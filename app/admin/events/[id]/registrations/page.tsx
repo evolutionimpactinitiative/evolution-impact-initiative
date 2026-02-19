@@ -48,6 +48,9 @@ export default async function EventRegistrationsPage({ params }: Props) {
   const waitlisted = registrations.filter((r) => r.status === "waitlisted").length;
   const cancelled = registrations.filter((r) => r.status === "cancelled").length;
   const attended = registrations.filter((r) => r.attended === "yes").length;
+  const totalChildren = registrations
+    .filter((r) => r.status === "confirmed")
+    .reduce((sum, r) => sum + (r.registration_children?.length || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -55,15 +58,15 @@ export default async function EventRegistrationsPage({ params }: Props) {
       <div>
         <Link
           href="/admin/events"
-          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4"
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Events
         </Link>
 
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>
-            <h1 className="font-heading font-black text-2xl md:text-3xl text-gray-900">
+            <h1 className="font-heading font-black text-xl lg:text-2xl text-gray-900">
               Registrations
             </h1>
             <p className="text-gray-600 mt-1">{event.title}</p>
@@ -86,35 +89,31 @@ export default async function EventRegistrationsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Confirmed</p>
-          <p className="text-2xl font-bold text-green-600">
+      {/* Stats - 2x3 grid on mobile, 5 cols on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4">
+          <p className="text-xs lg:text-sm text-gray-500">Confirmed</p>
+          <p className="text-xl lg:text-2xl font-bold text-green-600">
             {confirmed}/{event.total_slots}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Waitlist</p>
-          <p className="text-2xl font-bold text-yellow-600">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4">
+          <p className="text-xs lg:text-sm text-gray-500">Waitlist</p>
+          <p className="text-xl lg:text-2xl font-bold text-yellow-600">
             {waitlisted}/{event.waitlist_slots}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Cancelled</p>
-          <p className="text-2xl font-bold text-gray-600">{cancelled}</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4">
+          <p className="text-xs lg:text-sm text-gray-500">Cancelled</p>
+          <p className="text-xl lg:text-2xl font-bold text-gray-600">{cancelled}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Attended</p>
-          <p className="text-2xl font-bold text-brand-blue">{attended}</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4">
+          <p className="text-xs lg:text-sm text-gray-500">Attended</p>
+          <p className="text-xl lg:text-2xl font-bold text-brand-blue">{attended}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Total Children</p>
-          <p className="text-2xl font-bold text-purple-600">
-            {registrations
-              .filter((r) => r.status === "confirmed")
-              .reduce((sum, r) => sum + (r.registration_children?.length || 0), 0)}
-          </p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4 col-span-2 lg:col-span-1">
+          <p className="text-xs lg:text-sm text-gray-500">Total Children</p>
+          <p className="text-xl lg:text-2xl font-bold text-purple-600">{totalChildren}</p>
         </div>
       </div>
 

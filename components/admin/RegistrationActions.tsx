@@ -39,12 +39,12 @@ export function RegistrationActions({
       const data = await response.json();
 
       if (response.ok) {
-        setReminderResult(`Sent ${data.sent} reminder${data.sent !== 1 ? "s" : ""}`);
+        setReminderResult(`Sent ${data.sent}`);
       } else {
-        setReminderResult("Failed to send");
+        setReminderResult("Failed");
       }
     } catch {
-      setReminderResult("Failed to send");
+      setReminderResult("Failed");
     } finally {
       setSendingReminder(false);
       setTimeout(() => setReminderResult(null), 3000);
@@ -52,7 +52,6 @@ export function RegistrationActions({
   };
 
   const handleExportCSV = () => {
-    // Create CSV download link
     window.open(`/api/registrations/export?eventId=${eventId}`, "_blank");
   };
 
@@ -70,13 +69,12 @@ export function RegistrationActions({
       const data = await response.json();
 
       if (response.ok) {
-        const msg = `Sent ${data.sent}${data.skipped > 0 ? `, ${data.skipped} already confirmed` : ""}`;
-        setConfirmationResult(msg);
+        setConfirmationResult(`Sent ${data.sent}`);
       } else {
-        setConfirmationResult("Failed to send");
+        setConfirmationResult("Failed");
       }
     } catch {
-      setConfirmationResult("Failed to send");
+      setConfirmationResult("Failed");
     } finally {
       setSendingConfirmation(false);
       setTimeout(() => setConfirmationResult(null), 4000);
@@ -85,7 +83,66 @@ export function RegistrationActions({
 
   return (
     <>
-      <div className="flex items-center gap-3">
+      {/* Mobile: Vertical stack */}
+      <div className="lg:hidden flex flex-col gap-2 w-full mt-4">
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/admin/events/${eventId}/check-in`}>
+              <ClipboardCheck className="w-4 h-4 mr-1" />
+              Check-in
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowEmailModal(true)}>
+            <Mail className="w-4 h-4 mr-1" />
+            Email
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSendReminder}
+            disabled={sendingReminder || confirmedCount === 0}
+          >
+            {sendingReminder ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : reminderResult ? (
+              reminderResult
+            ) : (
+              <>
+                <Bell className="w-4 h-4 mr-1" />
+                Reminder
+              </>
+            )}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+            <Download className="w-4 h-4 mr-1" />
+            Export
+          </Button>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSendAttendanceConfirmation}
+          disabled={sendingConfirmation || confirmedCount === 0}
+          className="w-full"
+        >
+          {sendingConfirmation ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              Sending...
+            </>
+          ) : confirmationResult ? (
+            confirmationResult
+          ) : (
+            <>
+              <UserCheck className="w-4 h-4 mr-1" />
+              Confirm Attendance
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Desktop: Horizontal row */}
+      <div className="hidden lg:flex items-center gap-3">
         <Button variant="outline" asChild>
           <Link href={`/admin/events/${eventId}/check-in`}>
             <ClipboardCheck className="w-4 h-4 mr-2" />

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminLayoutContent } from "@/components/admin/AdminLayoutContent";
+import { MobileBottomNav } from "@/components/admin/MobileBottomNav";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 
 export default async function AdminLayout({
@@ -36,6 +37,7 @@ export default async function AdminLayout({
         >
           {children}
         </AdminLayoutContent>
+        <MobileBottomNav />
       </div>
     </SidebarProvider>
   );

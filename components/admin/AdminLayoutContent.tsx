@@ -19,7 +19,7 @@ export function AdminLayoutContent({ children, header }: AdminLayoutContentProps
       )}
     >
       {header}
-      <main className="p-6">{children}</main>
+      <main className="p-4 lg:p-6 pb-24 lg:pb-6">{children}</main>
     </div>
   );
 }

@@ -313,14 +313,14 @@ export function EventForm({ event }: EventFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Card Image <span className="text-gray-400 font-normal">(800x400px recommended)</span>
+              Card Image <span className="text-gray-400 font-normal">(800x600px, 4:3 ratio)</span>
             </label>
             {formData.card_image_url ? (
               <div className="relative">
                 <img
                   src={formData.card_image_url}
                   alt="Card preview"
-                  className="w-full h-40 object-cover rounded-lg"
+                  className="w-full aspect-[4/3] object-cover rounded-lg"
                 />
                 <button
                   type="button"
@@ -331,7 +331,7 @@ export function EventForm({ event }: EventFormProps) {
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-brand-blue hover:bg-gray-50 transition-colors">
+              <label className="flex flex-col items-center justify-center w-full aspect-[4/3] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-brand-blue hover:bg-gray-50 transition-colors">
                 <Upload className="w-8 h-8 text-gray-400 mb-2" />
                 <span className="text-sm text-gray-500">Click to upload</span>
                 <input
@@ -346,14 +346,14 @@ export function EventForm({ event }: EventFormProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Hero Image <span className="text-gray-400 font-normal">(1200x900px recommended)</span>
+              Hero Image <span className="text-gray-400 font-normal">(1200x900px, 4:3 ratio)</span>
             </label>
             {formData.hero_image_url ? (
               <div className="relative">
                 <img
                   src={formData.hero_image_url}
                   alt="Hero preview"
-                  className="w-full h-40 object-cover rounded-lg"
+                  className="w-full aspect-[4/3] object-cover rounded-lg"
                 />
                 <button
                   type="button"
@@ -364,7 +364,7 @@ export function EventForm({ event }: EventFormProps) {
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-brand-blue hover:bg-gray-50 transition-colors">
+              <label className="flex flex-col items-center justify-center w-full aspect-[4/3] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-brand-blue hover:bg-gray-50 transition-colors">
                 <Upload className="w-8 h-8 text-gray-400 mb-2" />
                 <span className="text-sm text-gray-500">Click to upload (optional)</span>
                 <input

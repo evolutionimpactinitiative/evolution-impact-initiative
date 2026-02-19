@@ -24,8 +24,8 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-heading font-black text-2xl md:text-3xl text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage your team and preferences</p>
+        <h1 className="font-heading font-black text-xl lg:text-2xl text-gray-900">Settings</h1>
+        <p className="text-gray-600 text-sm lg:text-base mt-1">Manage your team and preferences</p>
       </div>
 
       {/* Team Members */}
@@ -46,27 +46,29 @@ export default async function SettingsPage() {
 
         <div className="divide-y divide-gray-200">
           {teamMembers.map((member) => (
-            <div key={member.id} className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-brand-dark rounded-full flex items-center justify-center">
+            <div key={member.id} className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-brand-dark rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-bold">
                     {member.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">{member.name}</p>
-                  <p className="text-sm text-gray-500">{member.email}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium text-gray-900 truncate">{member.name}</p>
+                    <span
+                      className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
+                        member.role === "admin"
+                          ? "bg-purple-100 text-purple-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {member.role === "admin" ? "Admin" : "Editor"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 truncate mt-0.5">{member.email}</p>
                 </div>
               </div>
-              <span
-                className={`px-3 py-1 text-xs font-medium rounded-full ${
-                  member.role === "admin"
-                    ? "bg-purple-100 text-purple-700"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {member.role === "admin" ? "Administrator" : "Editor"}
-              </span>
             </div>
           ))}
         </div>

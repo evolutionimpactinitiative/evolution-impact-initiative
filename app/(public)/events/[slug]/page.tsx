@@ -129,43 +129,63 @@ export default async function EventPage({ params }: Props) {
       {/* Hero section */}
       <section className="container mx-auto px-4 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Event image */}
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
-            <Image
-              src={event.hero_image_url || event.card_image_url || "/placeholder-event.jpg"}
-              alt={event.title}
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-            {isPast && (
-              <div className="absolute top-4 left-4 bg-brand-dark text-white px-4 py-2 rounded-full text-sm font-bold">
-                Past Event
+          {/* Event image - Polaroid style */}
+          <div className="relative group">
+            <div
+              className="bg-white p-4 pb-6 shadow-lg hover:shadow-xl transition-all duration-300 -rotate-1 hover:rotate-0"
+              style={{
+                boxShadow: "0 4px 20px rgba(0,0,0,0.12), 0 8px 35px rgba(0,0,0,0.08)",
+              }}
+            >
+              {/* Tape decoration at top */}
+              <div
+                className="absolute -top-4 left-1/2 -translate-x-1/2 w-16 h-8 bg-amber-100/80 z-10"
+                style={{
+                  transform: "translateX(-50%) rotate(-2deg)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                }}
+              />
+
+              {/* Image container */}
+              <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                <Image
+                  src={event.hero_image_url || event.card_image_url || "/placeholder-event.jpg"}
+                  alt={event.title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+
+                {/* Status badge */}
+                {isPast && (
+                  <div className="absolute top-3 left-3 bg-gray-600 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm">
+                    Past Event
+                  </div>
+                )}
+                {isUpcoming && event.registrationStatus === "open" && (
+                  <div className="absolute top-3 left-3 bg-brand-green text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm">
+                    {event.spotsRemaining <= 5
+                      ? `${event.spotsRemaining} ${event.spotsRemaining === 1 ? "spot" : "spots"} left!`
+                      : "Registration Open"}
+                  </div>
+                )}
+                {isUpcoming && event.registrationStatus === "waitlist" && (
+                  <div className="absolute top-3 left-3 bg-yellow-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm">
+                    Waitlist Open
+                  </div>
+                )}
+                {isUpcoming && event.registrationStatus === "full" && (
+                  <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm">
+                    Fully Booked
+                  </div>
+                )}
+                {isUpcoming && event.registrationStatus === "closed" && (
+                  <div className="absolute top-3 left-3 bg-gray-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm">
+                    Registration Closed
+                  </div>
+                )}
               </div>
-            )}
-            {isUpcoming && event.registrationStatus === "open" && (
-              <div className="absolute top-4 left-4 bg-brand-green text-white px-4 py-2 rounded-full text-sm font-bold">
-                {event.spotsRemaining <= 5
-                  ? `${event.spotsRemaining} ${event.spotsRemaining === 1 ? "spot" : "spots"} left`
-                  : "Registrations Open"}
-              </div>
-            )}
-            {isUpcoming && event.registrationStatus === "waitlist" && (
-              <div className="absolute top-4 left-4 bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                Waitlist Open
-              </div>
-            )}
-            {isUpcoming && event.registrationStatus === "full" && (
-              <div className="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold">
-                Fully Booked
-              </div>
-            )}
-            {isUpcoming && event.registrationStatus === "closed" && (
-              <div className="absolute top-4 left-4 bg-gray-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                Registration Closed
-              </div>
-            )}
+            </div>
           </div>
 
           {/* Event details */}

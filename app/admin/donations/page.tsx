@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { Heart, TrendingUp, Users, Calendar, Gift } from "lucide-react";
+import { StatCard } from "@/components/admin/StatCard";
+import { DonationsView } from "@/components/admin/DonationsView";
 
 type Donation = {
   id: string;
@@ -76,222 +77,58 @@ export default async function DonationsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-heading font-black text-2xl md:text-3xl text-gray-900">Donations</h1>
-        <p className="text-gray-600 mt-1">Track donations and manage Gift Aid</p>
+        <h1 className="font-heading font-black text-xl lg:text-2xl text-gray-900">
+          Donations
+        </h1>
+        <p className="text-gray-600 text-sm lg:text-base mt-1">
+          Track donations and manage Gift Aid
+        </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-brand-green/10 rounded-lg flex items-center justify-center">
-              <Heart className="w-5 h-5 text-brand-green" />
-            </div>
-            <span className="text-sm text-gray-500">Total Raised</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">£{totalDonations.toFixed(2)}</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-brand-blue/10 rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-brand-blue" />
-            </div>
-            <span className="text-sm text-gray-500">This Month</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">£{thisMonthTotal.toFixed(2)}</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
-            </div>
-            <span className="text-sm text-gray-500">Monthly Recurring</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">£{monthlyRecurring.toFixed(2)}</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-brand-accent/10 rounded-lg flex items-center justify-center">
-              <Gift className="w-5 h-5 text-brand-accent" />
-            </div>
-            <span className="text-sm text-gray-500">Gift Aid Value</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">£{giftAidTotal.toFixed(2)}</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-gray-600" />
-            </div>
-            <span className="text-sm text-gray-500">Total Donors</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{donorCount}</p>
-        </div>
+      {/* Stats - 2x3 grid on mobile, 5 cols on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
+        <StatCard
+          title="Total Raised"
+          value={`£${totalDonations.toFixed(2)}`}
+          icon="Heart"
+          iconColor="text-brand-green"
+          iconBgColor="bg-brand-green/10"
+        />
+        <StatCard
+          title="This Month"
+          value={`£${thisMonthTotal.toFixed(2)}`}
+          icon="Calendar"
+          iconColor="text-brand-blue"
+          iconBgColor="bg-brand-blue/10"
+        />
+        <StatCard
+          title="Monthly"
+          value={`£${monthlyRecurring.toFixed(2)}`}
+          subtitle="Recurring"
+          icon="TrendingUp"
+          iconColor="text-purple-600"
+          iconBgColor="bg-purple-100"
+        />
+        <StatCard
+          title="Gift Aid"
+          value={`£${giftAidTotal.toFixed(2)}`}
+          subtitle="+25% bonus"
+          icon="Gift"
+          iconColor="text-brand-accent"
+          iconBgColor="bg-brand-accent/10"
+        />
+        <StatCard
+          title="Donors"
+          value={donorCount}
+          icon="Users"
+          iconColor="text-gray-600"
+          iconBgColor="bg-gray-100"
+          className="col-span-2 lg:col-span-1"
+        />
       </div>
 
-      {/* Active Subscriptions */}
-      {subscriptions.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="font-semibold text-gray-900">Active Monthly Donors</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Donor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Gift Aid
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Started
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {subscriptions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">
-                        {sub.donors?.name || "Anonymous"}
-                      </div>
-                      <div className="text-sm text-gray-500">{sub.donors?.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                      £{sub.amount.toFixed(2)}/month
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {sub.gift_aid_claimed ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                          <Gift className="w-3 h-3" />
-                          Claimed
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(sub.start_date).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                        Active
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Recent Donations */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200">
-          <h2 className="font-semibold text-gray-900">Recent Donations</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Donor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Gift Aid
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {donations.length > 0 ? (
-                donations.map((donation) => (
-                  <tr key={donation.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(donation.donation_date).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">
-                        {donation.donors?.name || "Anonymous"}
-                      </div>
-                      {donation.donors?.email && (
-                        <div className="text-sm text-gray-500">{donation.donors.email}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                      £{donation.amount.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {donation.payment_method === "card" ? "Card" : donation.payment_method}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {donation.gift_aid_claimed ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                          <Gift className="w-3 h-3" />
-                          +£{(donation.amount * 0.25).toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
-                          donation.status === "completed"
-                            ? "bg-green-100 text-green-700"
-                            : donation.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {donation.status.charAt(0).toUpperCase() + donation.status.slice(1)}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    No donations yet
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Donations List/Table */}
+      <DonationsView donations={donations} subscriptions={subscriptions} />
     </div>
   );
 }

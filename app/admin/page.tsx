@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Calendar, Users, Heart, TrendingUp, Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight, Clock, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/admin/StatCard";
+import {
+  DataCard,
+  DataCardHeader,
+  DataCardContent,
+  DataCardBadge,
+} from "@/components/admin/DataCard";
 import type { Event, Registration, RegistrationChild } from "@/lib/supabase/types";
 
 type RegistrationWithRelations = Registration & {
@@ -67,194 +74,184 @@ export default async function AdminDashboard() {
   const upcomingEvents = upcomingEventsData as Event[] | null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Welcome header */}
       <div>
-        <h1 className="font-heading font-black text-2xl md:text-3xl text-gray-900">
+        <h1 className="font-heading font-black text-xl lg:text-2xl text-gray-900">
           Dashboard
         </h1>
-        <p className="text-gray-600 mt-1">
-          Welcome back! Here&apos;s what&apos;s happening with Evolution Impact Initiative.
+        <p className="text-gray-600 text-sm lg:text-base mt-1">
+          Welcome back! Here&apos;s what&apos;s happening.
         </p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Upcoming Events</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{upcomingEventsCount || 0}</p>
-            </div>
-            <div className="w-12 h-12 bg-brand-blue/10 rounded-lg flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-brand-blue" />
-            </div>
-          </div>
-          <Link
-            href="/admin/events"
-            className="text-sm text-brand-blue hover:underline mt-4 inline-flex items-center gap-1"
-          >
-            View all events <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Registrations (This Month)</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{registrationsThisMonth || 0}</p>
-            </div>
-            <div className="w-12 h-12 bg-brand-green/10 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-brand-green" />
-            </div>
-          </div>
-          <Link
-            href="/admin/registrations"
-            className="text-sm text-brand-blue hover:underline mt-4 inline-flex items-center gap-1"
-          >
-            View registrations <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Donations (This Month)</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
-                £{(totalDonationsThisMonth / 100).toFixed(0)}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <Heart className="w-6 h-6 text-red-500" />
-            </div>
-          </div>
-          <Link
-            href="/admin/donations"
-            className="text-sm text-brand-blue hover:underline mt-4 inline-flex items-center gap-1"
-          >
-            View donations <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Monthly Recurring</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">£0</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-purple-500" />
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mt-4">From 0 active donors</p>
-        </div>
+      {/* Stats - 2x2 grid on mobile, 4 cols on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+        <StatCard
+          title="Upcoming Events"
+          value={upcomingEventsCount || 0}
+          icon="Calendar"
+          iconColor="text-brand-blue"
+          iconBgColor="bg-brand-blue/10"
+          href="/admin/events"
+          linkText="View all"
+        />
+        <StatCard
+          title="Registrations"
+          value={registrationsThisMonth || 0}
+          subtitle="This month"
+          icon="Users"
+          iconColor="text-brand-green"
+          iconBgColor="bg-brand-green/10"
+          href="/admin/registrations"
+          linkText="View all"
+        />
+        <StatCard
+          title="Donations"
+          value={`£${(totalDonationsThisMonth / 100).toFixed(0)}`}
+          subtitle="This month"
+          icon="Heart"
+          iconColor="text-red-500"
+          iconBgColor="bg-red-100"
+          href="/admin/donations"
+          linkText="View all"
+        />
+        <StatCard
+          title="Recurring"
+          value="£0"
+          subtitle="Monthly"
+          icon="TrendingUp"
+          iconColor="text-purple-500"
+          iconBgColor="bg-purple-100"
+        />
       </div>
 
-      {/* Quick actions */}
-      <div className="flex flex-wrap gap-4">
-        <Button asChild>
+      {/* Quick actions - Full width buttons on mobile */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/admin/events/new">
             <Plus className="w-4 h-4 mr-2" />
             Create Event
           </Link>
         </Button>
-        <Button variant="outline" asChild>
-          <Link href="/admin/registrations">View All Registrations</Link>
+        <Button variant="outline" asChild className="w-full sm:w-auto">
+          <Link href="/admin/registrations">View Registrations</Link>
         </Button>
-        <Button variant="outline" asChild>
+        <Button variant="outline" asChild className="w-full sm:w-auto">
           <Link href="/admin/donations">View Donations</Link>
         </Button>
       </div>
 
-      {/* Two column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Upcoming events */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="font-heading font-bold text-lg text-gray-900">Upcoming Events</h2>
-          </div>
-          <div className="p-6">
-            {upcomingEvents && upcomingEvents.length > 0 ? (
-              <div className="space-y-4">
-                {upcomingEvents.map((event) => (
-                  <Link
-                    key={event.id}
-                    href={`/admin/events/${event.id}`}
-                    className="block p-4 rounded-lg border border-gray-200 hover:border-brand-blue hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{event.title}</h3>
-                        <p className="text-sm text-gray-500 mt-1">
+      {/* Upcoming events - Card list */}
+      <DataCard>
+        <DataCardHeader>
+          <h2 className="font-heading font-bold text-lg text-gray-900">
+            Upcoming Events
+          </h2>
+          <Link
+            href="/admin/events"
+            className="text-sm text-brand-blue font-medium flex items-center gap-1"
+          >
+            View all
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </DataCardHeader>
+        <DataCardContent>
+          {upcomingEvents && upcomingEvents.length > 0 ? (
+            <div className="space-y-3">
+              {upcomingEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/admin/events/${event.id}`}
+                  className="block p-3 lg:p-4 rounded-xl border border-gray-100 hover:border-brand-blue hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {event.title}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                        <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate">
                           {new Date(event.date).toLocaleDateString("en-GB", {
-                            weekday: "long",
+                            weekday: "short",
                             day: "numeric",
-                            month: "long",
-                            year: "numeric",
+                            month: "short",
                           })}
-                        </p>
+                        </span>
                       </div>
-                      <span className="text-xs font-medium bg-brand-green/10 text-brand-green px-2 py-1 rounded-full">
-                        {event.total_slots} slots
-                      </span>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No upcoming events</p>
-                <Button asChild className="mt-4" size="sm">
-                  <Link href="/admin/events/new">Create Event</Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Recent registrations */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="font-heading font-bold text-lg text-gray-900">Recent Registrations</h2>
-          </div>
-          <div className="p-6">
-            {recentRegistrations && recentRegistrations.length > 0 ? (
-              <div className="space-y-4">
-                {recentRegistrations.map((reg) => (
-                  <div
-                    key={reg.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-gray-50"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">{reg.parent_name}</p>
-                      <p className="text-sm text-gray-500">
-                        {reg.events?.title} - {reg.registration_children?.length || 0} child(ren)
-                      </p>
-                    </div>
-                    <span
-                      className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        reg.status === "confirmed"
-                          ? "bg-green-100 text-green-700"
-                          : reg.status === "waitlisted"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {reg.status}
-                    </span>
+                    <DataCardBadge variant="success">
+                      {event.total_slots} slots
+                    </DataCardBadge>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No registrations yet</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">No upcoming events</p>
+              <Button asChild className="mt-4" size="sm">
+                <Link href="/admin/events/new">Create Event</Link>
+              </Button>
+            </div>
+          )}
+        </DataCardContent>
+      </DataCard>
+
+      {/* Recent registrations - Card list */}
+      <DataCard>
+        <DataCardHeader>
+          <h2 className="font-heading font-bold text-lg text-gray-900">
+            Recent Registrations
+          </h2>
+          <Link
+            href="/admin/registrations"
+            className="text-sm text-brand-blue font-medium flex items-center gap-1"
+          >
+            View all
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </DataCardHeader>
+        <DataCardContent>
+          {recentRegistrations && recentRegistrations.length > 0 ? (
+            <div className="space-y-3">
+              {recentRegistrations.map((reg) => (
+                <div
+                  key={reg.id}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-gray-50"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">
+                      {reg.parent_name}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {reg.events?.title} - {reg.registration_children?.length || 0} child(ren)
+                    </p>
+                  </div>
+                  <DataCardBadge
+                    variant={
+                      reg.status === "confirmed"
+                        ? "success"
+                        : reg.status === "waitlisted"
+                        ? "warning"
+                        : "default"
+                    }
+                  >
+                    {reg.status}
+                  </DataCardBadge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">No registrations yet</p>
+            </div>
+          )}
+        </DataCardContent>
+      </DataCard>
     </div>
   );
 }

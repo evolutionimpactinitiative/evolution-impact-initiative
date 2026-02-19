@@ -71,71 +71,147 @@ export function UpcomingEventsReminders({ events }: UpcomingEventsRemindersProps
         const isSending = sendingFor === event.id;
 
         return (
-          <div key={event.id} className="p-4 flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-gray-900 truncate">{event.title}</h3>
-              <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+          <div key={event.id} className="p-4">
+            {/* Mobile Layout */}
+            <div className="lg:hidden space-y-3">
+              {/* Title and days badge */}
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-medium text-gray-900">{event.title}</h3>
+                <span
+                  className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${
+                    daysUntil === 0
+                      ? "bg-red-100 text-red-700"
+                      : daysUntil === 1
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {daysUntil === 0
+                    ? "Today"
+                    : daysUntil === 1
+                    ? "Tomorrow"
+                    : `In ${daysUntil} days`}
+                </span>
+              </div>
+
+              {/* Event details */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="w-3.5 h-3.5" />
                   {formatDate(event.date)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-3.5 h-3.5" />
                   {event.start_time}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
+                  <Users className="w-3.5 h-3.5" />
                   {event.total_slots} slots
                 </span>
               </div>
+
+              {/* Action */}
+              <div>
+                {result ? (
+                  result.failed === -1 ? (
+                    <span className="text-sm text-red-600">Failed to send</span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-sm text-green-600">
+                      <CheckCircle className="w-4 h-4" />
+                      Sent {result.sent} reminder{result.sent !== 1 ? "s" : ""}
+                    </span>
+                  )
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSendReminder(event.id)}
+                    disabled={isSending}
+                    className="w-full"
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Bell className="w-4 h-4 mr-1" />
+                        Send Reminder
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span
-                className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  daysUntil === 0
-                    ? "bg-red-100 text-red-700"
-                    : daysUntil === 1
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {daysUntil === 0
-                  ? "Today"
-                  : daysUntil === 1
-                  ? "Tomorrow"
-                  : `In ${daysUntil} days`}
-              </span>
-
-              {result ? (
-                result.failed === -1 ? (
-                  <span className="text-sm text-red-600">Failed to send</span>
-                ) : (
-                  <span className="flex items-center gap-1 text-sm text-green-600">
-                    <CheckCircle className="w-4 h-4" />
-                    Sent {result.sent} reminder{result.sent !== 1 ? "s" : ""}
+            {/* Desktop Layout */}
+            <div className="hidden lg:flex items-center justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-gray-900 truncate">{event.title}</h3>
+                <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {formatDate(event.date)}
                   </span>
-                )
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSendReminder(event.id)}
-                  disabled={isSending}
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {event.start_time}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    {event.total_slots} slots
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    daysUntil === 0
+                      ? "bg-red-100 text-red-700"
+                      : daysUntil === 1
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
                 >
-                  {isSending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                      Sending...
-                    </>
+                  {daysUntil === 0
+                    ? "Today"
+                    : daysUntil === 1
+                    ? "Tomorrow"
+                    : `In ${daysUntil} days`}
+                </span>
+
+                {result ? (
+                  result.failed === -1 ? (
+                    <span className="text-sm text-red-600">Failed to send</span>
                   ) : (
-                    <>
-                      <Bell className="w-4 h-4 mr-1" />
-                      Send Reminder
-                    </>
-                  )}
-                </Button>
-              )}
+                    <span className="flex items-center gap-1 text-sm text-green-600">
+                      <CheckCircle className="w-4 h-4" />
+                      Sent {result.sent} reminder{result.sent !== 1 ? "s" : ""}
+                    </span>
+                  )
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSendReminder(event.id)}
+                    disabled={isSending}
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Bell className="w-4 h-4 mr-1" />
+                        Send Reminder
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         );
