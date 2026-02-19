@@ -1,16 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SendEmailModal } from "./SendEmailModal";
-import { ClipboardCheck, Mail, Download, Bell, Loader2, UserCheck } from "lucide-react";
+import { AnnounceEventModal } from "./AnnounceEventModal";
+import { createClient } from "@/lib/supabase/client";
+import { ClipboardCheck, Mail, Download, Bell, Loader2, UserCheck, Megaphone } from "lucide-react";
 
 interface RegistrationActionsProps {
   eventId: string;
   eventTitle: string;
   confirmedCount: number;
   waitlistedCount: number;
+}
+
+interface PastEvent {
+  id: string;
+  title: string;
+  date: string;
 }
 
 export function RegistrationActions({
@@ -20,10 +28,32 @@ export function RegistrationActions({
   waitlistedCount,
 }: RegistrationActionsProps) {
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showAnnounceModal, setShowAnnounceModal] = useState(false);
+  const [pastEvents, setPastEvents] = useState<PastEvent[]>([]);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [reminderResult, setReminderResult] = useState<string | null>(null);
   const [sendingConfirmation, setSendingConfirmation] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<string | null>(null);
+
+  // Fetch past events for the announce modal
+  useEffect(() => {
+    const fetchPastEvents = async () => {
+      const supabase = createClient();
+      const today = new Date().toISOString().split("T")[0];
+
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, date")
+        .eq("status", "published")
+        .lt("date", today)
+        .neq("id", eventId)
+        .order("date", { ascending: false });
+
+      setPastEvents((data as PastEvent[]) || []);
+    };
+
+    fetchPastEvents();
+  }, [eventId]);
 
   const handleSendReminder = async () => {
     setSendingReminder(true);
@@ -118,83 +148,99 @@ export function RegistrationActions({
             Export
           </Button>
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSendAttendanceConfirmation}
+            disabled={sendingConfirmation || confirmedCount === 0}
+          >
+            {sendingConfirmation ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                Sending...
+              </>
+            ) : confirmationResult ? (
+              confirmationResult
+            ) : (
+              <>
+                <UserCheck className="w-4 h-4 mr-1" />
+                Confirm
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAnnounceModal(true)}
+            disabled={pastEvents.length === 0}
+          >
+            <Megaphone className="w-4 h-4 mr-1" />
+            Announce
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop: Horizontal row with wrap */}
+      <div className="hidden lg:flex items-center gap-2 flex-wrap">
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/admin/events/${eventId}/check-in`}>
+            <ClipboardCheck className="w-4 h-4 mr-1" />
+            Check-in
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowEmailModal(true)}>
+          <Mail className="w-4 h-4 mr-1" />
+          Update
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSendReminder}
+          disabled={sendingReminder || confirmedCount === 0}
+        >
+          {sendingReminder ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : reminderResult ? (
+            reminderResult
+          ) : (
+            <>
+              <Bell className="w-4 h-4 mr-1" />
+              Reminder
+            </>
+          )}
+        </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={handleSendAttendanceConfirmation}
           disabled={sendingConfirmation || confirmedCount === 0}
-          className="w-full"
+          title="Send 72-hour attendance confirmation emails"
         >
           {sendingConfirmation ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-              Sending...
-            </>
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : confirmationResult ? (
             confirmationResult
           ) : (
             <>
               <UserCheck className="w-4 h-4 mr-1" />
-              Confirm Attendance
+              Confirm
             </>
           )}
         </Button>
-      </div>
-
-      {/* Desktop: Horizontal row */}
-      <div className="hidden lg:flex items-center gap-3">
-        <Button variant="outline" asChild>
-          <Link href={`/admin/events/${eventId}/check-in`}>
-            <ClipboardCheck className="w-4 h-4 mr-2" />
-            Check-in Mode
-          </Link>
-        </Button>
-        <Button variant="outline" onClick={() => setShowEmailModal(true)}>
-          <Mail className="w-4 h-4 mr-2" />
-          Send Update
+        <Button variant="outline" size="sm" onClick={handleExportCSV}>
+          <Download className="w-4 h-4 mr-1" />
+          Export
         </Button>
         <Button
           variant="outline"
-          onClick={handleSendReminder}
-          disabled={sendingReminder || confirmedCount === 0}
+          size="sm"
+          onClick={() => setShowAnnounceModal(true)}
+          disabled={pastEvents.length === 0}
+          title="Announce this event to past attendees"
         >
-          {sendingReminder ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Sending...
-            </>
-          ) : reminderResult ? (
-            reminderResult
-          ) : (
-            <>
-              <Bell className="w-4 h-4 mr-2" />
-              Send Reminder
-            </>
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handleSendAttendanceConfirmation}
-          disabled={sendingConfirmation || confirmedCount === 0}
-          title="Send 72-hour attendance confirmation emails"
-        >
-          {sendingConfirmation ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Sending...
-            </>
-          ) : confirmationResult ? (
-            confirmationResult
-          ) : (
-            <>
-              <UserCheck className="w-4 h-4 mr-2" />
-              Confirm Attendance
-            </>
-          )}
-        </Button>
-        <Button variant="outline" onClick={handleExportCSV}>
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
+          <Megaphone className="w-4 h-4 mr-1" />
+          Announce
         </Button>
       </div>
 
@@ -205,6 +251,14 @@ export function RegistrationActions({
         eventTitle={eventTitle}
         confirmedCount={confirmedCount}
         waitlistedCount={waitlistedCount}
+      />
+
+      <AnnounceEventModal
+        isOpen={showAnnounceModal}
+        onClose={() => setShowAnnounceModal(false)}
+        eventId={eventId}
+        eventTitle={eventTitle}
+        pastEvents={pastEvents}
       />
     </>
   );
