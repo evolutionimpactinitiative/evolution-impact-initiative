@@ -43,8 +43,10 @@ export default async function CheckInPage({ params }: Props) {
 
   const registrations = (registrationsData as RegistrationWithChildren[] | null) || [];
 
-  const checkedIn = registrations.filter((r) => r.attended === "yes").length;
-  const confirmedCount = registrations.filter((r) => r.status === "confirmed").length;
+  // Count children, not registrations
+  const allChildren = registrations.flatMap((r) => r.registration_children || []);
+  const totalChildren = allChildren.length;
+  const checkedInChildren = allChildren.filter((c) => c.attended === true).length;
 
   return (
     <div className="space-y-6">
@@ -74,15 +76,21 @@ export default async function CheckInPage({ params }: Props) {
           <div className="flex items-center gap-8 mt-6">
             <div>
               <p className="text-4xl font-bold text-brand-accent">
-                {checkedIn}/{confirmedCount}
+                {checkedInChildren}/{totalChildren}
               </p>
-              <p className="text-white/50 text-sm">Checked In</p>
+              <p className="text-white/50 text-sm">Children Checked In</p>
             </div>
             <div>
               <p className="text-4xl font-bold">
-                {confirmedCount - checkedIn}
+                {totalChildren - checkedInChildren}
               </p>
               <p className="text-white/50 text-sm">Pending</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-white/70">
+                {registrations.length}
+              </p>
+              <p className="text-white/50 text-sm">Families</p>
             </div>
           </div>
         </div>

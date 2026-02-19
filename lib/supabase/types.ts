@@ -226,6 +226,8 @@ export interface Database {
           child_name: string;
           child_age: number;
           display_order: number;
+          attended: boolean | null;
+          check_in_time: string | null;
           created_at: string;
         };
         Insert: {
@@ -234,6 +236,8 @@ export interface Database {
           child_name: string;
           child_age: number;
           display_order?: number;
+          attended?: boolean | null;
+          check_in_time?: string | null;
           created_at?: string;
         };
         Update: {
@@ -242,6 +246,8 @@ export interface Database {
           child_name?: string;
           child_age?: number;
           display_order?: number;
+          attended?: boolean | null;
+          check_in_time?: string | null;
           created_at?: string;
         };
       };

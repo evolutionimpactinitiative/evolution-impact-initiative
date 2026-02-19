@@ -40,7 +40,7 @@ export default async function EventsPage() {
     .eq("status", "published")
     .lt("date", today)
     .order("date", { ascending: false })
-    .limit(6);
+    .limit(12);
 
   const pastEvents = (pastData as Event[] | null) || [];
 
