@@ -2,12 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Send, Loader2, CheckCircle, AlertCircle, Check } from "lucide-react";
+import { X, Send, Loader2, CheckCircle, AlertCircle, Check, ChevronDown, ChevronUp, Users } from "lucide-react";
 
 interface PastEvent {
   id: string;
   title: string;
   date: string;
+}
+
+interface Recipient {
+  name: string;
+  email: string;
 }
 
 interface AnnounceEventModalProps {
@@ -29,7 +34,16 @@ export function AnnounceEventModal({
   const [message, setMessage] = useState("");
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
   const [recipientCount, setRecipientCount] = useState(0);
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [excludedEmails, setExcludedEmails] = useState<Set<string>>(new Set());
+  const [showRecipients, setShowRecipients] = useState(false);
   const [isLoadingCount, setIsLoadingCount] = useState(false);
+
+  // Filter out excluded recipients
+  const activeRecipients = recipients.filter(
+    (r) => !excludedEmails.has(r.email.toLowerCase())
+  );
+  const activeCount = activeRecipients.length;
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; sent?: number; failed?: number } | null>(null);
 
@@ -40,11 +54,12 @@ export function AnnounceEventModal({
     }
   }, [isOpen, eventTitle, subject]);
 
-  // Fetch recipient count when selection changes
+  // Fetch recipients when selection changes
   useEffect(() => {
-    const fetchCount = async () => {
+    const fetchRecipients = async () => {
       if (selectedEventIds.size === 0) {
         setRecipientCount(0);
+        setRecipients([]);
         return;
       }
 
@@ -56,14 +71,16 @@ export function AnnounceEventModal({
         );
         const data = await response.json();
         setRecipientCount(data.count || 0);
+        setRecipients(data.recipients || []);
       } catch {
         setRecipientCount(0);
+        setRecipients([]);
       } finally {
         setIsLoadingCount(false);
       }
     };
 
-    fetchCount();
+    fetchRecipients();
   }, [selectedEventIds, eventId]);
 
   const toggleEvent = (id: string) => {
@@ -98,6 +115,7 @@ export function AnnounceEventModal({
         body: JSON.stringify({
           eventId,
           sourceEventIds: Array.from(selectedEventIds),
+          excludedEmails: Array.from(excludedEmails),
           subject,
           message,
         }),
@@ -121,8 +139,19 @@ export function AnnounceEventModal({
     setSubject("");
     setMessage("");
     setSelectedEventIds(new Set());
+    setRecipients([]);
+    setExcludedEmails(new Set());
+    setShowRecipients(false);
     setResult(null);
     onClose();
+  };
+
+  const removeRecipient = (email: string) => {
+    setExcludedEmails((prev) => new Set([...prev, email.toLowerCase()]));
+  };
+
+  const restoreAllRecipients = () => {
+    setExcludedEmails(new Set());
   };
 
   if (!isOpen) return null;
@@ -250,17 +279,87 @@ export function AnnounceEventModal({
                   </div>
                 )}
 
-                {/* Recipient count */}
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Recipients:</span>
-                  {isLoadingCount ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                  ) : (
-                    <span className="text-sm font-semibold text-brand-blue">
-                      {recipientCount} {recipientCount === 1 ? "family" : "families"}
-                    </span>
+                {/* Recipients section */}
+                <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowRecipients(!showRecipients)}
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700">Recipients:</span>
+                      {isLoadingCount ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      ) : (
+                        <span className="text-sm font-semibold text-brand-blue">
+                          {activeCount} {activeCount === 1 ? "family" : "families"}
+                        </span>
+                      )}
+                      {excludedEmails.size > 0 && (
+                        <span className="text-xs text-orange-600">
+                          ({excludedEmails.size} removed)
+                        </span>
+                      )}
+                    </div>
+                    {recipientCount > 0 && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <span>{showRecipients ? "Hide" : "View"}</span>
+                        {showRecipients ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Recipients list */}
+                  {showRecipients && recipients.length > 0 && (
+                    <div className="border-t border-gray-200">
+                      {excludedEmails.size > 0 && (
+                        <div className="flex items-center justify-between px-3 py-2 bg-orange-50 border-b border-orange-100">
+                          <span className="text-xs text-orange-700">
+                            {excludedEmails.size} recipient{excludedEmails.size !== 1 ? "s" : ""} removed
+                          </span>
+                          <button
+                            type="button"
+                            onClick={restoreAllRecipients}
+                            className="text-xs text-orange-600 hover:text-orange-800 font-medium"
+                          >
+                            Restore all
+                          </button>
+                        </div>
+                      )}
+                      <div className="max-h-48 overflow-y-auto">
+                        {activeRecipients.map((recipient, index) => (
+                          <div
+                            key={recipient.email}
+                            className={`flex items-center justify-between px-3 py-2 text-sm group ${
+                              index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                            }`}
+                          >
+                            <div className="flex-1 min-w-0 mr-2">
+                              <span className="font-medium text-gray-900 truncate block">
+                                {recipient.name}
+                              </span>
+                              <span className="text-gray-500 text-xs truncate block">
+                                {recipient.email}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeRecipient(recipient.email)}
+                              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+                              title="Remove from list"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                  <span className="text-xs text-gray-400">(deduplicated)</span>
                 </div>
               </div>
 
@@ -310,7 +409,7 @@ export function AnnounceEventModal({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading || recipientCount === 0 || selectedEventIds.size === 0}
+                  disabled={isLoading || activeCount === 0 || selectedEventIds.size === 0}
                 >
                   {isLoading ? (
                     <>
@@ -320,7 +419,7 @@ export function AnnounceEventModal({
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      Send to {recipientCount}
+                      Send to {activeCount}
                     </>
                   )}
                 </Button>

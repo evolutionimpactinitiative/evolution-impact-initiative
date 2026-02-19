@@ -17,7 +17,7 @@ const LOGO_URL = `${BASE_URL}/logos/evolution_full_logo_2.svg`;
 
 export async function POST(request: NextRequest) {
   try {
-    const { eventId, sourceEventIds, subject, message } = await request.json();
+    const { eventId, sourceEventIds, excludedEmails, subject, message } = await request.json();
 
     if (!eventId || !sourceEventIds || !subject || !message) {
       return NextResponse.json(
@@ -68,15 +68,23 @@ export async function POST(request: NextRequest) {
       .eq("event_id", eventId)
       .in("status", ["confirmed", "waitlisted"]);
 
-    // Deduplicate emails and exclude those already registered
+    // Build exclusion sets
     const currentEmails = new Set(
       currentRegistrations?.map((r) => r.parent_email.toLowerCase()) || []
     );
+    const manuallyExcluded = new Set(
+      (excludedEmails || []).map((e: string) => e.toLowerCase())
+    );
 
+    // Deduplicate emails and exclude those already registered or manually excluded
     const uniqueRecipients = new Map<string, { name: string; email: string }>();
     pastRegistrations.forEach((r) => {
       const email = r.parent_email.toLowerCase();
-      if (!currentEmails.has(email) && !uniqueRecipients.has(email)) {
+      if (
+        !currentEmails.has(email) &&
+        !manuallyExcluded.has(email) &&
+        !uniqueRecipients.has(email)
+      ) {
         uniqueRecipients.set(email, {
           name: r.parent_name,
           email: r.parent_email,
@@ -164,7 +172,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint to preview recipient count
+// GET endpoint to preview recipients
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -172,7 +180,7 @@ export async function GET(request: NextRequest) {
     const sourceEventIds = searchParams.get("sourceEventIds")?.split(",").filter(Boolean);
 
     if (!eventId || !sourceEventIds || sourceEventIds.length === 0) {
-      return NextResponse.json({ count: 0 });
+      return NextResponse.json({ count: 0, recipients: [] });
     }
 
     const supabase = createAdminClient();
@@ -180,7 +188,7 @@ export async function GET(request: NextRequest) {
     // Get registrations from source events
     const { data: pastRegistrations } = await supabase
       .from("registrations")
-      .select("parent_email")
+      .select("parent_name, parent_email")
       .in("event_id", sourceEventIds)
       .in("status", ["confirmed", "waitlisted"]);
 
@@ -196,18 +204,25 @@ export async function GET(request: NextRequest) {
       currentRegistrations?.map((r) => r.parent_email.toLowerCase()) || []
     );
 
-    const uniqueEmails = new Set<string>();
+    const uniqueRecipients = new Map<string, { name: string; email: string }>();
     pastRegistrations?.forEach((r) => {
       const email = r.parent_email.toLowerCase();
-      if (!currentEmails.has(email)) {
-        uniqueEmails.add(email);
+      if (!currentEmails.has(email) && !uniqueRecipients.has(email)) {
+        uniqueRecipients.set(email, {
+          name: r.parent_name,
+          email: r.parent_email,
+        });
       }
     });
 
-    return NextResponse.json({ count: uniqueEmails.size });
+    const recipients = Array.from(uniqueRecipients.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    return NextResponse.json({ count: recipients.length, recipients });
   } catch (error) {
     console.error("Recipient count error:", error);
-    return NextResponse.json({ count: 0 });
+    return NextResponse.json({ count: 0, recipients: [] });
   }
 }
 
