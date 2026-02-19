@@ -447,7 +447,7 @@ export const teamMembers = [
   },
   {
     name: "B Emuchay",
-    role: "Finance & Funding Lead (Treasurer)",
+    role: "Finance & Funding Lead",
     bio: "Managing budgets, funding applications, and financial reporting",
     email: "blessing@evolutionimpactinitiative.co.uk",
     image: "/Team/Blessing.jpg",

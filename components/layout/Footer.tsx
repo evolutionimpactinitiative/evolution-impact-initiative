@@ -82,21 +82,27 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-4 mt-6">
                 <a
-                  href="#"
+                  href="https://www.instagram.com/evolutionimpactinitiative"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Instagram"
                   className="text-white/70 hover:text-brand-accent transition-colors"
                 >
                   <Instagram className="h-5 w-5" />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.facebook.com/share/1AhvjnBzca/?mibextid=wwXIfr"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Facebook"
                   className="text-white/70 hover:text-brand-accent transition-colors"
                 >
                   <Facebook className="h-5 w-5" />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.linkedin.com/company/evolution-impact-initiative-cic/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="LinkedIn"
                   className="text-white/70 hover:text-brand-accent transition-colors"
                 >

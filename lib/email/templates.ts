@@ -107,7 +107,7 @@ const emailWrapper = (content: string, heroImage?: string, accentColor: string =
                         <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
                             <tr>
                                 <td style="padding: 0 5px;">
-                                    <a href="https://facebook.com/evolutionimpactinitiative" style="text-decoration: none;">
+                                    <a href="https://www.facebook.com/share/1AhvjnBzca/?mibextid=wwXIfr" style="text-decoration: none;">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                             <tr>
                                                 <td style="width: 36px; height: 36px; background-color: #888888; border-radius: 50%; text-align: center; vertical-align: middle;">
@@ -118,7 +118,7 @@ const emailWrapper = (content: string, heroImage?: string, accentColor: string =
                                     </a>
                                 </td>
                                 <td style="padding: 0 5px;">
-                                    <a href="https://instagram.com/evolutionimpactinitiative" style="text-decoration: none;">
+                                    <a href="https://www.instagram.com/evolutionimpactinitiative" style="text-decoration: none;">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                             <tr>
                                                 <td style="width: 36px; height: 36px; background-color: #888888; border-radius: 50%; text-align: center; vertical-align: middle;">
@@ -129,7 +129,7 @@ const emailWrapper = (content: string, heroImage?: string, accentColor: string =
                                     </a>
                                 </td>
                                 <td style="padding: 0 5px;">
-                                    <a href="https://linkedin.com/company/evolution-impact-initiative" style="text-decoration: none;">
+                                    <a href="https://www.linkedin.com/company/evolution-impact-initiative-cic/" style="text-decoration: none;">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                                             <tr>
                                                 <td style="width: 36px; height: 36px; background-color: #888888; border-radius: 50%; text-align: center; vertical-align: middle;">

@@ -58,7 +58,7 @@ export default function DonatePage() {
                           : "text-brand-dark"
                       }`}
                     >
-                      £{tier.amount}
+                      {tier.amount}
                     </span>
                     <span className="text-brand-dark/70">{tier.description}</span>
                   </div>
