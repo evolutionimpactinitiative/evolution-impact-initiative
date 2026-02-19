@@ -15,7 +15,7 @@ export function ImpactSection() {
               The Difference We&apos;re Making
             </h2>
             <p className="text-white/70 leading-relaxed mb-8">
-              We measure our impact not just in numbers — but in confidence, connection and growth.
+              We measure our impact not just in numbers, but in confidence, connection and growth.
             </p>
 
             <div className="glass-card p-6 md:p-8">

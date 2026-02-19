@@ -16,7 +16,7 @@ export function AboutSection() {
               <PolaroidCard rotation="rotate-2" tapeStyle="top" className="w-64 md:w-80 -mr-8 z-10">
                 <div className="relative h-48 md:h-64 overflow-hidden">
                   <Image
-                    src="https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?w=800&q=80"
+                    src="/about-community.png"
                     alt="Community members working together"
                     fill
                     className="object-cover cinematic-filter"
@@ -28,7 +28,7 @@ export function AboutSection() {
               <PolaroidCard rotation="-rotate-2" tapeStyle="corner" className="w-64 md:w-80 mt-8 z-0">
                 <div className="relative h-48 md:h-64 overflow-hidden">
                   <Image
-                    src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&q=80"
+                    src="/rooted-medway.png"
                     alt="Family enjoying community event"
                     fill
                     className="object-cover cinematic-filter"
@@ -55,7 +55,7 @@ export function AboutSection() {
                 We create inclusive spaces where young people feel seen, families feel supported and communities feel connected. From creative arts workshops and youth sport programmes to food support drives and seasonal community events.
               </p>
               <p>
-                We&apos;re not just running events. We&apos;re building relationships. We&apos;re listening to our community. And we&apos;re designing programmes around real needs — not assumptions.
+                We&apos;re not just running events. We&apos;re building relationships. We&apos;re listening to our community. And we&apos;re designing programmes around real needs, not assumptions.
               </p>
             </div>
 

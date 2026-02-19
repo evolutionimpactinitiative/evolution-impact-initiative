@@ -5,7 +5,7 @@ export const programmes = [
     description: "Sip & Paint, Design It Yourself, and Jewellery Making. Creativity as a tool for confidence.",
     borderColor: "brand-blue",
     headingColor: "brand-blue",
-    image: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80",
+    image: "/IMG_6880.JPG",
   },
   {
     id: 2,
@@ -13,7 +13,7 @@ export const programmes = [
     description: "Boxing and team sports to promote discipline, resilience, and positive mentorship.",
     borderColor: "brand-green",
     headingColor: "brand-green",
-    image: "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=800&q=80",
+    image: "/IMG_6881.jpg",
   },
   {
     id: 3,
@@ -21,7 +21,7 @@ export const programmes = [
     description: "Seasonal food drives, back-to-school essentials, and family resource packs.",
     borderColor: "brand-dark",
     headingColor: "brand-dark",
-    image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&q=80",
+    image: "/support-outreach.png",
   },
   {
     id: 4,
@@ -29,14 +29,14 @@ export const programmes = [
     description: "Summer Fun Day and Women's Empowerment Sessions to bring people together.",
     borderColor: "brand-accent",
     headingColor: "brand-dark",
-    image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80",
+    image: "/community-events.png",
   },
 ];
 
 export const testimonials = [
   {
     id: 1,
-    quote: "My daughter came home glowing with confidence after the Sip & Paint session. She felt proud of what she created — and so was I.",
+    quote: "My daughter came home glowing with confidence after the Sip & Paint session. She felt proud of what she created, and so was I.",
     author: "Parent, Medway",
     borderColor: "brand-blue",
   },
@@ -90,7 +90,7 @@ export const values = [
   },
   {
     title: "Empowerment",
-    description: "We don't do things for people — we build their confidence and skills to do things for themselves.",
+    description: "We don't do things for people. We build their confidence and skills to do things for themselves.",
   },
   {
     title: "Integrity",
@@ -102,54 +102,288 @@ export const values = [
   },
   {
     title: "Joy",
-    description: "We believe joy is a form of community care. Celebration, creativity and laughter are not extras — they're essential.",
+    description: "We believe joy is a form of community care. Celebration, creativity and laughter are not extras; they're essential.",
   },
 ];
 
-export const upcomingEvents = [
-  {
-    id: 1,
-    title: "Spring Creative Workshop",
-    date: "March 15, 2026",
-    time: "10:00 AM - 2:00 PM",
-    location: "86 King Street, Rochester",
-    description: "Join us for a spring-themed creative session including painting, crafts, and community connection.",
-    image: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80",
-  },
-  {
-    id: 2,
-    title: "Youth Boxing Taster Session",
-    date: "March 22, 2026",
-    time: "4:00 PM - 6:00 PM",
-    location: "Local Community Centre, Medway",
-    description: "A free taster session for young people interested in our boxing and fitness programme.",
-    image: "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=800&q=80",
-  },
-];
+export const upcomingEvents: Array<{
+  id: number;
+  slug: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  address: string;
+  description: string;
+  fullDescription: string;
+  image: string;
+  category: string;
+  ageGroup: string;
+  price: string;
+  capacity: string;
+  whatToBring: string[];
+  accessibility: string;
+}> = [];
 
 export const pastEvents = [
   {
     id: 1,
-    title: "Summer Fun Day 2025",
-    date: "August 2025",
-    description: "Live DJ, bouncy castle, ice cream van, creative stations, community stalls.",
-    stats: "120+ attendees, 40+ children, 15 volunteers, 8 community partners",
-    testimonial: "It was amazing to see so many families come together. My kids haven't stopped talking about it!",
-    image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80",
+    slug: "summer-warriors-day-2025",
+    title: "Evolution Kids: Summer Warriors Day",
+    date: "Saturday, 19th July 2025",
+    location: "Evolution Combat Academy, Rochester, Kent",
+    description: "FREE kids martial arts event for ages 5-11. Two hours of boxing, kickboxing, BJJ, and obstacle courses.",
+    fullDescription: `Give your child a taste of martial arts and fitness in a safe, supportive space! This wasn't just about sport - it was about confidence, discipline, focus, and fun. Children left feeling proud, empowered, and full of positive energy.
+
+This high-energy event provided children aged 5-11 with an introduction to martial arts in a fun, inclusive environment delivered by qualified coaches.
+
+Event Activities:
+- Boxing Basics
+- Kickboxing & K1 Fun
+- Brazilian Jiu-Jitsu Play Zone
+- Obstacle Course & Relay Challenges
+- Medals & Certificates for All Kids!
+
+Special Awards:
+Every child received recognition, with special awards given for:
+- Bravest Warrior
+- Best Energy
+- Most Respectful
+
+This event successfully provided children with qualified coaches delivering safe, supportive instruction in an inclusive environment welcoming all children. High-energy fun activities for every participant, confidence-building through martial arts and fitness, and completely free access to quality martial arts instruction.
+
+Delivered in Partnership: Evolution Impact Initiative CIC x Evolution Combat Academy (ECA)`,
+    stats: "Our first event! Multiple children participated with medals and certificates for all",
+    testimonial: "Thank you to all the families who participated and made this martial arts experience a huge success!",
+    image: "/summer-warriors-day.png",
+    category: "Sport & Youth",
   },
   {
     id: 2,
-    title: "Valentine's Sip & Paint",
-    date: "February 2025",
-    description: "A love-themed creative evening for adults to relax, connect and create.",
-    image: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80",
+    slug: "back-to-school-giveaway-2025",
+    title: "Back to School Giveaway",
+    date: "Saturday, 30th August 2025",
+    location: "Evolution Combat Academy, Rochester",
+    description: "Free school uniforms and supplies for children aged 5-11. Backpacks filled with essentials at no cost.",
+    fullDescription: `Get ready for a fresh start to the school year! Evolution Impact Initiative presented the Back-To-School Giveaway - a special community event providing free school uniforms and supplies to children in Medway. Our mission was to ensure every child had the essentials they needed to step into the new academic year with confidence.
+
+This family-friendly event was open to children aged 5-11 years and featured backpacks filled with school essentials, uniforms, and more - all at no cost. Parents and guardians were warmly invited to join and pick up supplies for their kids.
+
+Event Highlights:
+- Free school uniforms for children aged 5-11
+- Backpacks filled with school essentials
+- Community support and family-friendly atmosphere
+- No cost to families - completely free event
+
+Impact:
+The event successfully supported numerous families in the Medway area, ensuring children had the resources they needed for a strong start to the school year. Together, we built a supportive community for Medway's future.
+
+This event has already taken place. Thank you to everyone who participated and made this community initiative a success!`,
+    stats: "Our second event! Multiple families supported with free uniforms and school supplies",
+    testimonial: "Thank you to everyone who participated and made this community initiative a success!",
+    image: "/back-to-school-2025.png",
+    category: "Support & Outreach",
   },
   {
-    id: 3,
-    title: "Back-to-School Giveaway",
-    date: "September 2025",
-    description: "Supporting families with essential school supplies for the new term.",
-    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80",
+    id: 5,
+    slug: "sip-and-paint-kids-2025",
+    title: "Sip & Paint for Kids",
+    date: "Saturday, 27th September 2025",
+    location: "Gillingham Children & Family Hub, Kent",
+    description: "A creative weekend experience for children. Free entry, all materials provided, kids keep their artwork!",
+    fullDescription: `Looking for a fun and inspiring activity for your little ones? Join us for our Sip & Paint Kids Event - a safe, welcoming space where children can explore their creativity, enjoy a refreshing drink, and take home their very own masterpiece!
+
+This event is all about fun, confidence, and self-expression, giving kids the chance to try something new while parents relax knowing they're in a supportive environment.
+
+Event Benefits:
+- Free entry (community-supported initiative)
+- Children keep the artwork they create
+- Fun, social and confidence-building activity
+- All materials provided
+
+Spaces were limited and filled quickly. This creative experience brought together children from across the community for an afternoon of artistic expression and fun.
+
+Creativity - Fun - Community`,
+    stats: "Our third event! Children created and took home their own artwork",
+    testimonial: "A wonderful creative experience for kids in a supportive environment!",
+    image: "/sip-paint-kids-2025.png",
+    category: "Creative & Wellbeing",
+  },
+  {
+    id: 6,
+    slug: "child-safety-programme-2025",
+    title: "FREE Child Safety Programme",
+    date: "Sunday, 28th September 2025",
+    location: "Evolution Combat Academy, Rochester, Kent",
+    description: "Essential safety skills training for children aged 5-11. Verbal and physical self-protection in a fun, supportive environment.",
+    fullDescription: `Following the successful Safety Talks delivered at Evolution Combat Academy, NEXGEN PROTECTION launched the Child Safety Programme - a vital one-day training designed to teach children essential safety skills in a fun and supportive environment.
+
+This session empowered children with both verbal and physical self-protection skills, giving them the confidence to deal with real-life situations such as travelling to and from school and responding to unwanted stranger interactions.
+
+Programme Benefits:
+- FREE for this launch event (normally £25-£50 per child)
+- Covers personal safety, travel safety & stranger awareness
+- Practical tools to build confidence and awareness
+- Parents welcome to attend (maximum two children per adult)
+- Designed for children aged 5-11 years old
+
+What to Bring:
+- Comfortable clothes (no skirts/dresses)
+- Light snacks & drinks for short breaks
+
+Delivered in Partnership:
+This event was proudly brought to you by Evolution Combat Academy x NEXGEN PROTECTION x Evolution Impact Initiative CIC
+
+Keeping Your Children Safe & Confident`,
+    stats: "Our fourth event! Children learned essential safety and self-protection skills",
+    testimonial: "Empowering children with confidence and practical safety skills for real-life situations!",
+    image: "/child-safety-programme-2025.png",
+    category: "Sport & Youth",
+  },
+  {
+    id: 7,
+    slug: "jewellery-making-workshop-2025",
+    title: "Kids' Jewellery Making Workshop",
+    date: "Saturday, 25th October 2025",
+    location: "Gillingham Children & Family Hub, Kent",
+    description: "Free creative workshop where children design and make their own bracelets, necklaces, and keychains to take home!",
+    fullDescription: `Looking for a fun, hands-on activity that helps children explore creativity and self-expression? Join us for our Kids' Jewellery Making Workshop - a free, community event where young creators designed and made their own bracelets, necklaces, and keychains to take home!
+
+This event promoted creativity, focus, and fine motor skills - while encouraging teamwork and confidence. Children had the freedom to create their own designs, learn basic crafting techniques, and proudly showcase their work at the end of the session.
+
+Event Highlights:
+- Free entry - supported by Evolution Impact Initiative CIC
+- All materials provided - children take home what they make
+- Boosts creativity, confidence, and social skills
+- Safe, supervised and inclusive environment
+- Great weekend activity for local families
+- Light refreshments available
+
+What Children Created:
+- Custom bracelets with colorful beads and charms
+- Personalized necklaces they designed themselves
+- Fun keychains to keep or gift to friends and family
+- All items were theirs to take home and treasure!
+
+Why It Matters:
+Our workshops are designed to inspire creativity while supporting children's wellbeing and emotional growth. Jewellery making encourages focus, patience, and self-expression - key skills that improve confidence and mental wellbeing in a fun, engaging way.
+
+Creativity - Confidence - Community`,
+    stats: "Our fifth event! Children created custom bracelets, necklaces, and keychains",
+    testimonial: "A wonderful creative experience that boosted confidence and self-expression!",
+    image: "/jewellery-making-2025.png",
+    category: "Creative & Wellbeing",
+  },
+  {
+    id: 8,
+    slug: "big-bake-off-christmas-2025",
+    title: "The Big Bake Off - Christmas Edition",
+    date: "Saturday, 13th December 2025",
+    location: "Gillingham Family Hub, Kent",
+    description: "A festive team-based baking challenge where kids competed to create, decorate, and present Christmas cupcakes!",
+    fullDescription: `Get ready for a festive afternoon full of fun, flour, and friendly competition!
+
+The Big Bake Off - Christmas Edition was a joyful, team-based baking challenge where kids competed to create, decorate, and present their best Christmas cupcakes!
+
+Working in teams, each child took on a role, collaborated with others, and showcased their creativity through baking. The event ended with a judging round where cupcakes were scored for taste, design, texture, and teamwork - and the winning team walked away with a special prize!
+
+Event Highlights:
+- Free to attend - supported by Evolution Impact Initiative CIC
+- All ingredients and materials provided
+- Children worked in teams of 4 with a team leader
+- Judging based on creativity, teamwork, taste, and design
+- Prizes for the winning team - baking kits to take home!
+- Safe, inclusive, and supervised environment
+
+What the Kids Did:
+- Baked festive cupcakes in small teams
+- Decorated and presented their baked goods to a panel of judges
+- Learned basic baking and presentation skills
+- Gained confidence through teamwork and creativity
+
+Why It Matters:
+This festive event was more than just baking - it was about building teamwork and communication skills, encouraging creativity and confidence, bringing children and families together for a joyful experience, and spreading holiday cheer in a meaningful, hands-on way.
+
+Creativity - Teamwork - Holiday Fun`,
+    stats: "Our sixth event! Teams competed in a festive cupcake baking challenge",
+    testimonial: "A wonderful festive experience bringing families together through creativity and teamwork!",
+    image: "/big-bake-off-2025.png",
+    category: "Creative & Wellbeing",
+  },
+  {
+    id: 9,
+    slug: "christmas-turkey-giveaway-2025",
+    title: "Christmas Turkey Giveaway 2025",
+    date: "Tuesday, 23rd December 2025",
+    location: "Medway",
+    description: "Supporting families in need this Christmas. Fifty turkeys distributed to households across Medway.",
+    fullDescription: `Medway Soup Kitchen CIC in partnership with Evolution Impact Initiative CIC ran a Christmas Turkey Giveaway for families who were experiencing financial hardship this holiday season.
+
+On Tuesday 23rd December 2025, we distributed fifty turkeys to households across Medway so families could enjoy a festive meal at home without stress or financial pressure.
+
+Christmas can be overwhelming for those struggling with the cost of living. A turkey may seem small, but it can make a big difference.
+
+Who This Was For:
+This support was for individuals and families in Medway who found it difficult to afford Christmas food. Priority was given to households with children. There was no requirement to explain circumstances - if families felt they needed support, they were welcome to register.
+
+What Families Received:
+- One turkey per household
+- Collection from Medway
+
+Why This Matters:
+A Christmas meal is more than food. It is dignity, family and celebration. Together we relieved stress, reduced food insecurity and created moments of joy for families who were struggling.
+
+Delivered in Partnership:
+Medway Soup Kitchen CIC x Evolution Impact Initiative CIC
+
+Small Acts - Big Impact`,
+    stats: "Our seventh event! 50 turkeys distributed to families across Medway",
+    testimonial: "A Christmas meal is more than food. It is dignity, family and celebration.",
+    image: "/turkey-giveaway-2025.png",
+    category: "Support & Outreach",
+  },
+  {
+    id: 10,
+    slug: "valentines-sip-and-paint-2026",
+    title: "Valentine's Sip & Paint",
+    date: "Saturday, 14th February 2026",
+    location: "Sunlight Centre, Gillingham, Kent",
+    description: "A creative celebration for Children's Mental Health Week. Valentine's-themed painting for children aged 4-11.",
+    fullDescription: `Join us for a special Valentine's Sip & Paint event celebrating Children's Mental Health Week! This creative, fun-filled session gave children the chance to express themselves through art in a safe and supportive environment.
+
+Painting and creative activities are proven to support emotional wellbeing, helping children relax, build confidence, and explore their feelings in a positive way.
+
+Each child created their own Valentine's-themed artwork to take home, while enjoying refreshments and making new friends.
+
+Event Highlights:
+- Free entry - supported by Evolution Impact Initiative CIC
+- All art materials and supplies provided
+- Valentine's-themed painting activity
+- Children take home their artwork
+- Refreshments included
+- Safe, inclusive, and supervised environment
+
+Why Children's Mental Health Week Matters:
+Children's Mental Health Week is a national campaign that shines a light on the importance of children and young people's mental health.
+
+Creative activities like painting help children:
+- Express emotions they may find hard to put into words
+- Build confidence and self-esteem
+- Reduce stress and anxiety
+- Develop focus and mindfulness
+- Connect with others in a relaxed setting
+
+What Children Experienced:
+- Step-by-step guided painting session
+- All materials provided
+- A welcoming space for children of all abilities
+- A finished painting to take home and treasure
+
+Creativity - Wellbeing - Community`,
+    stats: "Our first event of 2026! Celebrating Children's Mental Health Week through creativity",
+    testimonial: "A wonderful way to celebrate Children's Mental Health Week through art and self-expression!",
+    image: "/valentines-sip-paint-2026.png",
+    category: "Creative & Wellbeing",
   },
 ];
 
@@ -161,7 +395,7 @@ export const pillars = [
     description: "Creative workshops that promote self-expression, emotional wellbeing and genuine connection. Our sessions are open to all ages and abilities.",
     programmes: ["Sip & Paint", "Design It Yourself", "Jewellery Making", "Youth Creative Sessions", "Creative Summer Sessions"],
     outcomes: ["Self-confidence", "Emotional expression", "Social connection", "Fine motor skills", "Sense of achievement"],
-    image: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80",
+    image: "/IMG_6880.JPG",
     color: "brand-blue",
   },
   {
@@ -171,7 +405,7 @@ export const pillars = [
     description: "Structured sport programmes designed to do much more than build fitness. We use boxing, team training and physical challenges as vehicles for character development.",
     programmes: ["Youth Boxing & Fitness (non-contact)", "Team-Building Workshops", "Mentorship Through Sport", "Seasonal Sport Camps (HAF-aligned)"],
     outcomes: ["Physical fitness", "Emotional regulation", "Goal-setting", "Positive relationships", "Leadership"],
-    image: "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=800&q=80",
+    image: "/IMG_6881.jpg",
     color: "brand-green",
   },
   {
@@ -181,7 +415,7 @@ export const pillars = [
     description: "Direct, practical support for families and individuals navigating challenging times.",
     programmes: ["Seasonal Food Support", "Back-to-School Drives", "Family Resource Packs", "Signposting & Referrals"],
     outcomes: ["Practical support", "Reduced financial stress", "Access to services", "Community connection", "Dignity"],
-    image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&q=80",
+    image: "/support-outreach.png",
     color: "brand-dark",
   },
   {
@@ -191,7 +425,7 @@ export const pillars = [
     description: "Safe, vibrant events that bring people together, celebrate local talent and strengthen community bonds.",
     programmes: ["Summer Fun Day (flagship)", "Women's Empowerment Sessions", "Community Networking Events", "Family Celebration Events"],
     outcomes: ["Social connection", "Belonging", "Community pride", "Access to orgs", "Fun"],
-    image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80",
+    image: "/community-events.png",
     color: "brand-accent",
   },
 ];
@@ -263,8 +497,8 @@ export const footerInvolve = [
 ];
 
 export const footerGovernance = [
-  { href: "#", label: "Privacy Policy" },
-  { href: "#", label: "Safeguarding Policy" },
-  { href: "#", label: "CIC Statement" },
-  { href: "#", label: "Accessibility" },
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/safeguarding", label: "Safeguarding Policy" },
+  { href: "/cic-statement", label: "CIC Statement" },
+  { href: "/accessibility", label: "Accessibility" },
 ];

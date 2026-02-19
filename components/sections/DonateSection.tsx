@@ -14,7 +14,7 @@ export function DonateSection() {
             Every Contribution Fuels Change
           </h2>
           <p className="text-brand-dark/70 leading-relaxed">
-            As a Community Interest Company, every penny we receive is reinvested back into the community. That&apos;s not just a promise — it&apos;s written into our legal structure.
+            As a Community Interest Company, every penny we receive is reinvested back into the community. That&apos;s not just a promise, it&apos;s written into our legal structure.
           </p>
         </div>
 

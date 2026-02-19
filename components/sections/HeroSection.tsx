@@ -14,7 +14,7 @@ export function HeroSection() {
         <div className="max-w-5xl mx-auto text-center">
           {/* Badge */}
           <div className="inline-flex items-center border border-brand-blue text-brand-blue px-4 py-2 rounded-full text-sm font-heading font-semibold mb-8">
-            Est. 2025 — Medway, UK
+            Est. 2025 · Medway, UK
           </div>
 
           {/* Main heading */}
