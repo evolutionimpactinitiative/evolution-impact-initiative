@@ -18,6 +18,17 @@ export interface CustomField {
   placeholder?: string;
 }
 
+// Survey question types
+export type SurveyQuestionType = "rating" | "multiple_choice" | "multi_select" | "text" | "yes_no";
+
+export interface SurveyQuestion {
+  id: string;
+  type: SurveyQuestionType;
+  text: string;
+  required: boolean;
+  options?: string[] | { min: number; max: number }; // For choice questions or rating scale
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -80,6 +91,7 @@ export interface Database {
           send_reminder_24h: boolean;
           send_reminder_1h: boolean;
           custom_fields: CustomField[] | null;
+          photo_album_url: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -113,6 +125,7 @@ export interface Database {
           send_reminder_24h?: boolean;
           send_reminder_1h?: boolean;
           custom_fields?: CustomField[] | null;
+          photo_album_url?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -146,6 +159,7 @@ export interface Database {
           send_reminder_24h?: boolean;
           send_reminder_1h?: boolean;
           custom_fields?: CustomField[] | null;
+          photo_album_url?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -497,6 +511,111 @@ export interface Database {
           created_at?: string;
         };
       };
+      mailing_list: {
+        Row: {
+          id: string;
+          email: string;
+          name: string | null;
+          status: "active" | "unsubscribed";
+          source: "footer" | "registration" | "event" | "manual";
+          subscribed_at: string;
+          unsubscribed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          name?: string | null;
+          status?: "active" | "unsubscribed";
+          source?: "footer" | "registration" | "event" | "manual";
+          subscribed_at?: string;
+          unsubscribed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          name?: string | null;
+          status?: "active" | "unsubscribed";
+          source?: "footer" | "registration" | "event" | "manual";
+          subscribed_at?: string;
+          unsubscribed_at?: string | null;
+          created_at?: string;
+        };
+      };
+      surveys: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          event_id: string | null;
+          survey_type: "event_feedback" | "activity_interest" | "general";
+          questions: SurveyQuestion[];
+          is_active: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          event_id?: string | null;
+          survey_type?: "event_feedback" | "activity_interest" | "general";
+          questions: SurveyQuestion[];
+          is_active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string | null;
+          event_id?: string | null;
+          survey_type?: "event_feedback" | "activity_interest" | "general";
+          questions?: SurveyQuestion[];
+          is_active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      survey_responses: {
+        Row: {
+          id: string;
+          survey_id: string;
+          event_id: string | null;
+          registration_id: string | null;
+          respondent_email: string;
+          respondent_name: string | null;
+          answers: Record<string, string | number | string[] | boolean>;
+          submitted_at: string;
+          status: "completed" | "partial";
+        };
+        Insert: {
+          id?: string;
+          survey_id: string;
+          event_id?: string | null;
+          registration_id?: string | null;
+          respondent_email: string;
+          respondent_name?: string | null;
+          answers: Record<string, string | number | string[] | boolean>;
+          submitted_at?: string;
+          status?: "completed" | "partial";
+        };
+        Update: {
+          id?: string;
+          survey_id?: string;
+          event_id?: string | null;
+          registration_id?: string | null;
+          respondent_email?: string;
+          respondent_name?: string | null;
+          answers?: Record<string, string | number | string[] | boolean>;
+          submitted_at?: string;
+          status?: "completed" | "partial";
+        };
+      };
     };
     Functions: {
       get_event_registration_count: {
@@ -536,3 +655,11 @@ export type RegistrationChildInsert = Database["public"]["Tables"]["registration
 export type RegistrationAttendeeInsert = Database["public"]["Tables"]["registration_attendees"]["Insert"];
 export type DonorInsert = Database["public"]["Tables"]["donors"]["Insert"];
 export type DonationInsert = Database["public"]["Tables"]["donations"]["Insert"];
+
+// New community engagement types
+export type MailingListSubscriber = Database["public"]["Tables"]["mailing_list"]["Row"];
+export type MailingListInsert = Database["public"]["Tables"]["mailing_list"]["Insert"];
+export type Survey = Database["public"]["Tables"]["surveys"]["Row"];
+export type SurveyInsert = Database["public"]["Tables"]["surveys"]["Insert"];
+export type SurveyResponse = Database["public"]["Tables"]["survey_responses"]["Row"];
+export type SurveyResponseInsert = Database["public"]["Tables"]["survey_responses"]["Insert"];

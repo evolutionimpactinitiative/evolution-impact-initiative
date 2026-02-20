@@ -491,6 +491,7 @@ export const footerNav = [
 ];
 
 export const footerInvolve = [
+  { href: "/community", label: "Small Acts Community" },
   { href: "/get-involved", label: "Volunteer" },
   { href: "/get-involved#partner", label: "Partner With Us" },
   { href: "/contact", label: "Contact Us" },

@@ -63,6 +63,7 @@ export function EventForm({ event }: EventFormProps) {
     card_image_url: event?.card_image_url || "",
     hero_image_url: event?.hero_image_url || "",
     custom_fields: event?.custom_fields || [],
+    photo_album_url: event?.photo_album_url || "",
   });
 
   const [customFields, setCustomFields] = useState<CustomField[]>(event?.custom_fields || []);
@@ -604,6 +605,30 @@ export function EventForm({ event }: EventFormProps) {
             />
             <span className="text-sm text-gray-700">Send reminder 1 hour before event</span>
           </label>
+        </div>
+      </div>
+
+      {/* Post-Event */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="font-heading font-bold text-lg text-gray-900 mb-2">Post-Event</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Add a link to event photos that can be shared with attendees after the event.
+        </p>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Photo Album URL
+          </label>
+          <input
+            type="url"
+            value={formData.photo_album_url || ""}
+            onChange={(e) => setFormData({ ...formData, photo_album_url: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+            placeholder="e.g., https://drive.google.com/drive/folders/..."
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Paste a link to Google Drive, Dropbox, or any photo hosting service
+          </p>
         </div>
       </div>
 

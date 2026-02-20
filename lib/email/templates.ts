@@ -1001,3 +1001,200 @@ export function donationReceiptEmail(
     html: emailWrapper(content, undefined, BRAND.green),
   };
 }
+
+export function welcomeSubscriberEmail(
+  subscriberName: string | null,
+  subscriberEmail: string
+): { subject: string; html: string } {
+  const displayName = subscriberName || "there";
+  const unsubscribeLink = `${BASE_URL}/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`;
+
+  const content = `
+    <h1 style="margin: 0 0 20px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      Welcome to<br><span style="color: ${BRAND.green};">Small Acts!</span>
+    </h1>
+
+    <p style="margin: 0 0 20px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Hi <strong>${displayName}</strong>,
+    </p>
+
+    <p style="margin: 0 0 25px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Thank you for joining our Small Acts community! We're so glad to have you with us.
+    </p>
+
+    <!-- What is Small Acts -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            What is Small Acts?
+          </h3>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
+            Small Acts is the heart of Evolution Impact Initiative. It's our community space for people who believe that positive change doesn't require grand gestures—only willingness, consistency, and care.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- What to expect -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            What You'll Receive
+          </h3>
+          <ul style="margin: 0; padding-left: 20px; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.8;">
+            <li>Updates on upcoming events and workshops</li>
+            <li>Opportunities to volunteer and get involved</li>
+            <li>Stories of community impact</li>
+            <li>Ways to support local families and young people</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Join WhatsApp -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #25D366; border-radius: 8px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: center;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #ffffff; font-weight: 700;">
+            Join Our WhatsApp Community
+          </h3>
+          <p style="margin: 0 0 15px; font-family: 'Inter', sans-serif; font-size: 14px; color: #ffffff; line-height: 1.6;">
+            Connect with other community members and stay in the loop!
+          </p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+            <tr>
+              <td style="border-radius: 4px; background: #ffffff; text-align: center;">
+                <a href="https://chat.whatsapp.com/Ezf3U5WdlqC74h00tvS3uB" target="_blank" style="font-family: 'Montserrat', sans-serif; font-size: 14px; text-decoration: none; padding: 12px 24px; color: #25D366; display: block; font-weight: 700; text-transform: uppercase;">
+                  Join WhatsApp Group
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- View Events Button -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto 30px;">
+      <tr>
+        <td style="border-radius: 4px; background: ${BRAND.blue}; text-align: center;">
+          <a href="${BASE_URL}/events" target="_blank" class="button-primary" style="background: ${BRAND.blue}; font-family: 'Montserrat', sans-serif; font-size: 14px; text-decoration: none; padding: 14px 30px; color: #ffffff; display: block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+            View Upcoming Events
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 20px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6; text-align: left;">
+      We're excited to have you as part of our community. Together, small acts create big change.
+    </p>
+
+    <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6; text-align: left;">
+      With gratitude,<br>
+      <strong>The Evolution Impact Initiative Team</strong>
+    </p>
+
+    <p style="margin: 30px 0 0; font-family: 'Inter', sans-serif; font-size: 12px; color: #888888; text-align: center;">
+      <a href="${unsubscribeLink}" style="color: #888888; text-decoration: underline;">Unsubscribe</a> from these emails
+    </p>
+  `;
+
+  return {
+    subject: "Welcome to Small Acts - Evolution Impact Initiative",
+    html: emailWrapper(content, undefined, BRAND.green),
+  };
+}
+
+export function eventPhotosEmail(
+  recipientName: string,
+  event: Event,
+  photoAlbumUrl: string
+): { subject: string; html: string } {
+  const eventDate = new Date(event.date).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const heroImage = event.card_image_url || event.hero_image_url || undefined;
+
+  const content = `
+    <h1 style="margin: 0 0 20px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      Photos<br><span style="color: ${BRAND.green};">Are Ready!</span>
+    </h1>
+
+    <p style="margin: 0 0 20px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Dear <strong>${recipientName}</strong>,
+    </p>
+
+    <p style="margin: 0 0 25px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Thank you for joining us at <strong>${event.title}</strong> on ${eventDate}! We hope you and your family had a wonderful time.
+    </p>
+
+    <p style="margin: 0 0 25px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      We've uploaded photos from the day and wanted to share them with you. Click below to view and download:
+    </p>
+
+    <!-- View Photos Button -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto 30px;">
+      <tr>
+        <td style="border-radius: 4px; background: ${BRAND.green}; text-align: center;">
+          <a href="${photoAlbumUrl}" target="_blank" class="button-primary" style="background: ${BRAND.green}; font-family: 'Montserrat', sans-serif; font-size: 14px; text-decoration: none; padding: 14px 30px; color: #ffffff; display: block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+            View Photos
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Share Prompt -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: center;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Share the Moment
+          </h3>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
+            Feel free to share your favourite photos on social media!<br>
+            Tag us <strong>@evolutionimpactinitiative</strong> so we can see your posts.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Upcoming Events -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: center;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Join Us Again
+          </h3>
+          <p style="margin: 0 0 15px; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
+            We'd love to see you at our upcoming events!
+          </p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+            <tr>
+              <td style="border-radius: 4px; border: 2px solid ${BRAND.blue}; text-align: center;">
+                <a href="${BASE_URL}/events" style="font-family: 'Montserrat', sans-serif; font-size: 13px; text-decoration: none; padding: 12px 24px; color: ${BRAND.blue}; display: block; font-weight: 700; text-transform: uppercase;">
+                  View Upcoming Events
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 30px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6; text-align: left;">
+      Thank you for being part of our community!<br>
+      <strong>The Evolution Impact Initiative Team</strong>
+    </p>
+  `;
+
+  return {
+    subject: `Photos from ${event.title} Are Ready!`,
+    html: emailWrapper(content, heroImage, BRAND.green),
+  };
+}

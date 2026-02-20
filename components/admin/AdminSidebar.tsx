@@ -17,6 +17,8 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  UserPlus,
+  ClipboardList,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -29,6 +31,8 @@ const navigation = [
   { name: "Events", href: "/admin/events", icon: Calendar },
   { name: "Registrations", href: "/admin/registrations", icon: Users },
   { name: "Donations", href: "/admin/donations", icon: Heart },
+  { name: "Subscribers", href: "/admin/subscribers", icon: UserPlus },
+  { name: "Surveys", href: "/admin/surveys", icon: ClipboardList },
   { name: "Emails", href: "/admin/emails", icon: Mail },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];

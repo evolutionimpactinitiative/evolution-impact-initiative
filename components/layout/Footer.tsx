@@ -1,11 +1,25 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Instagram, Facebook, Linkedin, Mail, MapPin } from "lucide-react";
+import { Instagram, Facebook, Linkedin, Mail, MapPin, MessageCircle } from "lucide-react";
 import { footerNav, footerInvolve, footerGovernance } from "@/lib/constants";
+import { FooterSubscribeForm } from "./FooterSubscribeForm";
 
 export function Footer() {
   return (
     <footer className="bg-[#111111] text-white">
+      {/* Stay Updated Section */}
+      <div className="border-b border-white/10">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-xl mx-auto text-center">
+            <h3 className="font-heading font-bold text-2xl mb-3">Stay Updated</h3>
+            <p className="text-white/70 mb-6">
+              Join our Small Acts community and be the first to hear about events, initiatives, and ways to get involved.
+            </p>
+            <FooterSubscribeForm />
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Navigation */}
@@ -108,8 +122,18 @@ export function Footer() {
                 >
                   <Linkedin className="h-5 w-5" />
                 </a>
+                <a
+                  href="https://chat.whatsapp.com/Ezf3U5WdlqC74h00tvS3uB"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp Community"
+                  className="text-white/70 hover:text-brand-accent transition-colors"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </a>
               </div>
-              <div className="mt-8">
+
+              <div className="mt-6">
                 <Image
                   src="/logos/evolution_full_logo_2.svg"
                   alt="Evolution Impact Initiative"

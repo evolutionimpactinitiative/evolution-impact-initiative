@@ -5,8 +5,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SendEmailModal } from "./SendEmailModal";
 import { AnnounceEventModal } from "./AnnounceEventModal";
+import { SendPhotosModal } from "./SendPhotosModal";
 import { createClient } from "@/lib/supabase/client";
-import { ClipboardCheck, Mail, Download, Bell, Loader2, UserCheck, Megaphone } from "lucide-react";
+import { ClipboardCheck, Mail, Download, Bell, Loader2, UserCheck, Megaphone, Camera } from "lucide-react";
+import type { Event } from "@/lib/supabase/types";
 
 interface RegistrationActionsProps {
   eventId: string;
@@ -29,19 +31,22 @@ export function RegistrationActions({
 }: RegistrationActionsProps) {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showAnnounceModal, setShowAnnounceModal] = useState(false);
+  const [showPhotosModal, setShowPhotosModal] = useState(false);
   const [pastEvents, setPastEvents] = useState<PastEvent[]>([]);
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [reminderResult, setReminderResult] = useState<string | null>(null);
   const [sendingConfirmation, setSendingConfirmation] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<string | null>(null);
 
-  // Fetch past events for the announce modal
+  // Fetch past events for the announce modal and current event for photos modal
   useEffect(() => {
-    const fetchPastEvents = async () => {
+    const fetchData = async () => {
       const supabase = createClient();
       const today = new Date().toISOString().split("T")[0];
 
-      const { data } = await supabase
+      // Fetch past events
+      const { data: pastEventsData } = await supabase
         .from("events")
         .select("id, title, date")
         .eq("status", "published")
@@ -49,10 +54,19 @@ export function RegistrationActions({
         .neq("id", eventId)
         .order("date", { ascending: false });
 
-      setPastEvents((data as PastEvent[]) || []);
+      setPastEvents((pastEventsData as PastEvent[]) || []);
+
+      // Fetch current event for photos modal
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", eventId)
+        .single();
+
+      setCurrentEvent(eventData as Event | null);
     };
 
-    fetchPastEvents();
+    fetchData();
   }, [eventId]);
 
   const handleSendReminder = async () => {
@@ -148,7 +162,7 @@ export function RegistrationActions({
             Export
           </Button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -158,7 +172,7 @@ export function RegistrationActions({
             {sendingConfirmation ? (
               <>
                 <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                Sending...
+                ...
               </>
             ) : confirmationResult ? (
               confirmationResult
@@ -177,6 +191,15 @@ export function RegistrationActions({
           >
             <Megaphone className="w-4 h-4 mr-1" />
             Announce
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPhotosModal(true)}
+            disabled={!currentEvent}
+          >
+            <Camera className="w-4 h-4 mr-1" />
+            Photos
           </Button>
         </div>
       </div>
@@ -242,6 +265,16 @@ export function RegistrationActions({
           <Megaphone className="w-4 h-4 mr-1" />
           Announce
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowPhotosModal(true)}
+          disabled={!currentEvent}
+          title="Send photos email to attendees"
+        >
+          <Camera className="w-4 h-4 mr-1" />
+          Photos
+        </Button>
       </div>
 
       <SendEmailModal
@@ -260,6 +293,15 @@ export function RegistrationActions({
         eventTitle={eventTitle}
         pastEvents={pastEvents}
       />
+
+      {currentEvent && (
+        <SendPhotosModal
+          event={currentEvent}
+          attendeeCount={confirmedCount}
+          isOpen={showPhotosModal}
+          onClose={() => setShowPhotosModal(false)}
+        />
+      )}
     </>
   );
 }

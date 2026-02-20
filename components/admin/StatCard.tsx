@@ -14,6 +14,7 @@ import {
   XCircle,
   Gift,
   UserCheck,
+  ClipboardList,
 } from "lucide-react";
 
 const iconMap = {
@@ -27,6 +28,7 @@ const iconMap = {
   XCircle,
   Gift,
   UserCheck,
+  ClipboardList,
 } as const;
 
 type IconName = keyof typeof iconMap;
