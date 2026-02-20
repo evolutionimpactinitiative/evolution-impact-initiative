@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
                 .from("donors")
                 .insert({
                   email: session.customer_email,
-                  name: metadata.donor_name || null,
-                  gift_aid_eligible: metadata.gift_aid === "yes",
+                  name: metadata.donor_name || "Anonymous",
+                  gift_aid_declaration: metadata.gift_aid === "yes",
                 })
                 .select()
                 .single();
@@ -80,17 +80,18 @@ export async function POST(request: NextRequest) {
           const donationAmount = (session.amount_total || 0) / 100;
           const donationCurrency = session.currency?.toUpperCase() || "GBP";
           const giftAidClaimed = metadata.gift_aid === "yes";
+          const giftAidAmount = giftAidClaimed ? donationAmount * 0.25 : 0;
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (supabase as any).from("donations").insert({
             donor_id: donorId,
             amount: donationAmount,
             currency: donationCurrency,
-            payment_method: "card",
-            stripe_payment_id: session.payment_intent as string,
-            gift_aid_claimed: giftAidClaimed,
+            donation_type: "one_time",
+            stripe_payment_intent_id: session.payment_intent as string,
+            gift_aid_amount: giftAidAmount,
             status: "completed",
-            donation_date: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
           });
 
           // Send donation receipt email
@@ -156,18 +157,19 @@ export async function POST(request: NextRequest) {
           const recurringAmount = (invoiceAny.amount_paid || 0) / 100;
           const recurringCurrency = (invoiceAny.currency || "gbp").toUpperCase();
           const recurringGiftAid = metadata.gift_aid === "yes";
+          const recurringGiftAidAmount = recurringGiftAid ? recurringAmount * 0.25 : 0;
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (supabase as any).from("donations").insert({
             donor_id: donorId,
             amount: recurringAmount,
             currency: recurringCurrency,
-            payment_method: "card",
-            stripe_payment_id: invoiceAny.payment_intent as string,
+            donation_type: "recurring",
+            stripe_payment_intent_id: invoiceAny.payment_intent as string,
             stripe_subscription_id: subscriptionId as string,
-            gift_aid_claimed: recurringGiftAid,
+            gift_aid_amount: recurringGiftAidAmount,
             status: "completed",
-            donation_date: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
           });
 
           // Send donation receipt email for recurring payment
@@ -226,11 +228,9 @@ export async function POST(request: NextRequest) {
               donor_id: donor.id,
               stripe_subscription_id: subscription.id,
               amount: (price.unit_amount || 0) / 100,
-              currency: price.currency.toUpperCase(),
-              interval: "monthly",
-              status: subscription.status,
-              gift_aid_claimed: metadata.gift_aid === "yes",
-              start_date: new Date(subscription.start_date * 1000).toISOString(),
+              frequency: "monthly",
+              status: "active",
+              started_at: new Date(subscription.start_date * 1000).toISOString(),
             });
           }
         }
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
           .from("donation_subscriptions")
           .update({
             status: "cancelled",
-            end_date: new Date().toISOString(),
+            cancelled_at: new Date().toISOString(),
           })
           .eq("stripe_subscription_id", subscription.id);
         break;

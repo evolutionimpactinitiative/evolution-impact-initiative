@@ -10,10 +10,11 @@ type Donation = {
   id: string;
   amount: number;
   currency: string;
-  payment_method: string;
-  gift_aid_claimed: boolean;
+  donation_type: string;
+  gift_aid_amount: number;
   status: string;
-  donation_date: string;
+  created_at: string;
+  completed_at: string | null;
   donors?: {
     name: string | null;
     email: string;
@@ -23,11 +24,9 @@ type Donation = {
 type Subscription = {
   id: string;
   amount: number;
-  currency: string;
-  interval: string;
+  frequency: string;
   status: string;
-  gift_aid_claimed: boolean;
-  start_date: string;
+  started_at: string;
   donors?: {
     name: string | null;
     email: string;
@@ -65,9 +64,9 @@ export function DonationsView({ donations, subscriptions }: DonationsViewProps) 
                     donor_name: sub.donors?.name || null,
                     donor_email: sub.donors?.email || "",
                     amount: sub.amount * 100, // Convert to pence for component
-                    gift_aid: sub.gift_aid_claimed,
+                    gift_aid: false,
                     status: sub.status,
-                    current_period_start: sub.start_date,
+                    current_period_start: sub.started_at,
                   }}
                 />
               ))}
@@ -110,17 +109,10 @@ export function DonationsView({ donations, subscriptions }: DonationsViewProps) 
                           £{sub.amount.toFixed(2)}/mo
                         </td>
                         <td className="px-4 lg:px-6 py-4">
-                          {sub.gift_aid_claimed ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                              <Gift className="w-3 h-3" />
-                              +25%
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
+                          <span className="text-gray-400">-</span>
                         </td>
                         <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
-                          {new Date(sub.start_date).toLocaleDateString("en-GB", {
+                          {new Date(sub.started_at).toLocaleDateString("en-GB", {
                             day: "numeric",
                             month: "short",
                             year: "numeric",
@@ -163,10 +155,10 @@ export function DonationsView({ donations, subscriptions }: DonationsViewProps) 
                   donor_name: donation.donors?.name || null,
                   donor_email: donation.donors?.email || "",
                   amount: donation.amount * 100, // Convert to pence for component
-                  type: "one_time",
-                  gift_aid: donation.gift_aid_claimed,
+                  type: donation.donation_type === "recurring" ? "monthly" : "one_time",
+                  gift_aid: (donation.gift_aid_amount || 0) > 0,
                   status: donation.status,
-                  created_at: donation.donation_date,
+                  created_at: donation.created_at,
                 }}
               />
             ))}
@@ -201,7 +193,7 @@ export function DonationsView({ donations, subscriptions }: DonationsViewProps) 
                   {donations.map((donation) => (
                     <tr key={donation.id} className="hover:bg-gray-50">
                       <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
-                        {new Date(donation.donation_date).toLocaleDateString("en-GB", {
+                        {new Date(donation.created_at).toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
@@ -221,13 +213,13 @@ export function DonationsView({ donations, subscriptions }: DonationsViewProps) 
                         £{donation.amount.toFixed(2)}
                       </td>
                       <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
-                        {donation.payment_method === "card" ? "Card" : donation.payment_method}
+                        {donation.donation_type === "recurring" ? "Monthly" : "One-time"}
                       </td>
                       <td className="px-4 lg:px-6 py-4">
-                        {donation.gift_aid_claimed ? (
+                        {(donation.gift_aid_amount || 0) > 0 ? (
                           <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
                             <Gift className="w-3 h-3" />
-                            +£{(donation.amount * 0.25).toFixed(2)}
+                            +£{donation.gift_aid_amount.toFixed(2)}
                           </span>
                         ) : (
                           <span className="text-gray-400">-</span>

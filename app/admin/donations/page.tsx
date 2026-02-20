@@ -6,10 +6,11 @@ type Donation = {
   id: string;
   amount: number;
   currency: string;
-  payment_method: string;
-  gift_aid_claimed: boolean;
+  donation_type: string;
+  gift_aid_amount: number;
   status: string;
-  donation_date: string;
+  created_at: string;
+  completed_at: string | null;
   donors?: {
     name: string | null;
     email: string;
@@ -19,11 +20,9 @@ type Donation = {
 type Subscription = {
   id: string;
   amount: number;
-  currency: string;
-  interval: string;
+  frequency: string;
   status: string;
-  gift_aid_claimed: boolean;
-  start_date: string;
+  started_at: string;
   donors?: {
     name: string | null;
     email: string;
@@ -40,7 +39,7 @@ export default async function DonationsPage() {
       *,
       donors (name, email)
     `)
-    .order("donation_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(50);
 
   const donations = (donationsData as Donation[] | null) || [];
@@ -53,23 +52,21 @@ export default async function DonationsPage() {
       donors (name, email)
     `)
     .eq("status", "active")
-    .order("start_date", { ascending: false });
+    .order("started_at", { ascending: false });
 
   const subscriptions = (subscriptionsData as Subscription[] | null) || [];
 
   // Calculate stats
   const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
   const monthlyRecurring = subscriptions.reduce((sum, s) => sum + s.amount, 0);
-  const giftAidTotal = donations
-    .filter((d) => d.gift_aid_claimed)
-    .reduce((sum, d) => sum + d.amount * 0.25, 0);
+  const giftAidTotal = donations.reduce((sum, d) => sum + (d.gift_aid_amount || 0), 0);
   const donorCount = new Set(donations.map((d) => d.donors?.email).filter(Boolean)).size;
 
   // Get this month's donations
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const thisMonthDonations = donations.filter(
-    (d) => new Date(d.donation_date) >= startOfMonth
+    (d) => new Date(d.created_at) >= startOfMonth
   );
   const thisMonthTotal = thisMonthDonations.reduce((sum, d) => sum + d.amount, 0);
 
