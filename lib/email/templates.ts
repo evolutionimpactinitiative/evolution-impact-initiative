@@ -858,3 +858,146 @@ export function attendanceConfirmationEmail(
     html: emailWrapper(content, heroImage, BRAND.green),
   };
 }
+
+export function donationReceiptEmail(
+  donorName: string,
+  donorEmail: string,
+  amount: number,
+  currency: string,
+  giftAid: boolean,
+  isRecurring: boolean,
+  stripePaymentId?: string
+): { subject: string; html: string } {
+  const formattedAmount = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: currency || "GBP",
+  }).format(amount);
+
+  const giftAidAmount = giftAid
+    ? new Intl.NumberFormat("en-GB", {
+        style: "currency",
+        currency: currency || "GBP",
+      }).format(amount * 0.25)
+    : null;
+
+  const donationDate = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const content = `
+    <h1 style="margin: 0 0 20px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      Thank You<br><span style="color: ${BRAND.green};">For Your Donation!</span>
+    </h1>
+
+    <p style="margin: 0 0 20px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Dear <strong>${donorName || "Supporter"}</strong>,
+    </p>
+
+    <p style="margin: 0 0 25px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Thank you so much for your ${isRecurring ? "monthly " : ""}donation to Evolution Impact Initiative. Your generosity helps us continue our vital work supporting young people and families in Medway.
+    </p>
+
+    <!-- Donation Details Box -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Donation Receipt
+          </h3>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
+                <strong>Amount:</strong> ${formattedAmount}${isRecurring ? " /month" : ""}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
+                <strong>Date:</strong> ${donationDate}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
+                <strong>Type:</strong> ${isRecurring ? "Monthly Recurring" : "One-time"}
+              </td>
+            </tr>
+            ${giftAid ? `
+            <tr>
+              <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.green};">
+                <strong>Gift Aid:</strong> Yes (+${giftAidAmount} at no extra cost to you!)
+              </td>
+            </tr>
+            ` : ""}
+            ${stripePaymentId ? `
+            <tr>
+              <td style="font-family: 'Inter', sans-serif; font-size: 12px; color: #888888;">
+                Reference: ${stripePaymentId.slice(0, 20)}...
+              </td>
+            </tr>
+            ` : ""}
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${giftAid ? `
+    <!-- Gift Aid Note -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 2px solid ${BRAND.green}; border-radius: 12px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 20px; text-align: left;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.green}; font-weight: 700;">Gift Aid Declaration</h3>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 13px; color: #555555; line-height: 1.6;">
+            By selecting Gift Aid, you've confirmed you're a UK taxpayer. This means we can claim an extra 25p for every £1 you donate from HMRC, at no extra cost to you. Thank you!
+          </p>
+        </td>
+      </tr>
+    </table>
+    ` : ""}
+
+    <!-- Your Impact -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Your Impact
+          </h3>
+          <p style="margin: 0 0 15px; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
+            Your donation directly supports:
+          </p>
+          <ul style="margin: 0; padding-left: 20px; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.8;">
+            <li>Free creative workshops for children and young people</li>
+            <li>Youth sport and martial arts programmes</li>
+            <li>Community food drives and support initiatives</li>
+            <li>Family events and community gatherings</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <!-- View Events Button -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto 30px;">
+      <tr>
+        <td style="border-radius: 4px; background: ${BRAND.blue}; text-align: center;">
+          <a href="${BASE_URL}/events" target="_blank" class="button-primary" style="background: ${BRAND.blue}; font-family: 'Montserrat', sans-serif; font-size: 14px; text-decoration: none; padding: 14px 30px; color: #ffffff; display: block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+            See Our Events
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 13px; color: #888888; text-align: center;">
+      Please keep this email as your donation receipt for tax purposes.
+    </p>
+
+    <p style="margin: 30px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6; text-align: left;">
+      With heartfelt thanks,<br>
+      <strong>The Evolution Impact Initiative Team</strong>
+    </p>
+  `;
+
+  return {
+    subject: `Thank You for Your ${isRecurring ? "Monthly " : ""}Donation - Evolution Impact Initiative`,
+    html: emailWrapper(content, undefined, BRAND.green),
+  };
+}

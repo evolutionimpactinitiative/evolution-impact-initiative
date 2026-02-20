@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeClient, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/client";
 import { createClient } from "@/lib/supabase/server";
+import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
+import { donationReceiptEmail } from "@/lib/email/templates";
 import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -75,17 +77,49 @@ export async function POST(request: NextRequest) {
           }
 
           // Record donation
+          const donationAmount = (session.amount_total || 0) / 100;
+          const donationCurrency = session.currency?.toUpperCase() || "GBP";
+          const giftAidClaimed = metadata.gift_aid === "yes";
+
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (supabase as any).from("donations").insert({
             donor_id: donorId,
-            amount: (session.amount_total || 0) / 100,
-            currency: session.currency?.toUpperCase() || "GBP",
+            amount: donationAmount,
+            currency: donationCurrency,
             payment_method: "card",
             stripe_payment_id: session.payment_intent as string,
-            gift_aid_claimed: metadata.gift_aid === "yes",
+            gift_aid_claimed: giftAidClaimed,
             status: "completed",
             donation_date: new Date().toISOString(),
           });
+
+          // Send donation receipt email
+          if (session.customer_email) {
+            const resend = getResendClient();
+            if (resend) {
+              try {
+                const { subject, html } = donationReceiptEmail(
+                  metadata.donor_name || "",
+                  session.customer_email,
+                  donationAmount,
+                  donationCurrency,
+                  giftAidClaimed,
+                  false, // one-time donation
+                  session.payment_intent as string
+                );
+
+                await resend.emails.send({
+                  from: FROM_EMAIL,
+                  to: session.customer_email,
+                  replyTo: REPLY_TO_EMAIL,
+                  subject,
+                  html,
+                });
+              } catch (emailError) {
+                console.error("Failed to send donation receipt email:", emailError);
+              }
+            }
+          }
         }
         break;
       }
@@ -119,18 +153,50 @@ export async function POST(request: NextRequest) {
           }
 
           // Record donation
+          const recurringAmount = (invoiceAny.amount_paid || 0) / 100;
+          const recurringCurrency = (invoiceAny.currency || "gbp").toUpperCase();
+          const recurringGiftAid = metadata.gift_aid === "yes";
+
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (supabase as any).from("donations").insert({
             donor_id: donorId,
-            amount: (invoiceAny.amount_paid || 0) / 100,
-            currency: (invoiceAny.currency || "gbp").toUpperCase(),
+            amount: recurringAmount,
+            currency: recurringCurrency,
             payment_method: "card",
             stripe_payment_id: invoiceAny.payment_intent as string,
             stripe_subscription_id: subscriptionId as string,
-            gift_aid_claimed: metadata.gift_aid === "yes",
+            gift_aid_claimed: recurringGiftAid,
             status: "completed",
             donation_date: new Date().toISOString(),
           });
+
+          // Send donation receipt email for recurring payment
+          if (customerEmail) {
+            const resend = getResendClient();
+            if (resend) {
+              try {
+                const { subject, html } = donationReceiptEmail(
+                  metadata.donor_name || "",
+                  customerEmail,
+                  recurringAmount,
+                  recurringCurrency,
+                  recurringGiftAid,
+                  true, // recurring donation
+                  invoiceAny.payment_intent as string
+                );
+
+                await resend.emails.send({
+                  from: FROM_EMAIL,
+                  to: customerEmail,
+                  replyTo: REPLY_TO_EMAIL,
+                  subject,
+                  html,
+                });
+              } catch (emailError) {
+                console.error("Failed to send recurring donation receipt email:", emailError);
+              }
+            }
+          }
         }
         break;
       }
