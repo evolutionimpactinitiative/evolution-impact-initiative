@@ -13,7 +13,8 @@ const BRAND = {
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
-const LOGO_URL = `${BASE_URL}/logos/evolution_full_logo_2.svg`;
+// Always use production URL for logo (so it works in email clients)
+const LOGO_URL = "https://evolutionimpactinitiative.co.uk/logos/evolution_full_logo_2.png";
 
 export async function POST(request: NextRequest) {
   try {
@@ -238,91 +239,126 @@ function generateAnnouncementEmail(event: Event, message: string): string {
 
   return `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Event: ${event.title}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: ${BRAND.pale};">
-  <table role="presentation" style="width: 100%; border-collapse: collapse;">
-    <tr>
-      <td style="padding: 40px 20px;">
-        <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <tr>
-            <td style="background-color: ${BRAND.dark}; padding: 30px; text-align: center;">
-              <img src="${LOGO_URL}" alt="Evolution Impact Initiative" style="height: 50px; width: auto;" />
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 40px 30px;">
-              <h1 style="margin: 0 0 20px 0; color: ${BRAND.blue}; font-size: 24px; font-weight: bold;">
-                New Event: ${event.title}
-              </h1>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f6f8;">
+  <center style="width: 100%; background-color: #f4f6f8;">
+    <div style="max-width: 600px; margin: 0 auto;">
 
-              <p style="margin: 0 0 20px 0; color: ${BRAND.dark}; font-size: 16px; line-height: 1.6;">
-                Hi {{name}},
-              </p>
+      <!-- Logo Section -->
+      <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td style="padding: 30px 20px; text-align: center;">
+            <a href="${BASE_URL}" style="text-decoration: none;">
+              <img src="${LOGO_URL}" alt="Evolution Impact Initiative" width="220" style="display: block; margin: 0 auto; max-width: 220px; height: auto;" />
+            </a>
+          </td>
+        </tr>
+      </table>
 
-              <div style="margin: 0 0 25px 0; color: ${BRAND.dark}; font-size: 16px; line-height: 1.7; white-space: pre-wrap;">${message}</div>
+      <!-- Main Content Card -->
+      <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px;">
+        <tr>
+          <td style="padding: 0 20px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+              <tr>
+                <td style="padding: 40px 30px;">
 
-              <div style="background-color: ${BRAND.pale}; border-radius: 8px; padding: 20px; margin: 25px 0;">
-                <p style="margin: 0 0 15px 0; color: ${BRAND.blue}; font-size: 14px; font-weight: bold;">
-                  Event Details
-                </p>
-                <table style="width: 100%; font-size: 14px; color: ${BRAND.dark};">
-                  <tr>
-                    <td style="padding: 5px 0; width: 80px; vertical-align: top;"><strong>Date:</strong></td>
-                    <td style="padding: 5px 0;">${eventDate}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 5px 0; vertical-align: top;"><strong>Time:</strong></td>
-                    <td style="padding: 5px 0;">${event.start_time}${event.end_time ? ` - ${event.end_time}` : ""}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 5px 0; vertical-align: top;"><strong>Venue:</strong></td>
-                    <td style="padding: 5px 0;">${event.venue_name}${event.venue_address ? `<br>${event.venue_address}` : ""}</td>
-                  </tr>
-                  ${event.cost ? `
-                  <tr>
-                    <td style="padding: 5px 0; vertical-align: top;"><strong>Cost:</strong></td>
-                    <td style="padding: 5px 0;">${event.cost}</td>
-                  </tr>
-                  ` : ""}
-                </table>
-              </div>
+                  <!-- Heading -->
+                  <h1 style="margin: 0 0 20px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px;">
+                    New Event:<br><span style="color: ${BRAND.green};">${event.title}</span>
+                  </h1>
 
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${registerUrl}" style="display: inline-block; background-color: ${BRAND.green}; color: #ffffff; font-size: 16px; font-weight: bold; text-decoration: none; padding: 15px 40px; border-radius: 8px;">
-                  Register Now
-                </a>
-              </div>
+                  <!-- Greeting -->
+                  <p style="margin: 0 0 20px; font-size: 16px; line-height: 26px; color: #555555;">
+                    Hi <strong>{{name}}</strong>,
+                  </p>
 
-              <p style="margin: 30px 0 0 0; color: ${BRAND.dark}; font-size: 14px;">
-                Best wishes,<br>
-                <strong>The Evolution Impact Initiative Team</strong>
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="background-color: ${BRAND.dark}; padding: 30px; text-align: center;">
-              <p style="margin: 0 0 10px 0; color: #ffffff; font-size: 14px; font-weight: bold;">
-                Evolution Impact Initiative CIC
-              </p>
-              <p style="margin: 0 0 15px 0; font-size: 12px;">
-                <a href="${BASE_URL}" style="color: ${BRAND.accent}; text-decoration: none;">Visit our website</a>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                <a href="${BASE_URL}/contact" style="color: ${BRAND.accent}; text-decoration: none;">Contact us</a>
-              </p>
-              <p style="margin: 0; color: #888888; font-size: 11px;">
-                You're receiving this because you previously attended one of our events.<br>
-                <a href="${BASE_URL}/contact" style="color: #888888;">Unsubscribe from future announcements</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+                  <!-- Custom Message -->
+                  <div style="margin: 0 0 25px; font-size: 16px; line-height: 1.7; color: #555555; white-space: pre-wrap;">${message}</div>
+
+                  <!-- Event Details Box -->
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8fafc; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e5e7eb;">
+                    <tr>
+                      <td style="padding: 25px;">
+                        <h3 style="margin: 0 0 15px; font-size: 14px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                          Event Details
+                        </h3>
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                          <tr>
+                            <td style="padding-bottom: 12px; font-size: 14px; color: ${BRAND.dark};">
+                              <strong>Date:</strong> ${eventDate}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding-bottom: 12px; font-size: 14px; color: ${BRAND.dark};">
+                              <strong>Time:</strong> ${event.start_time}${event.end_time ? ` - ${event.end_time}` : ""}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding-bottom: ${event.cost ? "12px" : "0"}; font-size: 14px; color: ${BRAND.dark};">
+                              <strong>Venue:</strong> ${event.venue_name}${event.venue_address ? `<br><span style="color: #666;">${event.venue_address}</span>` : ""}
+                            </td>
+                          </tr>
+                          ${event.cost ? `
+                          <tr>
+                            <td style="font-size: 14px; color: ${BRAND.dark};">
+                              <strong>Cost:</strong> ${event.cost}
+                            </td>
+                          </tr>
+                          ` : ""}
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Register Button -->
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 30px auto;">
+                    <tr>
+                      <td style="border-radius: 8px; background: ${BRAND.green}; text-align: center;">
+                        <a href="${registerUrl}" target="_blank" style="background: ${BRAND.green}; font-size: 16px; text-decoration: none; padding: 16px 40px; color: #ffffff; display: block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 8px;">
+                          Register Now
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Sign off -->
+                  <p style="margin: 30px 0 0; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6;">
+                    Best wishes,<br>
+                    <strong>The Evolution Impact Initiative Team</strong>
+                  </p>
+
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Footer -->
+      <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td style="padding: 30px 20px; text-align: center;">
+            <p style="margin: 0 0 10px; font-size: 13px; color: #666666;">
+              <a href="${BASE_URL}" style="color: ${BRAND.blue}; text-decoration: none;">Visit our website</a>
+              &nbsp;&nbsp;|&nbsp;&nbsp;
+              <a href="${BASE_URL}/contact" style="color: ${BRAND.blue}; text-decoration: none;">Contact us</a>
+            </p>
+            <p style="margin: 0; font-size: 12px; color: #999999;">
+              You're receiving this because you previously attended one of our events.<br>
+              Evolution Impact Initiative CIC
+            </p>
+          </td>
+        </tr>
+      </table>
+
+    </div>
+  </center>
 </body>
 </html>
   `;
