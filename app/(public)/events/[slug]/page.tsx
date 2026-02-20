@@ -105,6 +105,32 @@ function formatDescription(text: string): string {
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n');
 
+  // Check if we have any newlines at all
+  const hasNewlines = /\n/.test(normalized);
+
+  // If no newlines, try to intelligently add paragraph breaks
+  if (!hasNewlines) {
+    // Add breaks before common section headers (What to Expect:, What to Bring:, etc.)
+    normalized = normalized.replace(/\s+(What to \w+:)/gi, '\n\n$1');
+    normalized = normalized.replace(/\s+(How to \w+:)/gi, '\n\n$1');
+    normalized = normalized.replace(/\s+(Please note:)/gi, '\n\n$1');
+    normalized = normalized.replace(/\s+(Important:)/gi, '\n\n$1');
+
+    // Add breaks before bullet points
+    normalized = normalized.replace(/\s+([•\-\*]\s)/g, '\n$1');
+
+    // Add paragraph breaks after sentences that end a thought (period + space + capital starting common sentence starters)
+    normalized = normalized.replace(/\.\s+(This\s)/g, '.\n\n$1');
+    normalized = normalized.replace(/\.\s+(It\s)/g, '.\n\n$1');
+    normalized = normalized.replace(/\.\s+(We\s)/g, '.\n\n$1');
+    normalized = normalized.replace(/\.\s+(You\s)/g, '.\n\n$1');
+    normalized = normalized.replace(/\.\s+(Spaces\s)/g, '.\n\n$1');
+    normalized = normalized.replace(/\.\s+(Secure\s)/g, '.\n\n$1');
+    normalized = normalized.replace(/\.\s+(Join\s)/g, '.\n\n$1');
+    normalized = normalized.replace(/\.\s+(Don't\s)/g, '.\n\n$1');
+    normalized = normalized.replace(/\.\s+(Whether\s)/g, '.\n\n$1');
+  }
+
   // Check if we have any paragraph breaks (double newlines)
   const hasDoubleNewlines = /\n\n/.test(normalized);
 
