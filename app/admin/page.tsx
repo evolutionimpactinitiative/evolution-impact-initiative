@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Plus, ArrowRight, Clock, Calendar, Users } from "lucide-react";
+import { Plus, ArrowRight, Clock, Calendar, Users, Mail, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/admin/StatCard";
 import {
@@ -49,6 +49,18 @@ export default async function AdminDashboard() {
     0
   ) || 0;
 
+  // Get active subscribers count
+  const { count: activeSubscribersCount } = await supabase
+    .from("mailing_list" as "profiles")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "active");
+
+  // Get survey responses this month
+  const { count: surveyResponsesThisMonth } = await supabase
+    .from("survey_responses" as "profiles")
+    .select("*", { count: "exact", head: true })
+    .gte("submitted_at", startOfMonth.toISOString());
+
   // Get recent registrations
   const { data: recentRegistrationsData } = await supabase
     .from("registrations")
@@ -85,8 +97,8 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      {/* Stats - 2x2 grid on mobile, 4 cols on desktop */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+      {/* Stats - 2x2 grid on mobile, 3 cols on tablet, 6 cols on desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
         <StatCard
           title="Upcoming Events"
           value={upcomingEventsCount || 0}
@@ -94,7 +106,7 @@ export default async function AdminDashboard() {
           iconColor="text-brand-blue"
           iconBgColor="bg-brand-blue/10"
           href="/admin/events"
-          linkText="View all"
+          linkText="View"
         />
         <StatCard
           title="Registrations"
@@ -104,7 +116,7 @@ export default async function AdminDashboard() {
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
           href="/admin/registrations"
-          linkText="View all"
+          linkText="View"
         />
         <StatCard
           title="Donations"
@@ -114,7 +126,27 @@ export default async function AdminDashboard() {
           iconColor="text-red-500"
           iconBgColor="bg-red-100"
           href="/admin/donations"
-          linkText="View all"
+          linkText="View"
+        />
+        <StatCard
+          title="Subscribers"
+          value={activeSubscribersCount || 0}
+          subtitle="Active"
+          icon="Mail"
+          iconColor="text-indigo-500"
+          iconBgColor="bg-indigo-100"
+          href="/admin/subscribers"
+          linkText="View"
+        />
+        <StatCard
+          title="Surveys"
+          value={surveyResponsesThisMonth || 0}
+          subtitle="Responses"
+          icon="ClipboardList"
+          iconColor="text-orange-500"
+          iconBgColor="bg-orange-100"
+          href="/admin/surveys"
+          linkText="View"
         />
         <StatCard
           title="Recurring"
@@ -127,7 +159,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Quick actions - Full width buttons on mobile */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3">
         <Button asChild className="w-full sm:w-auto">
           <Link href="/admin/events/new">
             <Plus className="w-4 h-4 mr-2" />
@@ -135,10 +167,19 @@ export default async function AdminDashboard() {
           </Link>
         </Button>
         <Button variant="outline" asChild className="w-full sm:w-auto">
-          <Link href="/admin/registrations">View Registrations</Link>
+          <Link href="/admin/surveys/new">
+            <Plus className="w-4 h-4 mr-2" />
+            Create Survey
+          </Link>
         </Button>
         <Button variant="outline" asChild className="w-full sm:w-auto">
-          <Link href="/admin/donations">View Donations</Link>
+          <Link href="/admin/subscribers/bulk-email">
+            <Send className="w-4 h-4 mr-2" />
+            Send Bulk Email
+          </Link>
+        </Button>
+        <Button variant="outline" asChild className="w-full sm:w-auto">
+          <Link href="/admin/registrations">View Registrations</Link>
         </Button>
       </div>
 

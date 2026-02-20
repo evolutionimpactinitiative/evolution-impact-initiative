@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Download, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Mail, Download, Search, Trash2, Send, MoreVertical, Users } from "lucide-react";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { ViewToggle } from "@/components/admin/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ComposeEmailModal } from "./ComposeEmailModal";
 
 type Subscriber = {
   id: string;
@@ -23,10 +25,47 @@ interface SubscribersViewProps {
 }
 
 export function SubscribersView({ subscribers }: SubscribersViewProps) {
+  const router = useRouter();
   const isMobile = useIsMobile();
   const [view, setView] = useState<"cards" | "table">(isMobile ? "cards" : "table");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "unsubscribed">("all");
+  const [selectedSubscriber, setSelectedSubscriber] = useState<Subscriber | null>(null);
+  const [showComposeModal, setShowComposeModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+
+  // Handle delete subscriber
+  const handleDelete = async (subscriberId: string) => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch("/api/subscribers/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscriberId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete subscriber");
+      }
+
+      router.refresh();
+      setShowDeleteConfirm(null);
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Failed to delete subscriber");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle compose email
+  const handleComposeEmail = (subscriber: Subscriber) => {
+    setSelectedSubscriber(subscriber);
+    setShowComposeModal(true);
+    setActionMenuOpen(null);
+  };
 
   // Filter subscribers
   const filteredSubscribers = subscribers.filter((sub) => {
@@ -104,6 +143,14 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/admin/subscribers/bulk-email")}
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Bulk Email
+          </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
@@ -156,12 +203,43 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
                     </span>
                   </div>
                 </div>
-                <div className="text-right text-xs text-gray-400">
-                  {new Date(subscriber.subscribed_at).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
+                <div className="flex items-center gap-2">
+                  <div className="text-right text-xs text-gray-400 mr-2">
+                    {new Date(subscriber.subscribed_at).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </div>
+                  <div className="relative">
+                    <button
+                      onClick={() => setActionMenuOpen(actionMenuOpen === subscriber.id ? null : subscriber.id)}
+                      className="p-1 hover:bg-gray-100 rounded"
+                    >
+                      <MoreVertical className="h-4 w-4 text-gray-400" />
+                    </button>
+                    {actionMenuOpen === subscriber.id && (
+                      <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                        <button
+                          onClick={() => handleComposeEmail(subscriber)}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Send className="h-4 w-4" />
+                          Send Email
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowDeleteConfirm(subscriber.id);
+                            setActionMenuOpen(null);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -187,6 +265,9 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
                   </th>
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
+                  </th>
+                  <th className="px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -224,12 +305,69 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
                         {subscriber.status === "active" ? "Active" : "Unsubscribed"}
                       </span>
                     </td>
+                    <td className="px-4 lg:px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleComposeEmail(subscriber)}
+                          className="p-1.5 text-gray-400 hover:text-brand-blue hover:bg-blue-50 rounded transition-colors"
+                          title="Send Email"
+                        >
+                          <Send className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteConfirm(subscriber.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="Remove Subscriber"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Remove Subscriber</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to remove this subscriber? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleDelete(showDeleteConfirm)}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isDeleting ? "Removing..." : "Remove"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compose Email Modal */}
+      {showComposeModal && selectedSubscriber && (
+        <ComposeEmailModal
+          recipient={selectedSubscriber}
+          onClose={() => {
+            setShowComposeModal(false);
+            setSelectedSubscriber(null);
+          }}
+        />
       )}
     </div>
   );
