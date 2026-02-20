@@ -55,15 +55,15 @@ export const testimonials = [
 ];
 
 export const stats = [
-  { value: "300+", label: "Community Members" },
-  { value: "150+", label: "Young People Supported" },
-  { value: "50+", label: "Families Reached" },
+  { value: "500+", label: "Community Members" },
+  { value: "200+", label: "Young People Supported" },
+  { value: "200+", label: "Families Reached" },
 ];
 
 export const impactStats = [
-  { value: "300+", label: "Community members engaged" },
-  { value: "150+", label: "Young people supported" },
-  { value: "50+", label: "Families supported" },
+  { value: "500+", label: "Community members engaged" },
+  { value: "200+", label: "Young people supported" },
+  { value: "200+", label: "Families supported" },
   { value: "10+", label: "Community events delivered" },
 ];
 
