@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { Event, Registration, RegistrationChild } from "@/lib/supabase/types";
+import type { Event, Registration, RegistrationChild, RegistrationAttendee } from "@/lib/supabase/types";
 import { CheckCircle, Clock, Calendar, MapPin, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
@@ -10,8 +10,9 @@ type Props = {
   searchParams: Promise<{ status?: string; id?: string }>;
 };
 
-type RegistrationWithChildren = Registration & {
+type RegistrationWithDetails = Registration & {
   registration_children: RegistrationChild[];
+  registration_attendees: RegistrationAttendee[];
 };
 
 export default async function ConfirmationPage({ params, searchParams }: Props) {
@@ -37,17 +38,18 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
     notFound();
   }
 
-  // Get registration with children
+  // Get registration with children and attendees
   const { data: registrationData } = await supabase
     .from("registrations")
     .select(`
       *,
-      registration_children (*)
+      registration_children (*),
+      registration_attendees (*)
     `)
     .eq("id", id)
     .single();
 
-  const registration = registrationData as RegistrationWithChildren | null;
+  const registration = registrationData as RegistrationWithDetails | null;
 
   if (!registration) {
     notFound();
@@ -137,28 +139,52 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Parent/Guardian</p>
+                <p className="text-sm text-gray-500">
+                  {event.event_type === "children" ? "Parent/Guardian" : "Contact Details"}
+                </p>
                 <p className="font-medium text-gray-900">{registration.parent_name}</p>
                 <p className="text-gray-600">{registration.parent_email}</p>
               </div>
 
-              <div>
-                <p className="text-sm text-gray-500 mb-2">Children Registered</p>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-brand-blue" />
-                  {registration.registration_children.map((child, i) => (
-                    <span key={child.id} className="text-gray-700">
-                      {child.child_name} ({child.child_age}y)
-                      {i < registration.registration_children.length - 1 && ", "}
-                    </span>
-                  ))}
+              {/* Show children for children events */}
+              {event.event_type === "children" && registration.registration_children.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-2">Children Registered</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Users className="w-4 h-4 text-brand-blue" />
+                    {registration.registration_children.map((child, i) => (
+                      <span key={child.id} className="text-gray-700">
+                        {child.child_name} ({child.child_age}y)
+                        {i < registration.registration_children.length - 1 && ", "}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Show attendees for adult/mixed events */}
+              {event.event_type !== "children" && registration.registration_attendees.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-2">Attendees Registered</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Users className="w-4 h-4 text-brand-blue" />
+                    {registration.registration_attendees.map((attendee, i) => (
+                      <span key={attendee.id} className="text-gray-700">
+                        {attendee.attendee_name}
+                        {i < registration.registration_attendees.length - 1 && ", "}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {event.what_to_bring && (
                 <div>
                   <p className="text-sm text-gray-500 mb-2">What to Bring</p>
-                  <p className="text-gray-700">{event.what_to_bring}</p>
+                  <div
+                    className="text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: event.what_to_bring }}
+                  />
                 </div>
               )}
             </div>
