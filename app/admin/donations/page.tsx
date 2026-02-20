@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { StatCard } from "@/components/admin/StatCard";
 import { DonationsView } from "@/components/admin/DonationsView";
 
@@ -31,7 +31,7 @@ type Subscription = {
 };
 
 export default async function DonationsPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get all donations
   const { data: donationsData } = await supabase
