@@ -54,6 +54,24 @@ function getEmailTypeBadge(type: string) {
           Update
         </span>
       );
+    case "individual":
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full">
+          Individual
+        </span>
+      );
+    case "bulk":
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded-full">
+          Bulk
+        </span>
+      );
+    case "welcome":
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-teal-100 text-teal-700 rounded-full">
+          Welcome
+        </span>
+      );
     default:
       return (
         <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">

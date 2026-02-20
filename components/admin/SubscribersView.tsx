@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Download, Search, Trash2, Send, MoreVertical, Users } from "lucide-react";
+import { Mail, Download, Search, Trash2, Send, MoreVertical, Users, UserPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { ViewToggle } from "@/components/admin/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ComposeEmailModal } from "./ComposeEmailModal";
+import { AddSubscriberModal } from "./AddSubscriberModal";
 
 type Subscriber = {
   id: string;
@@ -15,6 +16,7 @@ type Subscriber = {
   name: string | null;
   status: string;
   source: string;
+  tags?: string[];
   subscribed_at: string;
   unsubscribed_at: string | null;
   created_at: string;
@@ -35,6 +37,7 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // Handle delete subscriber
   const handleDelete = async (subscriberId: string) => {
@@ -143,6 +146,10 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button size="sm" onClick={() => setShowAddModal(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -153,7 +160,7 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
           </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            Export
           </Button>
           <ViewToggle view={view} onViewChange={setView} />
         </div>
@@ -188,7 +195,7 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
                     {subscriber.name || "No name"}
                   </p>
                   <p className="text-sm text-gray-500 truncate">{subscriber.email}</p>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
                         subscriber.status === "active"
@@ -201,6 +208,18 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
                     <span className="text-xs text-gray-400">
                       {getSourceLabel(subscriber.source)}
                     </span>
+                    {subscriber.tags && subscriber.tags.length > 0 && (
+                      <>
+                        {subscriber.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-brand-blue/10 text-brand-blue"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -283,9 +302,28 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
                       </span>
                     </td>
                     <td className="px-4 lg:px-6 py-4">
-                      <span className="text-sm text-gray-500">
-                        {getSourceLabel(subscriber.source)}
-                      </span>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <span className="text-sm text-gray-500">
+                          {getSourceLabel(subscriber.source)}
+                        </span>
+                        {subscriber.tags && subscriber.tags.length > 0 && (
+                          <>
+                            {subscriber.tags.slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded bg-brand-blue/10 text-brand-blue"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {subscriber.tags.length > 2 && (
+                              <span className="text-xs text-gray-400">
+                                +{subscriber.tags.length - 2}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
                       {new Date(subscriber.subscribed_at).toLocaleDateString("en-GB", {
@@ -368,6 +406,11 @@ export function SubscribersView({ subscribers }: SubscribersViewProps) {
             setSelectedSubscriber(null);
           }}
         />
+      )}
+
+      {/* Add Subscriber Modal */}
+      {showAddModal && (
+        <AddSubscriberModal onClose={() => setShowAddModal(false)} />
       )}
     </div>
   );

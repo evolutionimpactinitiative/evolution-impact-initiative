@@ -66,6 +66,19 @@ export async function POST(request: NextRequest) {
               html,
             });
 
+            // Log the email
+            try {
+              await supabase.from("email_logs" as "profiles").insert({
+                recipient_email: subscriber.email,
+                recipient_name: subscriber.name || null,
+                subject,
+                email_type: "bulk",
+                status: "sent",
+              } as never);
+            } catch (logError) {
+              console.error("Failed to log email:", logError);
+            }
+
             results.sent++;
           } catch (err) {
             results.failed++;
