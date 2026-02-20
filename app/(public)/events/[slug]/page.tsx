@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import { ArrowLeft, Calendar, Clock, MapPin, Users, Tag, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
 
 type Props = {
@@ -21,6 +22,8 @@ interface EventWithAvailability extends Event {
 
 async function getEvent(slug: string): Promise<EventWithAvailability | null> {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
+
   const { data } = await supabase
     .from("events")
     .select("*")
@@ -32,8 +35,8 @@ async function getEvent(slug: string): Promise<EventWithAvailability | null> {
 
   const event = data as Event;
 
-  // Fetch registration counts
-  const { data: regsData } = await supabase
+  // Fetch registration counts using admin client to bypass RLS
+  const { data: regsData } = await adminClient
     .from("registrations")
     .select("status")
     .eq("event_id", event.id);

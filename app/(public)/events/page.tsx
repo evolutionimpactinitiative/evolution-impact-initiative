@@ -3,6 +3,7 @@ import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { EventCard } from "@/components/shared/EventCard";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
 
 export const metadata: Metadata = {
@@ -44,10 +45,11 @@ export default async function EventsPage() {
 
   const pastEvents = (pastData as Event[] | null) || [];
 
-  // Fetch registration counts for upcoming events
+  // Fetch registration counts for upcoming events using admin client to bypass RLS
+  const adminClient = createAdminClient();
   const eventIds = upcomingEventsRaw.map((e) => e.id);
   const { data: registrationsData } = eventIds.length > 0
-    ? await supabase
+    ? await adminClient
         .from("registrations")
         .select("event_id, status")
         .in("event_id", eventIds)

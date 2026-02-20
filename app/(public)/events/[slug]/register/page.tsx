@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { RegistrationForm } from "@/components/registration/RegistrationForm";
 import type { Event } from "@/lib/supabase/types";
 import { ArrowLeft, Calendar, MapPin, Clock, AlertCircle, CheckCircle } from "lucide-react";
@@ -36,8 +37,9 @@ export default async function RegisterPage({ params }: Props) {
     redirect(`/events/${slug}`);
   }
 
-  // Get current registration counts
-  const { data: registrationsData } = await supabase
+  // Get current registration counts using admin client to bypass RLS
+  const adminClient = createAdminClient();
+  const { data: registrationsData } = await adminClient
     .from("registrations")
     .select("status")
     .eq("event_id", event.id);
