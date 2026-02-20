@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Registration, Event } from "@/lib/supabase/types";
 
 export async function POST(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid attendance value" }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get the registration
     const { data: regData, error: regError } = await supabase
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Registration ID required" }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data: regData, error } = await supabase
       .from("registrations")

@@ -108,8 +108,8 @@ function CancelRegistrationContent() {
           </p>
           <p className="text-sm text-gray-500 mb-6">
             If you believe this is an error, please contact us at{" "}
-            <a href="mailto:evolutionimpactinitiative@gmail.com" className="text-brand-blue hover:underline">
-              evolutionimpactinitiative@gmail.com
+            <a href="mailto:info@evolutionimpactinitiative.co.uk" className="text-brand-blue hover:underline">
+              info@evolutionimpactinitiative.co.uk
             </a>
           </p>
           <div className="flex flex-col gap-3">
