@@ -94,9 +94,13 @@ function formatTime(time: string | null | undefined): string {
 function formatDescription(text: string): string {
   if (!text) return "";
 
-  // If it already has proper HTML paragraph tags with content, return as-is
+  // If it already has proper HTML paragraph tags with content
   if (/<p[^>]*>[\s\S]*<\/p>/i.test(text)) {
-    return text;
+    // Clean up empty paragraphs and ensure proper spacing
+    return text
+      .replace(/<p>\s*<\/p>/gi, '') // Remove empty paragraphs
+      .replace(/<p><\/p>/gi, '')    // Remove empty paragraphs (no space)
+      .replace(/(<\/p>)(<p)/gi, '$1\n$2'); // Add newlines between paragraphs for readability
   }
 
   // Convert <br> and <br/> tags to newlines first
