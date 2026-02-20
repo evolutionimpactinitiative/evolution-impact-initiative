@@ -83,6 +83,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // Dynamic page - always fetch fresh data
 export const dynamic = "force-dynamic";
 
+// Helper to format plain text with newlines into HTML paragraphs
+function formatDescription(text: string): string {
+  if (!text) return "";
+
+  // If it already has HTML paragraph or div tags, return as-is
+  if (/<(p|div|br|ul|ol|h[1-6])[>\s]/i.test(text)) {
+    return text;
+  }
+
+  // Convert plain text with newlines to paragraphs
+  return text
+    .split(/\n\n+/)
+    .filter(para => para.trim())
+    .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+
 export default async function EventPage({ params }: Props) {
   const { slug } = await params;
   const event = await getEvent(slug);
@@ -284,7 +301,7 @@ export default async function EventPage({ params }: Props) {
             <div
               className="prose prose-lg max-w-none prose-headings:font-heading prose-headings:text-brand-dark prose-p:text-brand-dark/80"
               dangerouslySetInnerHTML={{
-                __html: event.full_description || `<p>${event.short_description}</p>`
+                __html: formatDescription(event.full_description || event.short_description)
               }}
             />
           </div>
@@ -303,7 +320,7 @@ export default async function EventPage({ params }: Props) {
                   </h3>
                   <div
                     className="prose prose-sm max-w-none prose-p:text-brand-dark/70"
-                    dangerouslySetInnerHTML={{ __html: event.what_to_bring }}
+                    dangerouslySetInnerHTML={{ __html: formatDescription(event.what_to_bring) }}
                   />
                 </div>
               )}
