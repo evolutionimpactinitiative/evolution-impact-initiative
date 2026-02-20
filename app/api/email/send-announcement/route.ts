@@ -237,6 +237,12 @@ function generateAnnouncementEmail(event: Event, message: string): string {
 
   const registerUrl = `${BASE_URL}/events/${event.slug}/register`;
 
+  // Convert newlines to <br> tags and double newlines to paragraph breaks
+  const formattedMessage = message
+    .split(/\n\n+/)
+    .map(para => `<p style="margin: 0 0 16px; font-size: 16px; line-height: 1.7; color: #555555;">${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -279,7 +285,7 @@ function generateAnnouncementEmail(event: Event, message: string): string {
                   </p>
 
                   <!-- Custom Message -->
-                  <div style="margin: 0 0 25px; font-size: 16px; line-height: 1.7; color: #555555; white-space: pre-wrap;">${message}</div>
+                  <div style="margin: 0 0 25px;">${formattedMessage}</div>
 
                   <!-- Event Details Box -->
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8fafc; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e5e7eb;">
