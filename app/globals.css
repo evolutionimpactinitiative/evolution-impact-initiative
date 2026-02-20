@@ -29,6 +29,32 @@
 }
 
 @layer components {
+  /* Prose Typography - ensure paragraph spacing */
+  .prose p {
+    margin-bottom: 1.25em;
+  }
+
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+
+  .prose h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    font-weight: 700;
+  }
+
+  .prose ul {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+    list-style-type: disc;
+  }
+
+  .prose li {
+    margin-bottom: 0.5em;
+  }
+
   /* Texture Overlay */
   .texture-overlay {
     position: fixed;
