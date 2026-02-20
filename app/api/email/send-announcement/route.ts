@@ -284,6 +284,13 @@ function generateAnnouncementEmail(event: Event, message: string): string {
                     Hi <strong>{{name}}</strong>,
                   </p>
 
+                  <!-- Event Image/Poster -->
+                  ${event.hero_image_url || event.card_image_url ? `
+                  <div style="margin: 0 0 25px; border-radius: 12px; overflow: hidden;">
+                    <img src="${event.hero_image_url || event.card_image_url}" alt="${event.title}" style="display: block; width: 100%; height: auto; border-radius: 12px;" />
+                  </div>
+                  ` : ''}
+
                   <!-- Custom Message -->
                   <div style="margin: 0 0 25px;">${formattedMessage}</div>
 

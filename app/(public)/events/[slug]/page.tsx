@@ -92,9 +92,19 @@ function formatDescription(text: string): string {
     return text;
   }
 
-  // Convert plain text with newlines to paragraphs
-  // First, normalize line endings and handle bullet points
-  const normalized = text.replace(/\r\n/g, '\n');
+  // Convert <br> and <br/> tags to newlines first
+  let normalized = text
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+
+  // Check if we have any paragraph breaks (double newlines)
+  const hasDoubleNewlines = /\n\n/.test(normalized);
+
+  // If no double newlines but has single newlines, treat them as paragraph breaks
+  if (!hasDoubleNewlines && /\n/.test(normalized)) {
+    normalized = normalized.replace(/\n+/g, '\n\n');
+  }
 
   // Split by double newlines for paragraphs
   const paragraphs = normalized.split(/\n\n+/);
@@ -115,7 +125,7 @@ function formatDescription(text: string): string {
             if (/^[•\-\*]/.test(line.trim())) {
               return `<li>${cleanLine}</li>`;
             }
-            return `<p style="margin-bottom: 8px;"><strong>${line}</strong></p>`;
+            return `<p><strong>${line}</strong></p>`;
           });
 
         // Group consecutive list items
@@ -124,7 +134,7 @@ function formatDescription(text: string): string {
         listItems.forEach(item => {
           if (item.startsWith('<li>')) {
             if (!inList) {
-              result += '<ul style="margin: 12px 0; padding-left: 20px;">';
+              result += '<ul>';
               inList = true;
             }
             result += item;
@@ -140,8 +150,8 @@ function formatDescription(text: string): string {
         return result;
       }
 
-      // Regular paragraph
-      return `<p style="margin-bottom: 16px;">${para.replace(/\n/g, '<br>')}</p>`;
+      // Regular paragraph - let Tailwind prose handle spacing
+      return `<p>${para.replace(/\n/g, '<br>')}</p>`;
     })
     .join('');
 }

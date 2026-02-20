@@ -34,6 +34,10 @@ export const metadata: Metadata = {
     "community interest company",
   ],
   authors: [{ name: "Evolution Impact Initiative CIC" }],
+  icons: {
+    icon: "/favicon.jpg",
+    apple: "/favicon.jpg",
+  },
   openGraph: {
     title: "Evolution Impact Initiative CIC | Small Acts, Big Impact",
     description:
