@@ -83,6 +83,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // Dynamic page - always fetch fresh data
 export const dynamic = "force-dynamic";
 
+// Helper to format time (remove seconds if present)
+function formatTime(time: string | null | undefined): string {
+  if (!time) return "";
+  // Remove seconds from HH:MM:SS format
+  return time.replace(/^(\d{2}:\d{2}):\d{2}$/, "$1");
+}
+
 // Helper to format plain text with newlines into HTML paragraphs
 function formatDescription(text: string): string {
   if (!text) return "";
@@ -278,8 +285,8 @@ export default async function EventPage({ params }: Props) {
               <div className="flex items-center gap-3 text-brand-dark/70">
                 <Clock className="w-5 h-5 text-brand-blue" />
                 <span>
-                  {event.arrival_time && `Doors: ${event.arrival_time} · `}
-                  {event.start_time}{event.end_time ? ` - ${event.end_time}` : ""}
+                  {event.arrival_time && `Doors: ${formatTime(event.arrival_time)} · `}
+                  {formatTime(event.start_time)}{event.end_time ? ` - ${formatTime(event.end_time)}` : ""}
                 </span>
               </div>
               <div className="flex items-center gap-3 text-brand-dark/70">
