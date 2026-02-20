@@ -42,7 +42,7 @@ export const testimonials = [
   },
   {
     id: 2,
-    quote: "This programme gave my son something positive to look forward to every week. He's calmer, more focused, and actually excited about it.",
+    quote: "This programme gave my son something positive to look forward to every month. He's calmer, more focused, and actually excited about it.",
     author: "Parent, Medway",
     borderColor: "brand-green",
   },
@@ -57,13 +57,13 @@ export const testimonials = [
 export const stats = [
   { value: "500+", label: "Community Members" },
   { value: "200+", label: "Young People Supported" },
-  { value: "200+", label: "Families Reached" },
+  { value: "100+", label: "Families Reached" },
 ];
 
 export const impactStats = [
   { value: "500+", label: "Community members engaged" },
   { value: "200+", label: "Young people supported" },
-  { value: "200+", label: "Families supported" },
+  { value: "100+", label: "Families supported" },
   { value: "10+", label: "Community events delivered" },
 ];
 
