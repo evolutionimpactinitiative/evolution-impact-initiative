@@ -113,16 +113,29 @@ function ConfirmAttendanceContent() {
     return (
       <div className="container mx-auto px-4 max-w-md">
         <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <XCircle className="w-8 h-8 text-red-600" />
+          <div className="w-16 h-16 bg-amber-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-amber-600" />
           </div>
           <h1 className="font-heading font-bold text-xl text-gray-900 mb-2">
             Registration Not Found
           </h1>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <Button asChild>
-            <Link href="/events">Browse Events</Link>
-          </Button>
+          <p className="text-gray-600 mb-4">
+            This registration may have already been cancelled, or the link has expired.
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
+            If you believe this is an error, please contact us at{" "}
+            <a href="mailto:evolutionimpactinitiative@gmail.com" className="text-brand-blue hover:underline">
+              evolutionimpactinitiative@gmail.com
+            </a>
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button asChild>
+              <Link href="/events">Browse Events</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/contact">Contact Us</Link>
+            </Button>
+          </div>
         </div>
       </div>
     );
