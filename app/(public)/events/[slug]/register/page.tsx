@@ -6,6 +6,12 @@ import { RegistrationForm } from "@/components/registration/RegistrationForm";
 import type { Event } from "@/lib/supabase/types";
 import { ArrowLeft, Calendar, MapPin, Clock, AlertCircle, CheckCircle } from "lucide-react";
 
+// Helper to format time (remove seconds if present)
+function formatTime(time: string | null | undefined): string {
+  if (!time) return "";
+  return time.replace(/^(\d{2}:\d{2}):\d{2}$/, "$1");
+}
+
 type Props = {
   params: Promise<{ slug: string }>;
 };
@@ -94,8 +100,8 @@ export default async function RegisterPage({ params }: Props) {
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-brand-blue" />
-                {event.start_time}
-                {event.end_time && ` - ${event.end_time}`}
+                {formatTime(event.start_time)}
+                {event.end_time && ` - ${formatTime(event.end_time)}`}
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-brand-blue" />

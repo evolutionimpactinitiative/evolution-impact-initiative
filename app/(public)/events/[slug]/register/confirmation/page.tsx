@@ -5,6 +5,12 @@ import { CheckCircle, Clock, Calendar, MapPin, Users, ArrowRight } from "lucide-
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 
+// Helper to format time (remove seconds if present)
+function formatTime(time: string | null | undefined): string {
+  if (!time) return "";
+  return time.replace(/^(\d{2}:\d{2}):\d{2}$/, "$1");
+}
+
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ status?: string; id?: string }>;
@@ -115,8 +121,8 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
               <div className="flex items-center gap-3">
                 <Clock className="w-5 h-5 text-brand-blue" />
                 <span>
-                  {event.start_time}
-                  {event.end_time && ` - ${event.end_time}`}
+                  {formatTime(event.start_time)}
+                  {event.end_time && ` - ${formatTime(event.end_time)}`}
                 </span>
               </div>
               <div className="flex items-center gap-3">

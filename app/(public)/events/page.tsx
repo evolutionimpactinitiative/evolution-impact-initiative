@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
 
+// Helper to format time (remove seconds if present)
+function formatTime(time: string | null | undefined): string {
+  if (!time) return "";
+  return time.replace(/^(\d{2}:\d{2}):\d{2}$/, "$1");
+}
+
 export const metadata: Metadata = {
   title: "Events | Evolution Impact Initiative CIC",
   description:
@@ -120,7 +126,7 @@ export default async function EventsPage() {
                     month: "long",
                     year: "numeric",
                   })}
-                  time={event.start_time}
+                  time={formatTime(event.start_time)}
                   location={event.venue_name}
                   description={event.short_description}
                   image={event.card_image_url || "/placeholder-event.jpg"}
