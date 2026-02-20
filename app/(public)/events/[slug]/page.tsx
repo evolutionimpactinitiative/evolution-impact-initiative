@@ -87,16 +87,62 @@ export const dynamic = "force-dynamic";
 function formatDescription(text: string): string {
   if (!text) return "";
 
-  // If it already has HTML paragraph or div tags, return as-is
-  if (/<(p|div|br|ul|ol|h[1-6])[>\s]/i.test(text)) {
+  // If it already has proper HTML paragraph tags with content, return as-is
+  if (/<p[^>]*>[\s\S]*<\/p>/i.test(text)) {
     return text;
   }
 
   // Convert plain text with newlines to paragraphs
-  return text
-    .split(/\n\n+/)
+  // First, normalize line endings and handle bullet points
+  const normalized = text.replace(/\r\n/g, '\n');
+
+  // Split by double newlines for paragraphs
+  const paragraphs = normalized.split(/\n\n+/);
+
+  return paragraphs
     .filter(para => para.trim())
-    .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+    .map(para => {
+      // Check if this paragraph contains bullet points
+      const lines = para.split('\n');
+      const hasBullets = lines.some(line => /^[\s]*[•\-\*]/.test(line));
+
+      if (hasBullets) {
+        // Convert bullet lines to a list
+        const listItems = lines
+          .filter(line => line.trim())
+          .map(line => {
+            const cleanLine = line.replace(/^[\s]*[•\-\*]\s*/, '');
+            if (/^[•\-\*]/.test(line.trim())) {
+              return `<li>${cleanLine}</li>`;
+            }
+            return `<p style="margin-bottom: 8px;"><strong>${line}</strong></p>`;
+          });
+
+        // Group consecutive list items
+        let result = '';
+        let inList = false;
+        listItems.forEach(item => {
+          if (item.startsWith('<li>')) {
+            if (!inList) {
+              result += '<ul style="margin: 12px 0; padding-left: 20px;">';
+              inList = true;
+            }
+            result += item;
+          } else {
+            if (inList) {
+              result += '</ul>';
+              inList = false;
+            }
+            result += item;
+          }
+        });
+        if (inList) result += '</ul>';
+        return result;
+      }
+
+      // Regular paragraph
+      return `<p style="margin-bottom: 16px;">${para.replace(/\n/g, '<br>')}</p>`;
+    })
     .join('');
 }
 
