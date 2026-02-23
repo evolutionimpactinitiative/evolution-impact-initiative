@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { ViewToggle } from "@/components/admin/ViewToggle";
 import type { Registration, RegistrationChild } from "@/lib/supabase/types";
-import { Search, Check, X, Clock, Users, Mail, Phone, ChevronDown, ChevronUp, UserCheck, QrCode } from "lucide-react";
+import { Search, Check, X, Clock, Users, Mail, Phone, ChevronDown, ChevronUp, UserCheck, QrCode, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type RegistrationWithChildren = Registration & {
@@ -35,12 +35,14 @@ function RegistrationMobileCard({
   reg,
   onPromote,
   onCancel,
+  onDelete,
   onChildCheckIn,
   checkInMode,
 }: {
   reg: RegistrationWithChildren;
   onPromote?: () => void;
   onCancel?: () => void;
+  onDelete?: () => void;
   onChildCheckIn?: (childId: string, attended: boolean) => void;
   checkInMode?: boolean;
 }) {
@@ -206,25 +208,33 @@ function RegistrationMobileCard({
       )}
 
       {/* Actions */}
-      {(reg.status === "waitlisted" || reg.status === "confirmed") && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
-          {reg.status === "waitlisted" && onPromote && (
-            <Button size="sm" variant="outline" onClick={onPromote} className="flex-1">
-              Promote
-            </Button>
-          )}
-          {reg.status === "confirmed" && onCancel && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onCancel}
-              className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              Cancel
-            </Button>
-          )}
-        </div>
-      )}
+      <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+        {reg.status === "waitlisted" && onPromote && (
+          <Button size="sm" variant="outline" onClick={onPromote} className="flex-1">
+            Promote
+          </Button>
+        )}
+        {reg.status === "confirmed" && onCancel && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            Cancel
+          </Button>
+        )}
+        {onDelete && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onDelete}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -283,6 +293,29 @@ export function RegistrationsTable({ registrations, eventId, checkInMode: initia
 
     if (!error) {
       router.refresh();
+    }
+  };
+
+  const handleDelete = async (registrationId: string, parentName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete the registration for "${parentName}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/registrations/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationId }),
+      });
+
+      if (response.ok) {
+        router.refresh();
+      } else {
+        const data = await response.json();
+        alert(data.error || "Failed to delete registration");
+      }
+    } catch {
+      alert("Failed to delete registration");
     }
   };
 
@@ -436,6 +469,7 @@ export function RegistrationsTable({ registrations, eventId, checkInMode: initia
                     ? () => handleStatusChange(reg.id, "cancelled")
                     : undefined
                 }
+                onDelete={() => handleDelete(reg.id, reg.parent_name)}
               />
             ))
           ) : (
@@ -569,6 +603,15 @@ export function RegistrationsTable({ registrations, eventId, checkInMode: initia
                               Cancel
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDelete(reg.id, reg.parent_name)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Delete registration"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
