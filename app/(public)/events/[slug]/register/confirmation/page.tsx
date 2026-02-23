@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event, Registration, RegistrationChild, RegistrationAttendee } from "@/lib/supabase/types";
 import { CheckCircle, Clock, Calendar, MapPin, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
     notFound();
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get event
   const { data: eventData } = await supabase
