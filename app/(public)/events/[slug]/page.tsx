@@ -2,22 +2,26 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
-import { ArrowLeft, Calendar, Clock, MapPin, Users, Tag, Info } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MapPin, Users, Tag, Info, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
+import { NotifyMeForm } from "@/components/shared/NotifyMeForm";
+import { CountdownTimer } from "@/components/shared/CountdownTimer";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-type RegistrationStatus = "open" | "waitlist" | "full" | "closed";
+type RegistrationStatus = "open" | "waitlist" | "full" | "closed" | "scheduled";
 
 interface EventWithAvailability extends Event {
   spotsRemaining: number;
   waitlistRemaining: number;
   registrationStatus: RegistrationStatus;
+  isScheduled: boolean;
+  publishAt: Date | null;
 }
 
 async function getEvent(slug: string): Promise<EventWithAvailability | null> {
@@ -77,8 +81,15 @@ async function getEvent(slug: string): Promise<EventWithAvailability | null> {
   const spotsRemaining = Math.max(0, event.total_slots - confirmedSlotsUsed);
   const waitlistRemaining = Math.max(0, event.waitlist_slots - waitlistedSlotsUsed);
 
+  // Check if event is scheduled for future publishing
+  const now = new Date();
+  const publishAt = event.publish_at ? new Date(event.publish_at) : null;
+  const isScheduled = publishAt !== null && publishAt > now;
+
   let registrationStatus: RegistrationStatus;
-  if (event.registration_status === "closed") {
+  if (isScheduled) {
+    registrationStatus = "scheduled";
+  } else if (event.registration_status === "closed") {
     registrationStatus = "closed";
   } else if (spotsRemaining > 0) {
     registrationStatus = "open";
@@ -93,6 +104,8 @@ async function getEvent(slug: string): Promise<EventWithAvailability | null> {
     spotsRemaining,
     waitlistRemaining,
     registrationStatus,
+    isScheduled,
+    publishAt,
   };
 }
 
@@ -304,6 +317,12 @@ export default async function EventPage({ params }: Props) {
                     Past Event
                   </div>
                 )}
+                {isUpcoming && event.registrationStatus === "scheduled" && (
+                  <div className="absolute top-3 left-3 bg-brand-blue text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm flex items-center gap-1.5">
+                    <Bell className="w-3.5 h-3.5" />
+                    Coming Soon
+                  </div>
+                )}
                 {isUpcoming && event.registrationStatus === "open" && (
                   <div className="absolute top-3 left-3 bg-brand-green text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm">
                     {event.spotsRemaining <= 5
@@ -367,6 +386,18 @@ export default async function EventPage({ params }: Props) {
               </div>
               <div className="flex items-center gap-3 text-brand-dark/70">
                 <Info className="w-5 h-5 text-brand-blue" />
+                {event.registrationStatus === "scheduled" && event.publishAt && (
+                  <span className="text-brand-blue font-medium">
+                    Registration opens{" "}
+                    {event.publishAt.toLocaleDateString("en-GB", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
                 {event.registrationStatus === "open" && (
                   <span>
                     {event.spotsRemaining} of {event.total_slots} places available
@@ -390,7 +421,29 @@ export default async function EventPage({ params }: Props) {
               </div>
             </div>
 
-            {isUpcoming && (
+            {isUpcoming && event.registrationStatus === "scheduled" && event.publishAt && (
+              <div className="space-y-6">
+                {/* Countdown Timer */}
+                <div className="bg-gradient-to-r from-brand-blue/10 to-brand-green/10 rounded-xl p-6 border border-brand-blue/20">
+                  <p className="text-sm text-brand-dark/70 mb-2">Registration opens in:</p>
+                  <CountdownTimer targetDate={event.publishAt.toISOString()} />
+                </div>
+
+                {/* Notify Me Form */}
+                <div className="bg-white rounded-xl p-6 border-2 border-brand-blue/30 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Bell className="w-5 h-5 text-brand-blue" />
+                    <h3 className="font-heading font-bold text-lg text-brand-dark">Get Notified</h3>
+                  </div>
+                  <p className="text-sm text-brand-dark/70 mb-4">
+                    Enter your email and we&apos;ll notify you as soon as registration opens.
+                  </p>
+                  <NotifyMeForm eventId={event.id} eventTitle={event.title} />
+                </div>
+              </div>
+            )}
+
+            {isUpcoming && event.registrationStatus !== "scheduled" && (
               <div className="flex flex-col sm:flex-row gap-4">
                 {event.registrationStatus === "open" && (
                   <Button asChild size="lg">
@@ -475,6 +528,11 @@ export default async function EventPage({ params }: Props) {
               : "Stay connected with us to hear about upcoming events and opportunities to get involved."}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {isUpcoming && event.registrationStatus === "scheduled" && (
+              <Button asChild size="lg">
+                <a href="#notify-form">Get Notified When Registration Opens</a>
+              </Button>
+            )}
             {isUpcoming && event.registrationStatus === "open" && (
               <Button asChild size="lg">
                 <Link href={`/events/${event.slug}/register`}>Register Now</Link>

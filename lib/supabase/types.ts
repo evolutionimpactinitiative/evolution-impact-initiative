@@ -92,6 +92,7 @@ export interface Database {
           send_reminder_1h: boolean;
           custom_fields: CustomField[] | null;
           photo_album_url: string | null;
+          publish_at: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -126,6 +127,7 @@ export interface Database {
           send_reminder_1h?: boolean;
           custom_fields?: CustomField[] | null;
           photo_album_url?: string | null;
+          publish_at?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -160,6 +162,7 @@ export interface Database {
           send_reminder_1h?: boolean;
           custom_fields?: CustomField[] | null;
           photo_album_url?: string | null;
+          publish_at?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -616,6 +619,35 @@ export interface Database {
           status?: "completed" | "partial";
         };
       };
+      event_notifications: {
+        Row: {
+          id: string;
+          event_id: string;
+          email: string;
+          name: string | null;
+          subscribe_to_newsletter: boolean;
+          notified_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          email: string;
+          name?: string | null;
+          subscribe_to_newsletter?: boolean;
+          notified_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          email?: string;
+          name?: string | null;
+          subscribe_to_newsletter?: boolean;
+          notified_at?: string | null;
+          created_at?: string;
+        };
+      };
     };
     Functions: {
       get_event_registration_count: {
@@ -663,3 +695,7 @@ export type Survey = Database["public"]["Tables"]["surveys"]["Row"];
 export type SurveyInsert = Database["public"]["Tables"]["surveys"]["Insert"];
 export type SurveyResponse = Database["public"]["Tables"]["survey_responses"]["Row"];
 export type SurveyResponseInsert = Database["public"]["Tables"]["survey_responses"]["Insert"];
+
+// Event notification types (for scheduled publishing)
+export type EventNotification = Database["public"]["Tables"]["event_notifications"]["Row"];
+export type EventNotificationInsert = Database["public"]["Tables"]["event_notifications"]["Insert"];

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/send-registration-notifications",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

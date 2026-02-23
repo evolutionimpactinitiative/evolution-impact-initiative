@@ -1107,6 +1107,106 @@ export function welcomeSubscriberEmail(
   };
 }
 
+export function registrationOpenEmail(
+  recipientName: string | null,
+  recipientEmail: string,
+  event: Event
+): { subject: string; html: string } {
+  const displayName = recipientName || "there";
+  const eventDate = new Date(event.date).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const registerLink = `${BASE_URL}/events/${event.slug}/register`;
+  const heroImage = event.card_image_url || event.hero_image_url || undefined;
+
+  const content = `
+    <h1 style="margin: 0 0 20px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      Registration<br><span style="color: ${BRAND.green};">Is Now Open!</span>
+    </h1>
+
+    <p style="margin: 0 0 20px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Hi <strong>${displayName}</strong>,
+    </p>
+
+    <p style="margin: 0 0 25px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Great news! Registration is now open for <strong>${event.title}</strong>. You asked to be notified, so we wanted you to be among the first to know!
+    </p>
+
+    <!-- Event Details Box -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Event Details
+          </h3>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+              <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 15px; color: ${BRAND.dark};"><strong>${event.title}</strong></td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
+                📅 ${eventDate}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
+                ⏰ ${event.start_time}${event.end_time ? ` – ${event.end_time}` : ""}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
+                📍 ${event.venue_name}${event.venue_address ? `<br>${event.venue_address}` : ""}
+              </td>
+            </tr>
+            <tr>
+              <td style="font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
+                💷 ${event.cost || "FREE"}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Availability Notice -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #fff4e5; border: 1px solid #ffa500; border-radius: 8px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 20px; text-align: center;">
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #b45309; line-height: 1.6;">
+            <strong>⚡ Spaces are limited!</strong><br>
+            This event has ${event.total_slots} spots available. Register early to secure your place.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Register Now Button -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto 30px;">
+      <tr>
+        <td style="border-radius: 4px; background: ${BRAND.green}; text-align: center;">
+          <a href="${registerLink}" target="_blank" class="button-primary" style="background: ${BRAND.green}; font-family: 'Montserrat', sans-serif; font-size: 14px; text-decoration: none; padding: 14px 30px; color: #ffffff; display: block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+            Register Now
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 30px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6; text-align: left;">
+      We hope to see you there!<br>
+      <strong>The Evolution Impact Initiative Team</strong>
+    </p>
+  `;
+
+  return {
+    subject: `Registration Open: ${event.title}`,
+    html: emailWrapper(content, heroImage, BRAND.green),
+  };
+}
+
 export function eventPhotosEmail(
   recipientName: string,
   event: Event,

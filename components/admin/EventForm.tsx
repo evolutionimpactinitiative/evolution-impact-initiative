@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import type { Event, EventInsert, CustomField } from "@/lib/supabase/types";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, Clock, Calendar } from "lucide-react";
 import { RichTextEditor } from "./RichTextEditor";
 import { CustomFieldsBuilder } from "./CustomFieldsBuilder";
 
@@ -64,6 +64,7 @@ export function EventForm({ event }: EventFormProps) {
     hero_image_url: event?.hero_image_url || "",
     custom_fields: event?.custom_fields || [],
     photo_album_url: event?.photo_album_url || "",
+    publish_at: event?.publish_at ? event.publish_at.slice(0, 16) : "", // Format for datetime-local input
   });
 
   const [customFields, setCustomFields] = useState<CustomField[]>(event?.custom_fields || []);
@@ -93,6 +94,7 @@ export function EventForm({ event }: EventFormProps) {
         registration_status: formData.registration_status as "open" | "closed" | "auto",
         arrival_time: formData.arrival_time || null,
         custom_fields: customFields.length > 0 ? customFields : null,
+        publish_at: formData.publish_at ? new Date(formData.publish_at).toISOString() : null,
       };
 
       if (isEditing) {
@@ -519,6 +521,70 @@ export function EventForm({ event }: EventFormProps) {
               />
               <span className="text-sm">Auto-close on event day</span>
             </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Scheduled Publishing */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Clock className="w-5 h-5 text-brand-blue" />
+          <h2 className="font-heading font-bold text-lg text-gray-900">Scheduled Registration</h2>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Optionally schedule when registration opens. Until then, visitors will see a countdown and can sign up to be notified.
+        </p>
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="publish_mode"
+                checked={!formData.publish_at}
+                onChange={() => setFormData({ ...formData, publish_at: "" })}
+                className="text-brand-blue focus:ring-brand-blue"
+              />
+              <span className="text-sm">Open registration immediately when published</span>
+            </label>
+          </div>
+
+          <div className="flex items-start gap-2">
+            <input
+              type="radio"
+              name="publish_mode"
+              checked={!!formData.publish_at}
+              onChange={() => {
+                // Set a default time of 1 day from now
+                const defaultTime = new Date();
+                defaultTime.setDate(defaultTime.getDate() + 1);
+                defaultTime.setHours(9, 0, 0, 0);
+                setFormData({ ...formData, publish_at: defaultTime.toISOString().slice(0, 16) });
+              }}
+              className="text-brand-blue focus:ring-brand-blue mt-1"
+            />
+            <div className="flex-1">
+              <span className="text-sm">Schedule registration to open at a specific time</span>
+
+              {formData.publish_at && (
+                <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    Registration Opens At
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.publish_at}
+                    onChange={(e) => setFormData({ ...formData, publish_at: e.target.value })}
+                    className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                  <p className="text-xs text-blue-600 mt-2">
+                    Until this time, visitors will see: &quot;Registration opens {formData.publish_at ? new Date(formData.publish_at).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}&quot;
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
