@@ -156,12 +156,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send confirmation email (fire and forget - don't wait)
-    fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ""}/api/email/send-registration`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ registrationId: registration.id }),
-    }).catch(console.error);
+    // Send confirmation email
+    try {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000";
+
+      const emailResponse = await fetch(`${siteUrl}/api/email/send-registration`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationId: registration.id }),
+      });
+
+      if (!emailResponse.ok) {
+        const emailError = await emailResponse.json();
+        console.error("Email send failed:", emailError);
+      }
+    } catch (emailErr) {
+      console.error("Email send error:", emailErr);
+    }
 
     return NextResponse.json({
       success: true,
