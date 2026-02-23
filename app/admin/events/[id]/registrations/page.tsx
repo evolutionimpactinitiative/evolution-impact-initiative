@@ -3,15 +3,16 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
 import { RegistrationActions } from "@/components/admin/RegistrationActions";
-import type { Event, Registration, RegistrationChild } from "@/lib/supabase/types";
+import type { Event, Registration, RegistrationChild, RegistrationAttendee } from "@/lib/supabase/types";
 import { ArrowLeft } from "lucide-react";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
-type RegistrationWithChildren = Registration & {
+type RegistrationWithDetails = Registration & {
   registration_children: RegistrationChild[];
+  registration_attendees: RegistrationAttendee[];
 };
 
 export default async function EventRegistrationsPage({ params }: Props) {
@@ -31,17 +32,18 @@ export default async function EventRegistrationsPage({ params }: Props) {
     notFound();
   }
 
-  // Get registrations with children
+  // Get registrations with children and attendees
   const { data: registrationsData } = await supabase
     .from("registrations")
     .select(`
       *,
-      registration_children (*)
+      registration_children (*),
+      registration_attendees (*)
     `)
     .eq("event_id", id)
     .order("created_at", { ascending: false });
 
-  const registrations = (registrationsData as RegistrationWithChildren[] | null) || [];
+  const registrations = (registrationsData as RegistrationWithDetails[] | null) || [];
 
   // Count stats
   const confirmed = registrations.filter((r) => r.status === "confirmed").length;
@@ -51,6 +53,12 @@ export default async function EventRegistrationsPage({ params }: Props) {
   const totalChildren = registrations
     .filter((r) => r.status === "confirmed")
     .reduce((sum, r) => sum + (r.registration_children?.length || 0), 0);
+  const totalAttendees = registrations
+    .filter((r) => r.status === "confirmed")
+    .reduce((sum, r) => sum + (r.registration_attendees?.length || 0), 0);
+
+  // Determine if this is an adults/mixed event
+  const isAdultsEvent = event.event_type === "adults" || event.event_type === "mixed";
 
   return (
     <div className="space-y-6">
@@ -112,13 +120,17 @@ export default async function EventRegistrationsPage({ params }: Props) {
           <p className="text-xl lg:text-2xl font-bold text-brand-blue">{attended}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4 col-span-2 lg:col-span-1">
-          <p className="text-xs lg:text-sm text-gray-500">Total Children</p>
-          <p className="text-xl lg:text-2xl font-bold text-purple-600">{totalChildren}</p>
+          <p className="text-xs lg:text-sm text-gray-500">
+            {isAdultsEvent ? "Total Attendees" : "Total Children"}
+          </p>
+          <p className="text-xl lg:text-2xl font-bold text-purple-600">
+            {isAdultsEvent ? totalAttendees : totalChildren}
+          </p>
         </div>
       </div>
 
       {/* Registrations Table */}
-      <RegistrationsTable registrations={registrations} eventId={id} />
+      <RegistrationsTable registrations={registrations} eventId={id} eventType={event.event_type || "children"} />
     </div>
   );
 }

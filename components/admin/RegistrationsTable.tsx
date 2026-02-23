@@ -6,12 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { ViewToggle } from "@/components/admin/ViewToggle";
-import type { Registration, RegistrationChild } from "@/lib/supabase/types";
+import type { Registration, RegistrationChild, RegistrationAttendee } from "@/lib/supabase/types";
 import { Search, Check, X, Clock, Users, Mail, Phone, ChevronDown, ChevronUp, UserCheck, QrCode, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type RegistrationWithChildren = Registration & {
+type RegistrationWithDetails = Registration & {
   registration_children: RegistrationChild[];
+  registration_attendees: RegistrationAttendee[];
 };
 
 function formatCancellationReason(reason: string): string {
@@ -26,9 +27,10 @@ function formatCancellationReason(reason: string): string {
 }
 
 interface RegistrationsTableProps {
-  registrations: RegistrationWithChildren[];
+  registrations: RegistrationWithDetails[];
   eventId: string;
   checkInMode?: boolean;
+  eventType?: "children" | "adults" | "mixed";
 }
 
 function RegistrationMobileCard({
@@ -38,13 +40,15 @@ function RegistrationMobileCard({
   onDelete,
   onChildCheckIn,
   checkInMode,
+  eventType = "children",
 }: {
-  reg: RegistrationWithChildren;
+  reg: RegistrationWithDetails;
   onPromote?: () => void;
   onCancel?: () => void;
   onDelete?: () => void;
   onChildCheckIn?: (childId: string, attended: boolean) => void;
   checkInMode?: boolean;
+  eventType?: "children" | "adults" | "mixed";
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -86,14 +90,18 @@ function RegistrationMobileCard({
             {getStatusBadge(reg.status)}
             <span className="flex items-center gap-1 text-xs text-gray-500">
               <Users className="w-3 h-3" />
-              {reg.registration_children?.length || 0} children
+              {eventType === "adults"
+                ? `${reg.registration_attendees?.length || 0} attendees`
+                : eventType === "mixed"
+                ? `${reg.registration_children?.length || 0} children, ${reg.registration_attendees?.length || 0} adults`
+                : `${reg.registration_children?.length || 0} children`}
             </span>
           </div>
         </div>
       </div>
 
       {/* Children list */}
-      {reg.registration_children && reg.registration_children.length > 0 && (
+      {(eventType === "children" || eventType === "mixed") && reg.registration_children && reg.registration_children.length > 0 && (
         <div className="mt-3 space-y-2">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Children</p>
           <div className="space-y-1.5">
@@ -141,6 +149,33 @@ function RegistrationMobileCard({
                       <UserCheck className="w-4 h-4" />
                     </button>
                   )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Attendees list */}
+      {(eventType === "adults" || eventType === "mixed") && reg.registration_attendees && reg.registration_attendees.length > 0 && (
+        <div className="mt-3 space-y-2">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Attendees</p>
+          <div className="space-y-1.5">
+            {reg.registration_attendees.map((attendee, idx) => (
+              <div
+                key={attendee.id || idx}
+                className="flex items-center justify-between rounded-lg px-3 py-2 bg-gray-50"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-brand-blue/10 flex items-center justify-center text-xs font-medium text-brand-blue">
+                    {idx + 1}
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-900 text-sm">{attendee.attendee_name}</span>
+                    {attendee.attendee_email && (
+                      <p className="text-xs text-gray-500">{attendee.attendee_email}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -239,7 +274,7 @@ function RegistrationMobileCard({
   );
 }
 
-export function RegistrationsTable({ registrations, eventId, checkInMode: initialCheckInMode = false }: RegistrationsTableProps) {
+export function RegistrationsTable({ registrations, eventId, checkInMode: initialCheckInMode = false, eventType = "children" }: RegistrationsTableProps) {
   const router = useRouter();
   const supabase = createClient();
   const isMobile = useIsMobile();
@@ -347,7 +382,7 @@ export function RegistrationsTable({ registrations, eventId, checkInMode: initia
     }
   };
 
-  const getAttendanceBadge = (reg: RegistrationWithChildren) => {
+  const getAttendanceBadge = (reg: RegistrationWithDetails) => {
     if (reg.attended === "yes") {
       return <span className="text-xs text-green-600 font-medium">Attended</span>;
     }
@@ -458,6 +493,7 @@ export function RegistrationsTable({ registrations, eventId, checkInMode: initia
                 key={reg.id}
                 reg={reg}
                 checkInMode={checkInMode}
+                eventType={eventType}
                 onChildCheckIn={handleChildCheckIn}
                 onPromote={
                   reg.status === "waitlisted"
@@ -491,7 +527,7 @@ export function RegistrationsTable({ registrations, eventId, checkInMode: initia
                     Parent/Guardian
                   </th>
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Children
+                    {eventType === "adults" ? "Attendees" : eventType === "mixed" ? "Children/Attendees" : "Children"}
                   </th>
                   <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Contact
@@ -519,7 +555,8 @@ export function RegistrationsTable({ registrations, eventId, checkInMode: initia
                       </td>
                       <td className="px-4 lg:px-6 py-4">
                         <div className="space-y-1.5">
-                          {reg.registration_children?.map((child, idx) => (
+                          {/* Children (for children and mixed events) */}
+                          {(eventType === "children" || eventType === "mixed") && reg.registration_children?.map((child, idx) => (
                             <div
                               key={child.id}
                               className={cn(
@@ -560,6 +597,29 @@ export function RegistrationsTable({ registrations, eventId, checkInMode: initia
                               )}
                             </div>
                           ))}
+                          {/* Attendees (for adults and mixed events) */}
+                          {(eventType === "adults" || eventType === "mixed") && reg.registration_attendees?.map((attendee, idx) => (
+                            <div
+                              key={attendee.id}
+                              className="flex items-center gap-2 rounded-lg px-2 py-1 -mx-2"
+                            >
+                              <span className="w-5 h-5 rounded-full bg-brand-blue/10 flex items-center justify-center text-xs font-medium text-brand-blue flex-shrink-0">
+                                {idx + 1}
+                              </span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {attendee.attendee_name}
+                              </span>
+                              {attendee.attendee_email && (
+                                <span className="text-xs text-gray-500 truncate max-w-[100px]">
+                                  {attendee.attendee_email}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                          {/* Empty state */}
+                          {(!reg.registration_children?.length && !reg.registration_attendees?.length) && (
+                            <span className="text-sm text-gray-400">None</span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 lg:px-6 py-4">
