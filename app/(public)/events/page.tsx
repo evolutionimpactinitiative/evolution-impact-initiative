@@ -57,19 +57,47 @@ export default async function EventsPage() {
   const { data: registrationsData } = eventIds.length > 0
     ? await adminClient
         .from("registrations")
-        .select("event_id, status")
+        .select(`
+          event_id,
+          status,
+          registration_children (id),
+          registration_attendees (id)
+        `)
         .in("event_id", eventIds)
     : { data: [] };
 
-  const registrations = (registrationsData as { event_id: string; status: string }[] | null) || [];
+  type RegWithCounts = {
+    event_id: string;
+    status: string;
+    registration_children: { id: string }[];
+    registration_attendees: { id: string }[];
+  };
+  const registrations = (registrationsData as RegWithCounts[] | null) || [];
 
-  // Calculate registration counts per event
+  // Create a map of event_id -> event_type for slot calculation
+  const eventTypeMap = upcomingEventsRaw.reduce((acc, e) => {
+    acc[e.id] = e.event_type || "children";
+    return acc;
+  }, {} as Record<string, string>);
+
+  // Calculate registration counts per event based on actual attendees/children
   const regCountsByEvent = registrations.reduce((acc, reg) => {
     if (!acc[reg.event_id]) {
       acc[reg.event_id] = { confirmed: 0, waitlisted: 0 };
     }
-    if (reg.status === "confirmed") acc[reg.event_id].confirmed++;
-    if (reg.status === "waitlisted") acc[reg.event_id].waitlisted++;
+
+    const eventType = eventTypeMap[reg.event_id];
+    let slotsForReg = 0;
+    if (eventType === "children") {
+      slotsForReg = reg.registration_children?.length || 0;
+    } else if (eventType === "adults") {
+      slotsForReg = reg.registration_attendees?.length || 0;
+    } else {
+      slotsForReg = (reg.registration_children?.length || 0) + (reg.registration_attendees?.length || 0);
+    }
+
+    if (reg.status === "confirmed") acc[reg.event_id].confirmed += slotsForReg;
+    if (reg.status === "waitlisted") acc[reg.event_id].waitlisted += slotsForReg;
     return acc;
   }, {} as Record<string, { confirmed: number; waitlisted: number }>);
 

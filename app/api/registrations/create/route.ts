@@ -64,28 +64,69 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    // Check availability
+    // Check availability - count actual attendees/children, not just registrations
     const { data: currentRegistrations } = await supabase
       .from("registrations")
-      .select("status")
+      .select(`
+        status,
+        registration_children (id),
+        registration_attendees (id)
+      `)
       .eq("event_id", eventId);
 
-    type RegStatus = { status: string };
-    const regs = (currentRegistrations as RegStatus[] | null) || [];
-    const confirmedCount = regs.filter((r) => r.status === "confirmed").length;
-    const waitlistedCount = regs.filter((r) => r.status === "waitlisted").length;
+    type RegWithCounts = {
+      status: string;
+      registration_children: { id: string }[];
+      registration_attendees: { id: string }[];
+    };
+    const regs = (currentRegistrations as RegWithCounts[] | null) || [];
 
-    const spotsRemaining = event.total_slots - confirmedCount;
-    const waitlistRemaining = event.waitlist_slots - waitlistedCount;
+    // Calculate slots used based on event type
+    let confirmedSlotsUsed = 0;
+    let waitlistedSlotsUsed = 0;
+
+    for (const reg of regs) {
+      let slotsForReg = 0;
+      if (event.event_type === "children") {
+        slotsForReg = reg.registration_children?.length || 0;
+      } else if (event.event_type === "adults") {
+        slotsForReg = reg.registration_attendees?.length || 0;
+      } else {
+        // mixed or default: count both
+        slotsForReg = (reg.registration_children?.length || 0) + (reg.registration_attendees?.length || 0);
+      }
+
+      if (reg.status === "confirmed") {
+        confirmedSlotsUsed += slotsForReg;
+      } else if (reg.status === "waitlisted") {
+        waitlistedSlotsUsed += slotsForReg;
+      }
+    }
+
+    const spotsRemaining = event.total_slots - confirmedSlotsUsed;
+    const waitlistRemaining = event.waitlist_slots - waitlistedSlotsUsed;
+
+    // Calculate how many slots this registration needs
+    const validChildren = children.filter((c) => c.name?.trim() && c.age?.trim());
+    const validAttendees = attendees.filter((a) => a.name?.trim());
+
+    let slotsNeeded = 0;
+    if (event.event_type === "children") {
+      slotsNeeded = validChildren.length;
+    } else if (event.event_type === "adults") {
+      slotsNeeded = validAttendees.length;
+    } else {
+      slotsNeeded = validChildren.length + validAttendees.length;
+    }
 
     let status: "confirmed" | "waitlisted";
-    if (spotsRemaining > 0) {
+    if (spotsRemaining >= slotsNeeded) {
       status = "confirmed";
-    } else if (waitlistRemaining > 0) {
+    } else if (waitlistRemaining >= slotsNeeded) {
       status = "waitlisted";
     } else {
       return NextResponse.json(
-        { error: "Sorry, this event is now fully booked. Please check other events." },
+        { error: `Sorry, there are only ${Math.max(0, spotsRemaining)} spots remaining. Please reduce the number of attendees or check other events.` },
         { status: 400 }
       );
     }
@@ -112,10 +153,6 @@ export async function POST(request: NextRequest) {
       console.error("Registration insert error:", regError);
       throw regError;
     }
-
-    // Filter valid children and attendees
-    const validChildren = children.filter((c) => c.name?.trim() && c.age?.trim());
-    const validAttendees = attendees.filter((a) => a.name?.trim());
 
     // Add children (for children and mixed events)
     if (validChildren.length > 0) {

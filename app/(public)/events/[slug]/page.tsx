@@ -38,15 +38,44 @@ async function getEvent(slug: string): Promise<EventWithAvailability | null> {
   // Fetch registration counts using admin client to bypass RLS
   const { data: regsData } = await adminClient
     .from("registrations")
-    .select("status")
+    .select(`
+      status,
+      registration_children (id),
+      registration_attendees (id)
+    `)
     .eq("event_id", event.id);
 
-  const regs = (regsData as { status: string }[] | null) || [];
-  const confirmedCount = regs.filter((r) => r.status === "confirmed").length;
-  const waitlistedCount = regs.filter((r) => r.status === "waitlisted").length;
+  type RegWithCounts = {
+    status: string;
+    registration_children: { id: string }[];
+    registration_attendees: { id: string }[];
+  };
+  const regs = (regsData as RegWithCounts[] | null) || [];
 
-  const spotsRemaining = Math.max(0, event.total_slots - confirmedCount);
-  const waitlistRemaining = Math.max(0, event.waitlist_slots - waitlistedCount);
+  // Calculate slots used based on event type
+  let confirmedSlotsUsed = 0;
+  let waitlistedSlotsUsed = 0;
+
+  for (const reg of regs) {
+    let slotsForReg = 0;
+    if (event.event_type === "children") {
+      slotsForReg = reg.registration_children?.length || 0;
+    } else if (event.event_type === "adults") {
+      slotsForReg = reg.registration_attendees?.length || 0;
+    } else {
+      // mixed or default: count both
+      slotsForReg = (reg.registration_children?.length || 0) + (reg.registration_attendees?.length || 0);
+    }
+
+    if (reg.status === "confirmed") {
+      confirmedSlotsUsed += slotsForReg;
+    } else if (reg.status === "waitlisted") {
+      waitlistedSlotsUsed += slotsForReg;
+    }
+  }
+
+  const spotsRemaining = Math.max(0, event.total_slots - confirmedSlotsUsed);
+  const waitlistRemaining = Math.max(0, event.waitlist_slots - waitlistedSlotsUsed);
 
   let registrationStatus: RegistrationStatus;
   if (event.registration_status === "closed") {
