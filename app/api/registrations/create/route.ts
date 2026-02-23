@@ -158,9 +158,15 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email
     try {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000";
+      let siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      if (!siteUrl && process.env.VERCEL_URL) {
+        siteUrl = `https://${process.env.VERCEL_URL}`;
+      }
+      if (!siteUrl) {
+        siteUrl = "http://localhost:3000";
+      }
+
+      console.log("Sending email to:", `${siteUrl}/api/email/send-registration`);
 
       const emailResponse = await fetch(`${siteUrl}/api/email/send-registration`, {
         method: "POST",
@@ -168,9 +174,11 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({ registrationId: registration.id }),
       });
 
+      const emailResult = await emailResponse.json();
+      console.log("Email API response:", emailResponse.status, emailResult);
+
       if (!emailResponse.ok) {
-        const emailError = await emailResponse.json();
-        console.error("Email send failed:", emailError);
+        console.error("Email send failed:", emailResult);
       }
     } catch (emailErr) {
       console.error("Email send error:", emailErr);
