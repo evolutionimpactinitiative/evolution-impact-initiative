@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import type { Event } from "@/lib/supabase/types";
 import { Loader2, Plus, Trash2, AlertCircle } from "lucide-react";
@@ -28,7 +27,6 @@ interface AttendeeData {
 
 export function RegistrationForm({ event, willBeWaitlisted, maxChildren, maxAttendees }: RegistrationFormProps) {
   const router = useRouter();
-  const supabase = createClient();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -169,96 +167,32 @@ export function RegistrationForm({ event, willBeWaitlisted, maxChildren, maxAtte
     }
 
     try {
-      // First check availability again
-      const { data: currentRegistrations } = await supabase
-        .from("registrations")
-        .select("status")
-        .eq("event_id", event.id);
-
-      type RegStatus = { status: string };
-      const regs = (currentRegistrations as RegStatus[] | null) || [];
-      const confirmedCount = regs.filter((r) => r.status === "confirmed").length;
-      const waitlistedCount = regs.filter((r) => r.status === "waitlisted").length;
-
-      const spotsRemaining = event.total_slots - confirmedCount;
-      const waitlistRemaining = event.waitlist_slots - waitlistedCount;
-
-      let status: "confirmed" | "waitlisted";
-      if (spotsRemaining > 0) {
-        status = "confirmed";
-      } else if (waitlistRemaining > 0) {
-        status = "waitlisted";
-      } else {
-        setError("Sorry, this event is now fully booked. Please check other events.");
-        setIsLoading(false);
-        return;
-      }
-
-      // Create registration
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: registration, error: regError } = await (supabase as any)
-        .from("registrations")
-        .insert({
-          event_id: event.id,
-          parent_name: parentName.trim(),
-          parent_email: parentEmail.trim().toLowerCase(),
-          parent_phone: parentPhone.trim(),
-          accessibility_requirements: accessibilityRequirements.trim() || null,
-          how_heard_about_us: howHeardAboutUs.trim() || null,
-          photo_video_consent: consentChecked,
-          terms_accepted_at: new Date().toISOString(),
-          status,
-          custom_responses: Object.keys(customResponses).length > 0 ? customResponses : null,
-        })
-        .select()
-        .single();
-
-      if (regError) throw regError;
-
-      // Add children (for children and mixed events)
-      if (validChildren.length > 0) {
-        const childrenToInsert = validChildren.map((child, index) => ({
-          registration_id: registration.id,
-          child_name: child.name.trim(),
-          child_age: parseInt(child.age),
-          display_order: index,
-        }));
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: childError } = await (supabase as any)
-          .from("registration_children")
-          .insert(childrenToInsert);
-
-        if (childError) throw childError;
-      }
-
-      // Add attendees (for adult and mixed events)
-      if (validAttendees.length > 0) {
-        const attendeesToInsert = validAttendees.map((attendee, index) => ({
-          registration_id: registration.id,
-          attendee_name: attendee.name.trim(),
-          attendee_email: attendee.email.trim() || null,
-          attendee_phone: attendee.phone.trim() || null,
-          display_order: index,
-        }));
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: attendeeError } = await (supabase as any)
-          .from("registration_attendees")
-          .insert(attendeesToInsert);
-
-        if (attendeeError) throw attendeeError;
-      }
-
-      // Send confirmation email (fire and forget)
-      fetch("/api/email/send-registration", {
+      // Call registration API
+      const response = await fetch("/api/registrations/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ registrationId: registration.id }),
-      }).catch(console.error);
+        body: JSON.stringify({
+          eventId: event.id,
+          parentName: parentName.trim(),
+          parentEmail: parentEmail.trim().toLowerCase(),
+          parentPhone: parentPhone.trim(),
+          accessibilityRequirements: accessibilityRequirements.trim() || null,
+          howHeardAboutUs: howHeardAboutUs.trim() || null,
+          consentChecked,
+          customResponses: Object.keys(customResponses).length > 0 ? customResponses : null,
+          children: validChildren,
+          attendees: validAttendees,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Something went wrong. Please try again.");
+      }
 
       // Redirect to confirmation page
-      router.push(`/events/${event.slug}/register/confirmation?status=${status}&id=${registration.id}`);
+      router.push(`/events/${event.slug}/register/confirmation?status=${data.status}&id=${data.registrationId}`);
     } catch (err) {
       console.error("Registration error:", err);
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
