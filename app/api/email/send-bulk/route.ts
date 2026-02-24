@@ -132,7 +132,7 @@ const BRAND = {
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
-const LOGO_URL = `${BASE_URL}/logos/evolution_full_logo_2.svg`;
+const LOGO_URL = `${BASE_URL}/logos/evolution_full_logo_1.png`;
 
 function generateUpdateEmail(event: Event, message: string): string {
   const eventDate = new Date(event.date).toLocaleDateString("en-GB", {

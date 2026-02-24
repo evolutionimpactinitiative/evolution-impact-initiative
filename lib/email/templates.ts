@@ -7,7 +7,7 @@ type RegistrationWithChildren = Registration & {
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
 
 // Always use production URL for logo (so it works in email clients during development)
-const LOGO_URL = "https://evolutionimpactinitiative.co.uk/logos/evolution_full_logo_2.png";
+const LOGO_URL = "https://evolutionimpactinitiative.co.uk/logos/evolution_full_logo_1.png";
 
 // Brand colors
 const BRAND = {
