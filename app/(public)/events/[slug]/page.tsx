@@ -21,7 +21,7 @@ interface EventWithAvailability extends Event {
   waitlistRemaining: number;
   registrationStatus: RegistrationStatus;
   isScheduled: boolean;
-  publishAt: Date | null;
+  publishAtISO: string | null;
 }
 
 async function getEvent(slug: string): Promise<EventWithAvailability | null> {
@@ -83,8 +83,8 @@ async function getEvent(slug: string): Promise<EventWithAvailability | null> {
 
   // Check if event is scheduled for future publishing
   const now = new Date();
-  const publishAt = event.publish_at ? new Date(event.publish_at) : null;
-  const isScheduled = publishAt !== null && publishAt > now;
+  const publishAtDate = event.publish_at ? new Date(event.publish_at) : null;
+  const isScheduled = publishAtDate !== null && publishAtDate > now;
 
   let registrationStatus: RegistrationStatus;
   if (isScheduled) {
@@ -105,7 +105,7 @@ async function getEvent(slug: string): Promise<EventWithAvailability | null> {
     waitlistRemaining,
     registrationStatus,
     isScheduled,
-    publishAt,
+    publishAtISO: event.publish_at || null,
   };
 }
 
@@ -386,10 +386,10 @@ export default async function EventPage({ params }: Props) {
               </div>
               <div className="flex items-center gap-3 text-brand-dark/70">
                 <Info className="w-5 h-5 text-brand-blue" />
-                {event.registrationStatus === "scheduled" && event.publishAt && (
+                {event.registrationStatus === "scheduled" && event.publishAtISO && (
                   <span className="text-brand-blue font-medium">
                     Registration opens{" "}
-                    {event.publishAt.toLocaleDateString("en-GB", {
+                    {new Date(event.publishAtISO).toLocaleDateString("en-GB", {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
@@ -421,12 +421,12 @@ export default async function EventPage({ params }: Props) {
               </div>
             </div>
 
-            {isUpcoming && event.registrationStatus === "scheduled" && event.publishAt && (
+            {isUpcoming && event.registrationStatus === "scheduled" && event.publishAtISO && (
               <div className="space-y-6">
                 {/* Countdown Timer */}
                 <div className="bg-gradient-to-r from-brand-blue/10 to-brand-green/10 rounded-xl p-6 border border-brand-blue/20">
                   <p className="text-sm text-brand-dark/70 mb-2">Registration opens in:</p>
-                  <CountdownTimer targetDate={event.publishAt.toISOString()} />
+                  <CountdownTimer targetDate={event.publishAtISO} />
                 </div>
 
                 {/* Notify Me Form */}
