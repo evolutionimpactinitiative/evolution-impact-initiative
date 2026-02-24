@@ -1,5 +1,125 @@
 # Development Session Log
 
+## Session: 24 February 2026
+
+### Summary
+Implemented clean email design across all templates and added instant notification system for when events go live.
+
+---
+
+### Features Implemented
+
+#### 1. Clean Email Design
+Updated all email templates to use a clean, minimal design with white boxes and subtle gray borders instead of colored backgrounds.
+
+**Templates Updated:**
+- Registration Confirmation
+- Waitlist Confirmation
+- Waitlist Promotion
+- Attendance Confirmation
+- Donation Receipt
+- Welcome Subscriber
+- Registration Open (Notify Me)
+- Event Photos
+- Event Update (bulk)
+- Event Announcement
+- Notification Signup Confirmation
+
+**Design Changes:**
+- White backgrounds (`#ffffff`) with subtle gray borders (`#e5e7eb`)
+- Dark text headers instead of blue
+- Consistent `border-radius: 12px` on all boxes
+- Removed colored backgrounds (blue, yellow, green fills)
+
+#### 2. Instant Notifications When Events Go Live
+Previously, notification emails were only sent via a daily cron job at 6 AM UTC, causing up to 12-hour delays.
+
+**New Flow:**
+- When admin publishes an event with immediate registration → notifications sent **instantly**
+- When admin publishes with scheduled registration → notifications sent when registration opens
+- Daily cron job remains as backup
+
+**Files Created:**
+- `app/api/notifications/trigger/route.ts` - POST endpoint to trigger instant notifications
+- Updated `components/admin/EventForm.tsx` - Calls trigger API after publishing
+
+#### 3. Test Email Endpoint
+Created endpoint to preview notification emails without affecting real data.
+
+**Endpoint:** `POST /api/notifications/test-email`
+```json
+{
+  "email": "test@example.com",
+  "name": "Test User",
+  "eventId": "uuid",
+  "type": "registration_open" | "signup_confirmation"
+}
+```
+
+#### 4. Clear Notifications Endpoint
+Added ability to clear all notification signups for an event (for admin/testing use).
+
+**Endpoint:** `DELETE /api/notifications/trigger`
+```json
+{
+  "eventId": "uuid"
+}
+```
+
+---
+
+### Bug Fixes
+
+#### 1. Notification Signup Confirmation Email Not Sending
+**Problem:** Users filling in the "Notify Me" form weren't receiving confirmation emails.
+
+**Cause:** Silent error handling was masking issues.
+
+**Fix:** Added better error logging and fixed the email sending flow in `/api/notifications/signup/route.ts`.
+
+---
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `lib/email/templates.ts` | Clean design for all email templates |
+| `app/api/email/send-bulk/route.ts` | Clean design for event update emails |
+| `app/api/email/send-announcement/route.ts` | Clean design for announcement emails |
+| `app/api/subscribers/send-bulk/route.ts` | Already had clean design (logo fix) |
+| `app/api/subscribers/send-email/route.ts` | Already had clean design (logo fix) |
+| `components/admin/EventForm.tsx` | Trigger instant notifications on publish |
+| `app/api/notifications/trigger/route.ts` | NEW - Instant trigger + clear notifications |
+| `app/api/notifications/test-email/route.ts` | NEW - Test email preview endpoint |
+| `app/api/notifications/signup/route.ts` | Better error logging for confirmation emails |
+
+---
+
+### Commits
+
+1. `7072e0d` - Update all email templates to clean white design
+2. `9b946f9` - Add instant notification trigger when event goes live
+3. `612baff` - Add test endpoint for registration open email preview
+4. `e345abc` - Add signup confirmation email type to test endpoint
+5. `6cb3748` - Add better error logging for notification signup email
+6. `0ef925f` - Add DELETE endpoint to clear event notifications
+
+---
+
+### How Instant Notifications Work
+
+1. **Immediate Registration (no scheduled date):**
+   - Admin clicks "Publish" → Event goes live
+   - System immediately sends "Registration is Open" email to everyone on notify list
+
+2. **Scheduled Registration (future publish_at date):**
+   - Event shows "Coming Soon" with countdown
+   - Users sign up via "Notify Me" form → receive confirmation email
+   - When publish_at time passes and admin updates/republishes → instant notifications sent
+   - Daily cron job at 6 AM UTC acts as backup
+
+---
+
 ## Session: 20 February 2026
 
 ### Summary
