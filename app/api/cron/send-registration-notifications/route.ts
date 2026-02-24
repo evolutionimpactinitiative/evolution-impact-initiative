@@ -24,15 +24,15 @@ export async function GET(request: NextRequest) {
     // Find events where:
     // - status is 'published'
     // - publish_at is in the past (registration just opened)
-    // - publish_at is within the last 10 minutes (to avoid re-sending)
-    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
+    // - publish_at is within the last 24 hours (cron runs daily on Hobby plan)
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     const { data: eventsData, error: eventsError } = await supabase
       .from("events")
       .select("*")
       .eq("status", "published")
       .lte("publish_at", now.toISOString())
-      .gte("publish_at", tenMinutesAgo.toISOString());
+      .gte("publish_at", twentyFourHoursAgo.toISOString());
 
     if (eventsError) {
       console.error("Error fetching events:", eventsError);

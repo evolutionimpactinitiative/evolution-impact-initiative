@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Resend } from "resend";
+import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
 import { welcomeSubscriberEmail } from "@/lib/email/templates";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,13 +46,17 @@ export async function POST(request: NextRequest) {
 
         // Send welcome back email
         try {
-          const { subject, html } = welcomeSubscriberEmail(name || null, email.toLowerCase());
-          await resend.emails.send({
-            from: "Evolution Impact Initiative <noreply@evolutionimpactinitiative.co.uk>",
-            to: email.toLowerCase(),
-            subject,
-            html,
-          });
+          const resend = getResendClient();
+          if (resend) {
+            const { subject, html } = welcomeSubscriberEmail(name || null, email.toLowerCase());
+            await resend.emails.send({
+              from: FROM_EMAIL,
+              replyTo: REPLY_TO_EMAIL,
+              to: email.toLowerCase(),
+              subject,
+              html,
+            });
+          }
         } catch (emailError) {
           console.error("Failed to send welcome email:", emailError);
         }
@@ -88,13 +90,17 @@ export async function POST(request: NextRequest) {
 
     // Send welcome email
     try {
-      const { subject, html } = welcomeSubscriberEmail(name || null, email.toLowerCase());
-      await resend.emails.send({
-        from: "Evolution Impact Initiative <noreply@evolutionimpactinitiative.co.uk>",
-        to: email.toLowerCase(),
-        subject,
-        html,
-      });
+      const resend = getResendClient();
+      if (resend) {
+        const { subject, html } = welcomeSubscriberEmail(name || null, email.toLowerCase());
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          replyTo: REPLY_TO_EMAIL,
+          to: email.toLowerCase(),
+          subject,
+          html,
+        });
+      }
     } catch (emailError) {
       // Log email error but don't fail the subscription
       console.error("Failed to send welcome email:", emailError);

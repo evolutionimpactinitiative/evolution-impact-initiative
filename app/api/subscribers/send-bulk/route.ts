@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { Resend } from "resend";
+import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
 const LOGO_URL = "https://evolutionimpactinitiative.co.uk/logos/evolution_full_logo_2.png";
 
@@ -38,6 +37,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const resend = getResendClient();
+    if (!resend) {
+      return NextResponse.json(
+        { error: "Email service not configured" },
+        { status: 500 }
+      );
+    }
+
     // Send emails
     const results = {
       sent: 0,
@@ -60,7 +67,8 @@ export async function POST(request: NextRequest) {
             );
 
             await resend.emails.send({
-              from: "Evolution Impact Initiative <noreply@evolutionimpactinitiative.co.uk>",
+              from: FROM_EMAIL,
+              replyTo: REPLY_TO_EMAIL,
               to: subscriber.email,
               subject,
               html,

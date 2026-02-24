@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Resend } from "resend";
+import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
 import { eventPhotosEmail } from "@/lib/email/templates";
 import type { Event } from "@/lib/supabase/types";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,6 +68,14 @@ export async function POST(request: NextRequest) {
       errors: [] as string[],
     };
 
+    const resend = getResendClient();
+    if (!resend) {
+      return NextResponse.json(
+        { error: "Email service not configured" },
+        { status: 500 }
+      );
+    }
+
     for (const registration of registrations) {
       try {
         const emailContent = eventPhotosEmail(
@@ -79,7 +85,8 @@ export async function POST(request: NextRequest) {
         );
 
         await resend.emails.send({
-          from: "Evolution Impact Initiative <noreply@evolutionimpactinitiative.co.uk>",
+          from: FROM_EMAIL,
+          replyTo: REPLY_TO_EMAIL,
           to: registration.parent_email,
           subject: emailContent.subject,
           html: emailContent.html,
