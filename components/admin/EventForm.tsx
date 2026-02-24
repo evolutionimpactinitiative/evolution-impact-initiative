@@ -97,6 +97,8 @@ export function EventForm({ event }: EventFormProps) {
         publish_at: formData.publish_at ? new Date(formData.publish_at).toISOString() : null,
       };
 
+      let savedEventId = isEditing ? event.id : null;
+
       if (isEditing) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error: updateError } = await (supabase as any)
@@ -107,9 +109,37 @@ export function EventForm({ event }: EventFormProps) {
         if (updateError) throw updateError;
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: insertError } = await (supabase as any).from("events").insert(eventData);
+        const { data: insertedData, error: insertError } = await (supabase as any)
+          .from("events")
+          .insert(eventData)
+          .select("id")
+          .single();
 
         if (insertError) throw insertError;
+        savedEventId = insertedData?.id;
+      }
+
+      // If publishing and registration is immediately open, trigger instant notifications
+      if (saveAs === "published" && savedEventId) {
+        const publishAt = formData.publish_at ? new Date(formData.publish_at) : null;
+        const isRegistrationOpen = !publishAt || publishAt <= new Date();
+
+        if (isRegistrationOpen) {
+          try {
+            const response = await fetch("/api/notifications/trigger", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ eventId: savedEventId }),
+            });
+            const result = await response.json();
+            if (result.notified > 0) {
+              console.log(`Sent ${result.notified} notification(s) for event registration opening`);
+            }
+          } catch (notifError) {
+            // Don't fail the whole operation if notifications fail
+            console.error("Failed to trigger notifications:", notifError);
+          }
+        }
       }
 
       router.push("/admin/events");
