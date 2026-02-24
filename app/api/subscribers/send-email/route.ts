@@ -62,6 +62,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Brand colors
+const BRAND = {
+  blue: "#17559D",
+  green: "#31B67D",
+  dark: "#1E1E1E",
+};
+
 function generateEmailHtml(
   recipientName: string,
   subject: string,
@@ -74,11 +81,13 @@ function generateEmailHtml(
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>${subject}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; background-color: #f4f6f8;">
   <center style="width: 100%; background-color: #f4f6f8;">
@@ -98,9 +107,16 @@ function generateEmailHtml(
       <!-- Content -->
       <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-          <td style="background-color: #ffffff; border-radius: 8px; padding: 40px; text-align: left;">
-            <p style="margin: 0 0 25px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+          <td style="background-color: #ffffff; border-radius: 8px 8px 0 0; padding: 40px; text-align: center;">
+            <p style="margin: 0 0 20px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555; text-align: left;">
+              Hi <strong>${recipientName}</strong>,
+            </p>
+            <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555; text-align: left;">
               ${htmlBody}
+            </p>
+            <p style="margin: 30px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6; text-align: left;">
+              Warm regards,<br>
+              <strong>The Evolution Impact Initiative Team</strong>
             </p>
           </td>
         </tr>
@@ -109,7 +125,7 @@ function generateEmailHtml(
       <!-- Footer -->
       <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-          <td style="border-top: 3px solid #17559D; padding: 30px; text-align: center;">
+          <td style="border-top: 3px solid ${BRAND.blue}; padding: 30px; text-align: center;">
             <!-- Social Icons -->
             <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
               <tr>
@@ -154,9 +170,9 @@ function generateEmailHtml(
               Company No. 16667870 | Registered in England & Wales
             </p>
             <p style="margin: 0; font-size: 12px;">
-              <a href="${unsubscribeLink}" style="color: #17559D; text-decoration: underline;">Unsubscribe</a>
+              <a href="${unsubscribeLink}" style="color: ${BRAND.blue}; text-decoration: underline;">Unsubscribe</a>
               &nbsp;&nbsp;|&nbsp;&nbsp;
-              <a href="${BASE_URL}" style="color: #17559D; text-decoration: underline;">Visit Website</a>
+              <a href="${BASE_URL}" style="color: ${BRAND.blue}; text-decoration: underline;">Visit Website</a>
             </p>
           </td>
         </tr>

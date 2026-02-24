@@ -245,13 +245,15 @@ function generateAnnouncementEmail(event: Event, message: string): string {
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>New Event: ${event.title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f6f8;">
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; background-color: #f4f6f8;">
   <center style="width: 100%; background-color: #f4f6f8;">
     <div style="max-width: 600px; margin: 0 auto;">
 
@@ -356,15 +358,52 @@ function generateAnnouncementEmail(event: Event, message: string): string {
       <!-- Footer -->
       <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-          <td style="padding: 30px 20px; text-align: center;">
-            <p style="margin: 0 0 10px; font-size: 13px; color: #666666;">
-              <a href="${BASE_URL}" style="color: ${BRAND.blue}; text-decoration: none;">Visit our website</a>
-              &nbsp;&nbsp;|&nbsp;&nbsp;
-              <a href="${BASE_URL}/contact" style="color: ${BRAND.blue}; text-decoration: none;">Contact us</a>
+          <td style="border-top: 3px solid ${BRAND.blue}; padding: 30px; text-align: center;">
+            <!-- Social Icons -->
+            <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px;">
+              <tr>
+                <td style="padding: 0 5px;">
+                  <a href="https://www.facebook.com/share/1AhvjnBzca/?mibextid=wwXIfr" style="text-decoration: none;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="width: 36px; height: 36px; background-color: #888888; border-radius: 50%; text-align: center; vertical-align: middle;">
+                          <img src="https://img.icons8.com/ios-glyphs/30/FFFFFF/facebook-f.png" width="16" height="16" alt="Facebook" style="display: block; margin: 0 auto;" />
+                        </td>
+                      </tr>
+                    </table>
+                  </a>
+                </td>
+                <td style="padding: 0 5px;">
+                  <a href="https://www.instagram.com/evolutionimpactinitiative" style="text-decoration: none;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="width: 36px; height: 36px; background-color: #888888; border-radius: 50%; text-align: center; vertical-align: middle;">
+                          <img src="https://img.icons8.com/ios-glyphs/30/FFFFFF/instagram-new--v1.png" width="16" height="16" alt="Instagram" style="display: block; margin: 0 auto;" />
+                        </td>
+                      </tr>
+                    </table>
+                  </a>
+                </td>
+                <td style="padding: 0 5px;">
+                  <a href="https://www.linkedin.com/company/evolution-impact-initiative-cic/" style="text-decoration: none;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="width: 36px; height: 36px; background-color: #888888; border-radius: 50%; text-align: center; vertical-align: middle;">
+                          <img src="https://img.icons8.com/ios-glyphs/30/FFFFFF/linkedin-2--v1.png" width="16" height="16" alt="LinkedIn" style="display: block; margin: 0 auto;" />
+                        </td>
+                      </tr>
+                    </table>
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin: 0 0 5px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: #555555; font-weight: 600;">Evolution Impact Initiative CIC</p>
+            <p style="margin: 0 0 10px; font-family: 'Inter', sans-serif; font-size: 12px; color: #888888;">86 King Street, Rochester, Kent, ME1 1YD</p>
+            <p style="margin: 0 0 15px; font-family: 'Inter', sans-serif; font-size: 11px; color: #aaaaaa;">
+              Company No. 16667870 | Registered in England & Wales
             </p>
             <p style="margin: 0; font-size: 12px; color: #999999;">
-              You're receiving this because you previously attended one of our events.<br>
-              Evolution Impact Initiative CIC
+              You're receiving this because you previously attended one of our events.
             </p>
           </td>
         </tr>
