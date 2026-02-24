@@ -96,7 +96,8 @@ export async function POST(request: NextRequest) {
           email.toLowerCase(),
           event
         );
-        await resend.emails.send({
+
+        const { error: sendError } = await resend.emails.send({
           from: FROM_EMAIL,
           to: email.toLowerCase(),
           replyTo: REPLY_TO_EMAIL,
@@ -104,15 +105,21 @@ export async function POST(request: NextRequest) {
           html: emailData.html,
         });
 
-        // Log the email
-        await supabase.from("email_logs").insert({
-          event_id: eventId,
-          email_type: "notification_signup_confirmation",
-          recipient_email: email.toLowerCase(),
-          subject: emailData.subject,
-          sent_at: new Date().toISOString(),
-          status: "sent",
-        });
+        if (sendError) {
+          console.error("Resend error sending confirmation email:", sendError);
+        } else {
+          // Log the email
+          await supabase.from("email_logs").insert({
+            event_id: eventId,
+            email_type: "notification_signup_confirmation",
+            recipient_email: email.toLowerCase(),
+            subject: emailData.subject,
+            sent_at: new Date().toISOString(),
+            status: "sent",
+          });
+        }
+      } else {
+        console.log("Resend client not available, skipping confirmation email");
       }
     } catch (emailError) {
       console.error("Failed to send confirmation email:", emailError);
