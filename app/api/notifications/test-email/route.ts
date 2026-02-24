@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
-import { registrationOpenEmail } from "@/lib/email/templates";
+import { registrationOpenEmail, notificationSignupConfirmationEmail } from "@/lib/email/templates";
 import type { Event } from "@/lib/supabase/types";
 
-// Test endpoint to preview the "Registration is Open" email
+// Test endpoint to preview emails
+// type: "registration_open" (default) or "signup_confirmation"
 export async function POST(request: NextRequest) {
   try {
-    const { email, name, eventId } = await request.json();
+    const { email, name, eventId, type = "registration_open" } = await request.json();
 
     if (!email || !eventId) {
       return NextResponse.json(
@@ -34,12 +35,10 @@ export async function POST(request: NextRequest) {
 
     const event = eventData as Event;
 
-    // Generate the email
-    const emailData = registrationOpenEmail(
-      name || "Test User",
-      email,
-      event
-    );
+    // Generate the email based on type
+    const emailData = type === "signup_confirmation"
+      ? notificationSignupConfirmationEmail(name || null, email, event)
+      : registrationOpenEmail(name || "Test User", email, event);
 
     const resend = getResendClient();
     if (!resend) {
@@ -61,7 +60,7 @@ export async function POST(request: NextRequest) {
     if (sendError) {
       console.error("Failed to send test email:", sendError);
       return NextResponse.json(
-        { error: "Failed to send email" },
+        { error: `Failed to send email: ${JSON.stringify(sendError)}` },
         { status: 500 }
       );
     }
