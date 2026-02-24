@@ -4,6 +4,44 @@ import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend"
 import { registrationOpenEmail } from "@/lib/email/templates";
 import type { Event, EventNotification } from "@/lib/supabase/types";
 
+// Clear all notifications for an event (for admin use)
+export async function DELETE(request: NextRequest) {
+  try {
+    const { eventId } = await request.json();
+
+    if (!eventId) {
+      return NextResponse.json(
+        { error: "Event ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = createAdminClient();
+
+    const { data, error } = await supabase
+      .from("event_notifications")
+      .delete()
+      .eq("event_id", eventId)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Cleared ${data?.length || 0} notification(s)`,
+      deleted: data?.length || 0,
+    });
+  } catch (error) {
+    console.error("Clear notifications error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to clear notifications" },
+      { status: 500 }
+    );
+  }
+}
+
 // Trigger instant notifications for an event when registration opens
 export async function POST(request: NextRequest) {
   try {
