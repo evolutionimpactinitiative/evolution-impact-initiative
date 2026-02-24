@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
+import { notificationSignupConfirmationEmail } from "@/lib/email/templates";
+import type { Event } from "@/lib/supabase/types";
 
 interface NotificationSignupRequest {
   eventId: string;
@@ -33,11 +36,13 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminClient();
 
     // Verify event exists and is scheduled
-    const { data: event, error: eventError } = await supabase
+    const { data: eventData, error: eventError } = await supabase
       .from("events")
-      .select("id, title, publish_at, status")
+      .select("*")
       .eq("id", eventId)
       .single();
+
+    const event = eventData as Event | null;
 
     if (eventError || !event) {
       return NextResponse.json(
@@ -80,6 +85,38 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error("Error inserting notification signup:", insertError);
       throw insertError;
+    }
+
+    // Send confirmation email
+    try {
+      const resend = getResendClient();
+      if (resend) {
+        const emailData = notificationSignupConfirmationEmail(
+          name || null,
+          email.toLowerCase(),
+          event
+        );
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: email.toLowerCase(),
+          replyTo: REPLY_TO_EMAIL,
+          subject: emailData.subject,
+          html: emailData.html,
+        });
+
+        // Log the email
+        await supabase.from("email_logs").insert({
+          event_id: eventId,
+          email_type: "notification_signup_confirmation",
+          recipient_email: email.toLowerCase(),
+          subject: emailData.subject,
+          sent_at: new Date().toISOString(),
+          status: "sent",
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError);
+      // Don't fail the signup, just log the error
     }
 
     // If user opted into newsletter, also add to mailing list

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Plus, Calendar, Users } from "lucide-react";
+import { Plus, Calendar, Users, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Event } from "@/lib/supabase/types";
 
@@ -34,6 +34,21 @@ export default async function EventsPage() {
     {} as Record<string, { confirmed: number; waitlisted: number }>
   );
 
+  // Get notification counts for events with scheduled publishing
+  const { data: notificationCounts } = await supabase
+    .from("event_notifications")
+    .select("event_id")
+    .in("event_id", eventIds.length > 0 ? eventIds : ["none"]);
+
+  type NotifCount = { event_id: string };
+  const notifCountsByEvent = ((notificationCounts as NotifCount[] | null) || []).reduce(
+    (acc, notif) => {
+      acc[notif.event_id] = (acc[notif.event_id] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
   const getStatusBadge = (event: Event) => {
     const now = new Date();
     const eventDate = new Date(event.date);
@@ -47,7 +62,15 @@ export default async function EventsPage() {
     if (eventDate < now) {
       return <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Past</span>;
     }
+    // Check if scheduled (publish_at is in the future)
+    if (event.publish_at && new Date(event.publish_at) > now) {
+      return <span className="px-2 py-0.5 text-xs font-medium bg-brand-blue text-white rounded-full">Coming Soon</span>;
+    }
     return <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Published</span>;
+  };
+
+  const isScheduled = (event: Event) => {
+    return event.publish_at && new Date(event.publish_at) > new Date();
   };
 
   const getCategoryColor = (category: string) => {
@@ -86,6 +109,8 @@ export default async function EventsPage() {
         <div className="space-y-3">
           {events.map((event) => {
             const counts = countsByEvent[event.id] || { confirmed: 0, waitlisted: 0 };
+            const notifCount = notifCountsByEvent[event.id] || 0;
+            const scheduled = isScheduled(event);
             return (
               <div
                 key={event.id}
@@ -124,16 +149,30 @@ export default async function EventsPage() {
                       <Users className="w-4 h-4 flex-shrink-0" />
                       {counts.confirmed}/{event.total_slots} registered
                     </div>
+                    {notifCount > 0 && (
+                      <div className="flex items-center gap-1 text-brand-blue">
+                        <Bell className="w-4 h-4 flex-shrink-0" />
+                        {notifCount} waiting
+                      </div>
+                    )}
                   </div>
 
                   {/* Venue */}
                   <p className="text-sm text-gray-500 truncate">{event.venue_name}</p>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2 pt-2 flex-wrap">
                     <Button variant="outline" size="sm" asChild className="flex-1">
                       <Link href={`/admin/events/${event.id}/registrations`}>Registrations</Link>
                     </Button>
+                    {(scheduled || notifCount > 0) && (
+                      <Button variant="outline" size="sm" asChild className="flex-1">
+                        <Link href={`/admin/events/${event.id}/notifications`}>
+                          <Bell className="w-3 h-3 mr-1" />
+                          Notify ({notifCount})
+                        </Link>
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" asChild className="flex-1">
                       <Link href={`/admin/events/${event.id}`}>Edit</Link>
                     </Button>
@@ -172,6 +211,12 @@ export default async function EventsPage() {
                           {counts.confirmed}/{event.total_slots} registered
                           {counts.waitlisted > 0 && ` (+${counts.waitlisted} waitlist)`}
                         </div>
+                        {notifCount > 0 && (
+                          <div className="flex items-center gap-1 text-brand-blue">
+                            <Bell className="w-4 h-4" />
+                            {notifCount} waiting for notification
+                          </div>
+                        )}
                       </div>
 
                       <p className="text-sm text-gray-500 mt-2 truncate">{event.venue_name}</p>
@@ -181,6 +226,14 @@ export default async function EventsPage() {
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/admin/events/${event.id}/registrations`}>Registrations</Link>
                       </Button>
+                      {(scheduled || notifCount > 0) && (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/admin/events/${event.id}/notifications`}>
+                            <Bell className="w-3 h-3 mr-1" />
+                            Notify ({notifCount})
+                          </Link>
+                        </Button>
+                      )}
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/admin/events/${event.id}`}>Edit</Link>
                       </Button>

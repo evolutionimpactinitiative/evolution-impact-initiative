@@ -77,57 +77,70 @@ export async function GET(request: NextRequest) {
 
       console.log(`Sending ${notifications.length} notifications for event: ${event.title}`);
 
-      // Send emails to each subscriber
-      for (const notification of notifications) {
-        try {
-          const emailData = registrationOpenEmail(
-            notification.name,
-            notification.email,
-            event
-          );
+      // Process notifications in batches to avoid rate limits
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < notifications.length; i += BATCH_SIZE) {
+        const batch = notifications.slice(i, i + BATCH_SIZE);
 
-          if (resend) {
-            const { error: sendError } = await resend.emails.send({
-              from: FROM_EMAIL,
-              to: notification.email,
-              replyTo: REPLY_TO_EMAIL,
-              subject: emailData.subject,
-              html: emailData.html,
-            });
+        // Send batch in parallel
+        await Promise.all(
+          batch.map(async (notification) => {
+            try {
+              const emailData = registrationOpenEmail(
+                notification.name,
+                notification.email,
+                event
+              );
 
-            if (sendError) {
-              console.error(`Failed to send to ${notification.email}:`, sendError);
+              if (resend) {
+                const { error: sendError } = await resend.emails.send({
+                  from: FROM_EMAIL,
+                  to: notification.email,
+                  replyTo: REPLY_TO_EMAIL,
+                  subject: emailData.subject,
+                  html: emailData.html,
+                });
+
+                if (sendError) {
+                  console.error(`Failed to send to ${notification.email}:`, sendError);
+                  totalFailed++;
+                  return;
+                }
+              } else {
+                console.log(`[DEV] Would send email to ${notification.email}`);
+              }
+
+              // Mark as notified
+              const { error: updateError } = await supabase
+                .from("event_notifications")
+                .update({ notified_at: now.toISOString() })
+                .eq("id", notification.id);
+
+              if (updateError) {
+                console.error(`Error updating notification ${notification.id}:`, updateError);
+              }
+
+              // Log the email
+              await supabase.from("email_logs").insert({
+                event_id: event.id,
+                email_type: "registration_open_notification",
+                recipient_email: notification.email,
+                subject: emailData.subject,
+                sent_at: now.toISOString(),
+                status: "sent",
+              });
+
+              totalNotified++;
+            } catch (err) {
+              console.error(`Error processing notification ${notification.id}:`, err);
               totalFailed++;
-              continue;
             }
-          } else {
-            console.log(`[DEV] Would send email to ${notification.email}`);
-          }
+          })
+        );
 
-          // Mark as notified
-          const { error: updateError } = await supabase
-            .from("event_notifications")
-            .update({ notified_at: now.toISOString() })
-            .eq("id", notification.id);
-
-          if (updateError) {
-            console.error(`Error updating notification ${notification.id}:`, updateError);
-          }
-
-          // Log the email
-          await supabase.from("email_logs").insert({
-            event_id: event.id,
-            email_type: "registration_open_notification",
-            recipient_email: notification.email,
-            subject: emailData.subject,
-            sent_at: now.toISOString(),
-            status: "sent",
-          });
-
-          totalNotified++;
-        } catch (err) {
-          console.error(`Error processing notification ${notification.id}:`, err);
-          totalFailed++;
+        // Small delay between batches to respect rate limits
+        if (i + BATCH_SIZE < notifications.length) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
     }
