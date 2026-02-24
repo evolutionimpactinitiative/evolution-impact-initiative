@@ -201,10 +201,10 @@ export function registrationConfirmationEmail(
     </p>
 
     <!-- Event Details Box -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: left;">
-          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Event Details
           </h3>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -214,7 +214,7 @@ export function registrationConfirmationEmail(
             <tr>
               <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
                 📅 ${eventDate}<br>
-                <span style="font-size: 13px; color: #666;">Please arrive 15 minutes early for check-in.</span>
+                <span style="font-size: 13px; color: #888;">Please arrive 15 minutes early for check-in.</span>
               </td>
             </tr>
             <tr>
@@ -238,10 +238,10 @@ export function registrationConfirmationEmail(
     </table>
 
     <!-- Children Registered -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
-        <td style="text-align: left;">
-          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Children Registered
           </h3>
           <ul style="margin: 0; padding-left: 20px; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.8;">
@@ -348,10 +348,10 @@ export function waitlistConfirmationEmail(
     </p>
 
     <!-- Event Details Box -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: left;">
-          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Event Details
           </h3>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -384,10 +384,10 @@ export function waitlistConfirmationEmail(
     </table>
 
     <!-- Children Registered -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
-        <td style="text-align: left;">
-          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Children Registered
           </h3>
           <ul style="margin: 0; padding-left: 20px; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.8;">
@@ -477,10 +477,10 @@ export function waitlistPromotionEmail(
     </p>
 
     <!-- Confirmed Banner -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.green}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 2px solid ${BRAND.green}; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 20px; text-align: center;">
-          <p style="margin: 0; font-family: 'Montserrat', sans-serif; font-size: 18px; color: #ffffff; font-weight: 700;">
+          <p style="margin: 0; font-family: 'Montserrat', sans-serif; font-size: 18px; color: ${BRAND.green}; font-weight: 700;">
             ✓ Your registration is now confirmed!
           </p>
         </td>
@@ -488,10 +488,10 @@ export function waitlistPromotionEmail(
     </table>
 
     <!-- Event Details Box -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: left;">
-          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Event Details
           </h3>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -501,7 +501,7 @@ export function waitlistPromotionEmail(
             <tr>
               <td style="padding-bottom: 12px; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
                 📅 ${eventDate}<br>
-                <span style="font-size: 13px; color: #666;">Please arrive 15 minutes early for check-in.</span>
+                <span style="font-size: 13px; color: #888;">Please arrive 15 minutes early for check-in.</span>
               </td>
             </tr>
             <tr>
@@ -781,10 +781,10 @@ export function attendanceConfirmationEmail(
     </p>
 
     <!-- Event Details Box -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: left;">
-          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Event Details
           </h3>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -900,10 +900,10 @@ export function donationReceiptEmail(
     </p>
 
     <!-- Donation Details Box -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: left;">
-          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Donation Receipt
           </h3>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -1023,10 +1023,10 @@ export function welcomeSubscriberEmail(
     </p>
 
     <!-- What is Small Acts -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: left;">
-          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             What is Small Acts?
           </h3>
           <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
@@ -1054,19 +1054,19 @@ export function welcomeSubscriberEmail(
     </table>
 
     <!-- Join WhatsApp -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #25D366; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 2px solid #25D366; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: center;">
-          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #ffffff; font-weight: 700;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Join Our WhatsApp Community
           </h3>
-          <p style="margin: 0 0 15px; font-family: 'Inter', sans-serif; font-size: 14px; color: #ffffff; line-height: 1.6;">
+          <p style="margin: 0 0 15px; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
             Connect with other community members and stay in the loop!
           </p>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
             <tr>
-              <td style="border-radius: 4px; background: #ffffff; text-align: center;">
-                <a href="https://chat.whatsapp.com/Ezf3U5WdlqC74h00tvS3uB" target="_blank" style="font-family: 'Montserrat', sans-serif; font-size: 14px; text-decoration: none; padding: 12px 24px; color: #25D366; display: block; font-weight: 700; text-transform: uppercase;">
+              <td style="border-radius: 4px; background: #25D366; text-align: center;">
+                <a href="https://chat.whatsapp.com/Ezf3U5WdlqC74h00tvS3uB" target="_blank" style="font-family: 'Montserrat', sans-serif; font-size: 14px; text-decoration: none; padding: 12px 24px; color: #ffffff; display: block; font-weight: 700; text-transform: uppercase;">
                   Join WhatsApp Group
                 </a>
               </td>
@@ -1137,10 +1137,10 @@ export function registrationOpenEmail(
     </p>
 
     <!-- Event Details Box -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: left;">
-          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Event Details
           </h3>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -1173,11 +1173,11 @@ export function registrationOpenEmail(
     </table>
 
     <!-- Availability Notice -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #fff4e5; border: 1px solid #ffa500; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
-        <td style="padding: 20px; text-align: center;">
-          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #b45309; line-height: 1.6;">
-            <strong>⚡ Spaces are limited!</strong><br>
+        <td style="padding: 20px; text-align: left;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; font-style: italic;">Spaces are limited!</h3>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
             This event has ${event.total_slots} spots available. Register early to secure your place.
           </p>
         </td>
@@ -1247,10 +1247,10 @@ export function notificationSignupConfirmationEmail(
     </p>
 
     <!-- Event Details Box -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
         <td style="padding: 25px; text-align: left;">
-          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          <h3 style="margin: 0 0 15px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Event Details
           </h3>
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -1283,12 +1283,12 @@ export function notificationSignupConfirmationEmail(
     </table>
 
     <!-- Registration Opens -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #fff4e5; border: 1px solid #ffa500; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
-        <td style="padding: 20px; text-align: center;">
-          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #b45309; line-height: 1.6;">
-            <strong>🔔 Registration opens:</strong><br>
-            ${publishDate}
+        <td style="padding: 20px; text-align: left;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; font-style: italic;">Registration Opens</h3>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
+            🔔 ${publishDate}
           </p>
         </td>
       </tr>
@@ -1372,12 +1372,10 @@ export function eventPhotosEmail(
     </table>
 
     <!-- Share Prompt -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 8px; margin-bottom: 25px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 25px;">
       <tr>
-        <td style="padding: 25px; text-align: center;">
-          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-            Share the Moment
-          </h3>
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; font-style: italic;">Share the Moment</h3>
           <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: #555555; line-height: 1.6;">
             Feel free to share your favourite photos on social media!<br>
             Tag us <strong>@evolutionimpactinitiative</strong> so we can see your posts.

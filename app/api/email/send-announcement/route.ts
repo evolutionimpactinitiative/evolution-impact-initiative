@@ -297,10 +297,10 @@ function generateAnnouncementEmail(event: Event, message: string): string {
                   <div style="margin: 0 0 25px;">${formattedMessage}</div>
 
                   <!-- Event Details Box -->
-                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8fafc; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e5e7eb;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border-radius: 12px; margin-bottom: 25px; border: 1px solid #e5e7eb;">
                     <tr>
                       <td style="padding: 25px;">
-                        <h3 style="margin: 0 0 15px; font-size: 14px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                        <h3 style="margin: 0 0 15px; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
                           Event Details
                         </h3>
                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
