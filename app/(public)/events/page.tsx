@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "Upcoming and previous community events, workshops and programmes in Medway.",
 };
 
-type RegistrationStatus = "open" | "waitlist" | "full" | "closed";
+type RegistrationStatus = "open" | "waitlist" | "full" | "closed" | "scheduled";
 
 interface EventWithStatus extends Event {
   registrationStatus: RegistrationStatus;
@@ -102,13 +102,18 @@ export default async function EventsPage() {
   }, {} as Record<string, { confirmed: number; waitlisted: number }>);
 
   // Add registration status to upcoming events
+  const now = new Date();
   const upcomingEvents: EventWithStatus[] = upcomingEventsRaw.map((event) => {
     const counts = regCountsByEvent[event.id] || { confirmed: 0, waitlisted: 0 };
     const spotsRemaining = Math.max(0, event.total_slots - counts.confirmed);
     const waitlistRemaining = Math.max(0, event.waitlist_slots - counts.waitlisted);
 
     let registrationStatus: RegistrationStatus;
-    if (event.registration_status === "closed") {
+
+    // Check if event has a scheduled publish date in the future
+    if (event.publish_at && new Date(event.publish_at) > now) {
+      registrationStatus = "scheduled";
+    } else if (event.registration_status === "closed") {
       registrationStatus = "closed";
     } else if (spotsRemaining > 0) {
       registrationStatus = "open";

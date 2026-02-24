@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Calendar, MapPin, Clock, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type RegistrationStatus = "open" | "waitlist" | "full" | "closed";
+type RegistrationStatus = "open" | "waitlist" | "full" | "closed" | "scheduled";
 
 interface EventCardProps {
   title: string;
@@ -64,6 +64,11 @@ export function EventCard({
           text: "Registration Closed",
           bgColor: "bg-gray-500",
         };
+      case "scheduled":
+        return {
+          text: "Coming Soon",
+          bgColor: "bg-brand-blue",
+        };
       case "open":
       default:
         if (spotsRemaining !== undefined && spotsRemaining <= 5 && spotsRemaining > 0) {
@@ -88,6 +93,8 @@ export function EventCard({
         return "Join Waitlist";
       case "closed":
         return "Registration Closed";
+      case "scheduled":
+        return "Get Notified";
       default:
         return "Register Now";
     }
