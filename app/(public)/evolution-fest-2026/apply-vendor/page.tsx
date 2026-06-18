@@ -19,6 +19,9 @@ export const metadata: Metadata = {
     "Apply to trade at Evolution Fest 2026 — a free family festival on Saturday 25 July 2026 in Medway. Food, drinks, sweet treats, retail, and community organisations welcome.",
 };
 
+// Live capacity per category — never cache
+export const revalidate = 0;
+
 interface VendorCountRow {
   category: string;
   active_total: number;

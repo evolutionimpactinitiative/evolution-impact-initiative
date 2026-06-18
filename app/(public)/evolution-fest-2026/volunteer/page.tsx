@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     "Volunteer at Evolution Fest 2026 — Saturday 25 July 2026, Strood Youth Centre. Setup, AM, PM and packdown shifts available. T-shirt and refreshments provided.",
 };
 
+// Reflects live event status — never cache
+export const revalidate = 0;
+
 export default async function VolunteerPage() {
   const supabase = createAdminClient();
 

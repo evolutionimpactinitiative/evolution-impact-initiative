@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     "Sponsor Evolution Fest 2026 and the Back to School campaign — premium tiers, community ladder (£50–£750), and activity zones (from £300).",
 };
 
+// Live capacity for capped tiers (Title Partner + activity zones)
+export const revalidate = 0;
+
 export default async function SponsorPage() {
   const supabase = createAdminClient();
 

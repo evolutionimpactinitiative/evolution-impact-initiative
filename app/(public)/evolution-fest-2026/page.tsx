@@ -41,6 +41,9 @@ export const metadata: Metadata = {
     "A free family festival celebrating one year of Evolution Impact Initiative. Saturday 25 July 2026, 12pm–6pm at Strood Youth Centre. Get free tickets, become a vendor, sponsor or volunteer.",
 };
 
+// Reflects live event status + ticket availability + sponsor wall on every request
+export const revalidate = 0;
+
 interface VendorCountRow {
   category: string;
   active_total: number;
@@ -53,12 +56,18 @@ export default async function FestivalHubPage() {
   // we degrade gracefully and use FESTIVAL constants only.
   const { data: eventRow } = await supabase
     .from("events")
-    .select("id, status, total_slots")
+    .select("id, status, total_slots, publish_at")
     .eq("slug", FESTIVAL.slug)
     .maybeSingle();
 
   const eventId = eventRow?.id ?? null;
-  const isPublished = eventRow?.status === "published";
+  const now = new Date();
+  const publishAt = eventRow?.publish_at
+    ? new Date(eventRow.publish_at as string)
+    : null;
+  const isScheduled = !!publishAt && publishAt > now;
+  // Treat as "live" only when status=published AND publish_at has passed (or is null)
+  const isPublished = eventRow?.status === "published" && !isScheduled;
 
   // Ticket availability — count registered attendees if event exists
   let ticketsRemaining: number = FESTIVAL.totalTickets;
@@ -124,6 +133,21 @@ export default async function FestivalHubPage() {
   const ticketsCtaHref = isPublished
     ? `/events/${FESTIVAL.slug}/register`
     : `/${FESTIVAL.slug}#tickets`;
+
+  const scheduledLabel = publishAt
+    ? publishAt.toLocaleString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+  const ticketsButtonLabel = isPublished
+    ? "Book free tickets"
+    : isScheduled && scheduledLabel
+      ? `Tickets open ${scheduledLabel}`
+      : "Tickets opening soon";
 
   return (
     <>
@@ -293,7 +317,7 @@ export default async function FestivalHubPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button asChild size="lg">
                   <Link href={ticketsCtaHref}>
-                    {isPublished ? "Book free tickets" : "Tickets opening soon"}
+                    {ticketsButtonLabel}
                     <Ticket className="h-4 w-4 ml-2" />
                   </Link>
                 </Button>
