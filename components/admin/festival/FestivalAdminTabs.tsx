@@ -9,6 +9,7 @@ const TABS = [
   { href: "/admin/festival/sponsors", label: "Sponsors" },
   { href: "/admin/festival/volunteers", label: "Volunteers" },
   { href: "/admin/festival/check-in", label: "Check-in" },
+  { href: "/admin/festival/test-ticket-email", label: "Test email" },
 ];
 
 export function FestivalAdminTabs() {
