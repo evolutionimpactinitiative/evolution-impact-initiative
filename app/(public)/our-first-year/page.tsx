@@ -202,7 +202,7 @@ export default function OurFirstYearPage() {
                 variant="outline"
                 className="border-white/30 text-white hover:bg-white hover:text-brand-dark"
               >
-                <Link href="/donate">Donate to the campaign</Link>
+                <Link href="/back-to-school">Donate to the campaign</Link>
               </Button>
             </div>
 

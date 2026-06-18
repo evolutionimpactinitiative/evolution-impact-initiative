@@ -409,7 +409,7 @@ export default async function FestivalHubPage() {
             <FestivalProgressBar raisedPence={raisedPence} />
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Button asChild className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white">
-                <Link href="/donate">
+                <Link href="/back-to-school">
                   Donate to the campaign
                   <Heart className="h-4 w-4 ml-2" />
                 </Link>

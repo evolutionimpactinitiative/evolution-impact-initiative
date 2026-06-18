@@ -6,7 +6,15 @@ import { Loader2, Heart, Check } from "lucide-react";
 
 const DONATION_AMOUNTS = [5, 10, 25, 50, 100];
 
-export function DonationForm() {
+interface DonationFormProps {
+  /**
+   * Campaign tag. Use "back-to-school-2026" to count toward the Back to
+   * School goal. Defaults to "general".
+   */
+  campaign?: string;
+}
+
+export function DonationForm({ campaign = "general" }: DonationFormProps = {}) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(25);
   const [customAmount, setCustomAmount] = useState("");
   const [frequency, setFrequency] = useState<"one-time" | "monthly">("one-time");
@@ -53,6 +61,7 @@ export function DonationForm() {
           amount,
           frequency,
           giftAid,
+          campaign,
           donorEmail: email || undefined,
           donorName: name || undefined,
         }),

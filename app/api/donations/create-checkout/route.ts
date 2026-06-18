@@ -5,7 +5,8 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount, frequency, giftAid, donorEmail, donorName } = await request.json();
+    const { amount, frequency, giftAid, donorEmail, donorName, campaign } =
+      await request.json();
 
     // Validate amount
     const amountInPence = Math.round(parseFloat(amount) * 100);
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
       donor_name: donorName || "",
       gift_aid: giftAid ? "yes" : "no",
       frequency: frequency || "one-time",
+      campaign: typeof campaign === "string" && campaign.trim() ? campaign.trim() : "general",
     };
 
     let session;

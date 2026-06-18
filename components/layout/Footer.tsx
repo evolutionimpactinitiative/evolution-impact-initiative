@@ -116,6 +116,14 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  href="/back-to-school"
+                  className="text-white/70 hover:text-brand-accent transition-colors"
+                >
+                  Back to School campaign
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/our-first-year"
                   className="text-white/70 hover:text-brand-accent transition-colors"
                 >
