@@ -39,17 +39,31 @@ function holderTypeColor(type: FestivalTicket["holder_type"]): string {
   return BRAND.dark;
 }
 
-async function renderTicketBlock(ticket: FestivalTicket): Promise<string> {
+export interface FestivalTicketAttachment {
+  filename: string;
+  content: string; // base64-encoded PNG
+  contentId: string; // referenced from HTML as cid:<contentId>
+}
+
+async function renderTicketBlock(
+  ticket: FestivalTicket,
+): Promise<{ html: string; attachment: FestivalTicketAttachment }> {
   const url = ticketUrl(ticket.ticket_code);
-  const qr = await QRCode.toDataURL(url, {
-    width: 240,
+  const dataUrl = await QRCode.toDataURL(url, {
+    width: 480,
     margin: 1,
     errorCorrectionLevel: "M",
     color: { dark: BRAND.dark, light: "#ffffff" },
   });
+  // dataUrl is "data:image/png;base64,XXXX" — strip the prefix so we can
+  // attach as a real inline image (data: URLs are blocked by Gmail et al).
+  const base64 = dataUrl.split(",")[1] ?? "";
+  const contentId = `qr-${ticket.ticket_code}`;
+  const filename = `ticket-${ticket.ticket_code}.png`;
+
   const badgeColor = holderTypeColor(ticket.holder_type);
 
-  return `
+  const html = `
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 16px;">
       <tr>
         <td style="padding: 20px;">
@@ -73,7 +87,7 @@ async function renderTicketBlock(ticket: FestivalTicket): Promise<string> {
                 </a>
               </td>
               <td width="140" style="vertical-align: middle; text-align: right;">
-                <img src="${qr}" width="140" height="140" alt="Ticket QR code" style="display: block; border: 1px solid #e5e7eb; border-radius: 8px;" />
+                <img src="cid:${contentId}" width="140" height="140" alt="Ticket QR code" style="display: block; border: 1px solid #e5e7eb; border-radius: 8px;" />
               </td>
             </tr>
           </table>
@@ -81,6 +95,11 @@ async function renderTicketBlock(ticket: FestivalTicket): Promise<string> {
       </tr>
     </table>
   `;
+
+  return {
+    html,
+    attachment: { filename, content: base64, contentId },
+  };
 }
 
 function calendarLink(): string {
@@ -106,13 +125,21 @@ interface FestivalTicketEmailArgs {
 
 /**
  * One combined email per registration with all N tickets (each with its own QR).
+ * Returns CID-referenced attachments so Gmail / Outlook / Apple Mail all render
+ * the QR images inline (data: URLs would be stripped by most clients).
  */
 export async function festivalTicketsEmail({
   registration,
   event,
   tickets,
-}: FestivalTicketEmailArgs): Promise<{ subject: string; html: string }> {
-  const ticketBlocks = await Promise.all(tickets.map(renderTicketBlock));
+}: FestivalTicketEmailArgs): Promise<{
+  subject: string;
+  html: string;
+  attachments: FestivalTicketAttachment[];
+}> {
+  const rendered = await Promise.all(tickets.map(renderTicketBlock));
+  const ticketBlocks = rendered.map((r) => r.html);
+  const attachments = rendered.map((r) => r.attachment);
   const ticketCount = tickets.length;
 
   const ticketWord = ticketCount === 1 ? "ticket" : "tickets";
@@ -198,6 +225,7 @@ export async function festivalTicketsEmail({
   return {
     subject: `Your ${ticketWord} for ${FESTIVAL.title} 🎉`,
     html: emailWrapper(content),
+    attachments,
   };
 }
 

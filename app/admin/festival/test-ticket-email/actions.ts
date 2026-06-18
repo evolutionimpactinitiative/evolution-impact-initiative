@@ -167,6 +167,11 @@ export async function sendTestTicketEmail(
       replyTo: REPLY_TO_EMAIL,
       subject: `[TEST] ${emailData.subject}`,
       html: emailData.html,
+      attachments: emailData.attachments.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentId: a.contentId,
+      })),
     });
     if (sendErr) {
       return {

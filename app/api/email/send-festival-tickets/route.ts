@@ -116,6 +116,11 @@ export async function POST(request: NextRequest) {
       replyTo: REPLY_TO_EMAIL,
       subject: emailData.subject,
       html: emailData.html,
+      attachments: emailData.attachments.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentId: a.contentId,
+      })),
     });
 
     if (sendErr) {
