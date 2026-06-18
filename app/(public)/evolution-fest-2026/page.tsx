@@ -225,18 +225,39 @@ export default async function FestivalHubPage() {
               </div>
             </div>
 
-            {/* Event flyer */}
+            {/* Event flyer · polaroid */}
             {heroImage && (
-              <div className="lg:col-span-5">
-                <div className="relative aspect-[4/5] w-full max-w-md mx-auto lg:max-w-none rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 rotate-1 hover:rotate-0 transition-transform duration-500">
-                  <Image
-                    src={heroImage}
-                    alt="Evolution Fest 2026"
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 1024px) 90vw, 40vw"
-                    priority
+              <div className="lg:col-span-5 flex justify-center lg:justify-end">
+                <div className="relative w-full max-w-xs sm:max-w-sm -rotate-2 hover:rotate-0 transition-transform duration-500">
+                  {/* Tape decoration */}
+                  <div
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-amber-100/90 z-20"
+                    style={{
+                      transform: "translateX(-50%) rotate(-2deg)",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                    }}
                   />
+                  <div
+                    className="bg-white p-3 pb-4 shadow-2xl"
+                    style={{
+                      boxShadow:
+                        "0 4px 20px rgba(0,0,0,0.25), 0 12px 40px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                      <Image
+                        src={heroImage}
+                        alt="Evolution Fest 2026"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 80vw, 400px"
+                        priority
+                      />
+                    </div>
+                    <p className="font-heading font-bold text-brand-dark text-sm text-center mt-3">
+                      Evolution Fest 2026
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
