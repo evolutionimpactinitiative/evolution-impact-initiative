@@ -29,6 +29,14 @@ export interface SurveyQuestion {
   options?: string[] | { min: number; max: number }; // For choice questions or rating scale
 }
 
+// Festival 2026: volunteer availability slots
+export interface VolunteerAvailability {
+  setup?: boolean;
+  am?: boolean;
+  pm?: boolean;
+  packdown?: boolean;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -648,6 +656,325 @@ export interface Database {
           created_at?: string;
         };
       };
+      festival_steward_tokens: {
+        Row: {
+          id: string;
+          event_id: string;
+          token: string;
+          label: string;
+          created_by: string | null;
+          revoked_at: string | null;
+          last_used_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          token: string;
+          label: string;
+          created_by?: string | null;
+          revoked_at?: string | null;
+          last_used_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          token?: string;
+          label?: string;
+          created_by?: string | null;
+          revoked_at?: string | null;
+          last_used_at?: string | null;
+          created_at?: string;
+        };
+      };
+      festival_tickets: {
+        Row: {
+          id: string;
+          registration_id: string;
+          event_id: string;
+          ticket_code: string;
+          holder_name: string | null;
+          holder_type: "lead" | "adult" | "child";
+          display_order: number;
+          checked_in_at: string | null;
+          checked_in_by_token_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          registration_id: string;
+          event_id: string;
+          ticket_code: string;
+          holder_name?: string | null;
+          holder_type: "lead" | "adult" | "child";
+          display_order?: number;
+          checked_in_at?: string | null;
+          checked_in_by_token_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          registration_id?: string;
+          event_id?: string;
+          ticket_code?: string;
+          holder_name?: string | null;
+          holder_type?: "lead" | "adult" | "child";
+          display_order?: number;
+          checked_in_at?: string | null;
+          checked_in_by_token_id?: string | null;
+          created_at?: string;
+        };
+      };
+      festival_vendors: {
+        Row: {
+          id: string;
+          event_id: string;
+          business_name: string;
+          contact_name: string;
+          email: string;
+          phone: string;
+          category: "food" | "drinks" | "sweet_treats" | "retail" | "community_org";
+          description: string | null;
+          what_selling: string | null;
+          social_handles: Record<string, string>;
+          website: string | null;
+          power_needed: boolean;
+          power_notes: string | null;
+          gazebo_size: string | null;
+          has_public_liability: boolean;
+          has_food_hygiene_rating: boolean;
+          food_hygiene_score: number | null;
+          has_risk_assessment: boolean;
+          status: "pending_payment" | "pending_review" | "approved" | "rejected" | "cancelled" | "waitlisted";
+          contribution_amount: number;
+          stripe_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          paid_at: string | null;
+          refunded_at: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          admin_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          business_name: string;
+          contact_name: string;
+          email: string;
+          phone: string;
+          category: "food" | "drinks" | "sweet_treats" | "retail" | "community_org";
+          description?: string | null;
+          what_selling?: string | null;
+          social_handles?: Record<string, string>;
+          website?: string | null;
+          power_needed?: boolean;
+          power_notes?: string | null;
+          gazebo_size?: string | null;
+          has_public_liability?: boolean;
+          has_food_hygiene_rating?: boolean;
+          food_hygiene_score?: number | null;
+          has_risk_assessment?: boolean;
+          status?: "pending_payment" | "pending_review" | "approved" | "rejected" | "cancelled" | "waitlisted";
+          contribution_amount?: number;
+          stripe_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          paid_at?: string | null;
+          refunded_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          business_name?: string;
+          contact_name?: string;
+          email?: string;
+          phone?: string;
+          category?: "food" | "drinks" | "sweet_treats" | "retail" | "community_org";
+          description?: string | null;
+          what_selling?: string | null;
+          social_handles?: Record<string, string>;
+          website?: string | null;
+          power_needed?: boolean;
+          power_notes?: string | null;
+          gazebo_size?: string | null;
+          has_public_liability?: boolean;
+          has_food_hygiene_rating?: boolean;
+          food_hygiene_score?: number | null;
+          has_risk_assessment?: boolean;
+          status?: "pending_payment" | "pending_review" | "approved" | "rejected" | "cancelled" | "waitlisted";
+          contribution_amount?: number;
+          stripe_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          paid_at?: string | null;
+          refunded_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      festival_sponsors: {
+        Row: {
+          id: string;
+          event_id: string;
+          organisation_name: string;
+          contact_name: string;
+          email: string;
+          phone: string | null;
+          path: "premium" | "community" | "activity" | "custom";
+          tier_key: string;
+          display_name: string | null;
+          logo_url: string | null;
+          website: string | null;
+          message: string | null;
+          amount_pledged: number;
+          status: "pending_payment" | "pending_review" | "confirmed" | "cancelled" | "refunded";
+          stripe_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          paid_at: string | null;
+          refunded_at: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          admin_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          organisation_name: string;
+          contact_name: string;
+          email: string;
+          phone?: string | null;
+          path: "premium" | "community" | "activity" | "custom";
+          tier_key: string;
+          display_name?: string | null;
+          logo_url?: string | null;
+          website?: string | null;
+          message?: string | null;
+          amount_pledged?: number;
+          status?: "pending_payment" | "pending_review" | "confirmed" | "cancelled" | "refunded";
+          stripe_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          paid_at?: string | null;
+          refunded_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          organisation_name?: string;
+          contact_name?: string;
+          email?: string;
+          phone?: string | null;
+          path?: "premium" | "community" | "activity" | "custom";
+          tier_key?: string;
+          display_name?: string | null;
+          logo_url?: string | null;
+          website?: string | null;
+          message?: string | null;
+          amount_pledged?: number;
+          status?: "pending_payment" | "pending_review" | "confirmed" | "cancelled" | "refunded";
+          stripe_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          paid_at?: string | null;
+          refunded_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      festival_volunteers: {
+        Row: {
+          id: string;
+          event_id: string;
+          full_name: string;
+          email: string;
+          phone: string;
+          is_over_18: boolean;
+          date_of_birth: string | null;
+          availability: VolunteerAvailability;
+          t_shirt_size: "XS" | "S" | "M" | "L" | "XL" | "XXL" | null;
+          dietary_requirements: string | null;
+          accessibility_needs: string | null;
+          skills: string | null;
+          prior_experience: string | null;
+          emergency_contact_name: string;
+          emergency_contact_phone: string;
+          consent_to_contact: boolean;
+          status: "pending" | "approved" | "assigned" | "declined" | "cancelled";
+          assigned_role: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          admin_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          full_name: string;
+          email: string;
+          phone: string;
+          is_over_18?: boolean;
+          date_of_birth?: string | null;
+          availability?: VolunteerAvailability;
+          t_shirt_size?: "XS" | "S" | "M" | "L" | "XL" | "XXL" | null;
+          dietary_requirements?: string | null;
+          accessibility_needs?: string | null;
+          skills?: string | null;
+          prior_experience?: string | null;
+          emergency_contact_name: string;
+          emergency_contact_phone: string;
+          consent_to_contact?: boolean;
+          status?: "pending" | "approved" | "assigned" | "declined" | "cancelled";
+          assigned_role?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          full_name?: string;
+          email?: string;
+          phone?: string;
+          is_over_18?: boolean;
+          date_of_birth?: string | null;
+          availability?: VolunteerAvailability;
+          t_shirt_size?: "XS" | "S" | "M" | "L" | "XL" | "XXL" | null;
+          dietary_requirements?: string | null;
+          accessibility_needs?: string | null;
+          skills?: string | null;
+          prior_experience?: string | null;
+          emergency_contact_name?: string;
+          emergency_contact_phone?: string;
+          consent_to_contact?: boolean;
+          status?: "pending" | "approved" | "assigned" | "declined" | "cancelled";
+          assigned_role?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Functions: {
       get_event_registration_count: {
@@ -663,6 +990,24 @@ export interface Database {
         Returns: {
           slots_available: number;
           waitlist_available: number;
+        }[];
+      };
+      get_festival_headcount: {
+        Args: { p_event_id: string };
+        Returns: {
+          total_tickets: number;
+          checked_in: number;
+          pending: number;
+        }[];
+      };
+      get_festival_vendor_counts: {
+        Args: { p_event_id: string };
+        Returns: {
+          category: "food" | "drinks" | "sweet_treats" | "retail" | "community_org";
+          pending_payment: number;
+          pending_review: number;
+          approved: number;
+          active_total: number;
         }[];
       };
     };
@@ -699,3 +1044,21 @@ export type SurveyResponseInsert = Database["public"]["Tables"]["survey_response
 // Event notification types (for scheduled publishing)
 export type EventNotification = Database["public"]["Tables"]["event_notifications"]["Row"];
 export type EventNotificationInsert = Database["public"]["Tables"]["event_notifications"]["Insert"];
+
+// Festival 2026 types
+export type FestivalTicket = Database["public"]["Tables"]["festival_tickets"]["Row"];
+export type FestivalTicketInsert = Database["public"]["Tables"]["festival_tickets"]["Insert"];
+export type FestivalVendor = Database["public"]["Tables"]["festival_vendors"]["Row"];
+export type FestivalVendorInsert = Database["public"]["Tables"]["festival_vendors"]["Insert"];
+export type FestivalSponsor = Database["public"]["Tables"]["festival_sponsors"]["Row"];
+export type FestivalSponsorInsert = Database["public"]["Tables"]["festival_sponsors"]["Insert"];
+export type FestivalVolunteer = Database["public"]["Tables"]["festival_volunteers"]["Row"];
+export type FestivalVolunteerInsert = Database["public"]["Tables"]["festival_volunteers"]["Insert"];
+export type FestivalStewardToken = Database["public"]["Tables"]["festival_steward_tokens"]["Row"];
+export type FestivalStewardTokenInsert = Database["public"]["Tables"]["festival_steward_tokens"]["Insert"];
+
+export type FestivalVendorCategory = FestivalVendor["category"];
+export type FestivalVendorStatus = FestivalVendor["status"];
+export type FestivalSponsorPath = FestivalSponsor["path"];
+export type FestivalSponsorStatus = FestivalSponsor["status"];
+export type FestivalVolunteerStatus = FestivalVolunteer["status"];

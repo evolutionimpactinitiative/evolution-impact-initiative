@@ -19,6 +19,7 @@ import {
   ChevronRight,
   UserPlus,
   ClipboardList,
+  Sparkles,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -29,6 +30,7 @@ interface AdminSidebarProps {
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Events", href: "/admin/events", icon: Calendar },
+  { name: "Festival 2026", href: "/admin/festival/vendors", icon: Sparkles },
   { name: "Registrations", href: "/admin/registrations", icon: Users },
   { name: "Donations", href: "/admin/donations", icon: Heart },
   { name: "Subscribers", href: "/admin/subscribers", icon: UserPlus },

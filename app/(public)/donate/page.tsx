@@ -4,6 +4,7 @@ import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { DonationForm } from "@/components/donations/DonationForm";
 import { Button } from "@/components/ui/button";
+import { FestivalPromoBanner } from "@/components/festival/FestivalPromoBanner";
 import { fullDonationTiers } from "@/lib/constants";
 import { Suspense } from "react";
 import { Heart, Building, BarChart3 } from "lucide-react";
@@ -21,6 +22,13 @@ export default function DonatePage() {
         title="Your Generosity Powers Real Change"
         subtitle="Every donation, no matter the size, directly supports our work in Medway."
       />
+
+      {/* Festival cross-promo */}
+      <section className="bg-brand-pale/40 pt-10 pb-2">
+        <div className="container mx-auto px-4">
+          <FestivalPromoBanner variant="sponsor" />
+        </div>
+      </section>
 
       {/* Intro & Donation Form */}
       <section id="donate-form" className="bg-white py-16 md:py-24">

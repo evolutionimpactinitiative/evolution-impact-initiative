@@ -59,8 +59,11 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Button asChild>
-            <Link href="/get-involved">Get Involved</Link>
+          <Button
+            asChild
+            className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
+          >
+            <Link href="/evolution-fest-2026">Fest 2026 · Free tickets</Link>
           </Button>
         </div>
 
@@ -93,7 +96,18 @@ export function Navbar() {
                     </Link>
                   ))}
                 </nav>
-                <Button asChild className="w-full mt-4">
+                <Button
+                  asChild
+                  className="w-full mt-4 bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
+                >
+                  <Link
+                    href="/evolution-fest-2026"
+                    onClick={() => setOpen(false)}
+                  >
+                    Fest 2026 · Free tickets
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
                   <Link href="/get-involved" onClick={() => setOpen(false)}>
                     Get Involved
                   </Link>

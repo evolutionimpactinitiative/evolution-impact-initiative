@@ -5,6 +5,7 @@ import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { Button } from "@/components/ui/button";
 import { PolaroidCard } from "@/components/shared/PolaroidCard";
+import { FestivalPromoBanner } from "@/components/festival/FestivalPromoBanner";
 import { Users, Building2, CheckCircle } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -53,6 +54,13 @@ export default function GetInvolvedPage() {
         title="Your Time. Your Skills. Real Impact."
         subtitle="There are many ways to support what we do, and none of them require a cape."
       />
+
+      {/* Festival cross-promo */}
+      <section className="bg-brand-pale/40 pt-10 pb-2">
+        <div className="container mx-auto px-4">
+          <FestivalPromoBanner variant="volunteer" />
+        </div>
+      </section>
 
       {/* Volunteer With Us */}
       <section className="bg-white py-16 md:py-24">

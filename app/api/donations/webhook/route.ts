@@ -3,6 +3,10 @@ import { getStripeClient, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
 import { donationReceiptEmail } from "@/lib/email/templates";
+import {
+  sponsorConfirmedEmail,
+  vendorApplicationReceivedEmail,
+} from "@/lib/email/festival-templates";
 import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -42,10 +46,131 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+        const sessionMetadata = session.metadata || {};
+
+        // Branch: festival sponsor payment
+        if (sessionMetadata.kind === "festival_sponsor") {
+          const sponsorId = sessionMetadata.sponsor_id;
+          if (!sponsorId) {
+            console.warn("[webhook] festival_sponsor session missing sponsor_id");
+            break;
+          }
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: updated } = await (supabase as any)
+            .from("festival_sponsors")
+            .update({
+              status: "confirmed",
+              paid_at: new Date().toISOString(),
+              stripe_payment_intent_id: session.payment_intent as string,
+            })
+            .eq("id", sponsorId)
+            .select()
+            .single();
+
+          if (!updated) {
+            console.warn(`[webhook] sponsor ${sponsorId} not found after payment`);
+            break;
+          }
+
+          try {
+            const resend = getResendClient();
+            if (resend) {
+              const { subject, html } = sponsorConfirmedEmail({
+                sponsor: {
+                  organisation_name: updated.organisation_name,
+                  contact_name: updated.contact_name,
+                  path: updated.path,
+                  tier_key: updated.tier_key,
+                  amount_pledged: updated.amount_pledged,
+                  display_name: updated.display_name,
+                },
+              });
+              await resend.emails.send({
+                from: FROM_EMAIL,
+                to: updated.email,
+                replyTo: REPLY_TO_EMAIL,
+                subject,
+                html,
+              });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (supabase as any).from("email_logs").insert({
+                email_type: "sponsor_confirmed",
+                recipient_email: updated.email,
+                subject,
+                sent_at: new Date().toISOString(),
+                status: "sent",
+              });
+            }
+          } catch (emailErr) {
+            console.error("[webhook] sponsor email send error:", emailErr);
+          }
+          break;
+        }
+
+        // Branch: festival vendor payment
+        if (sessionMetadata.kind === "festival_vendor") {
+          const vendorId = sessionMetadata.vendor_id;
+          if (!vendorId) {
+            console.warn("[webhook] festival_vendor session missing vendor_id");
+            break;
+          }
+
+          // Mark the vendor application as paid and move to review queue
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: updated } = await (supabase as any)
+            .from("festival_vendors")
+            .update({
+              status: "pending_review",
+              paid_at: new Date().toISOString(),
+              stripe_payment_intent_id: session.payment_intent as string,
+            })
+            .eq("id", vendorId)
+            .select()
+            .single();
+
+          if (!updated) {
+            console.warn(`[webhook] vendor ${vendorId} not found after payment`);
+            break;
+          }
+
+          // Fire the "application received" email (paid path defers it to after payment)
+          try {
+            const resend = getResendClient();
+            if (resend) {
+              const { subject, html } = vendorApplicationReceivedEmail({
+                vendor: {
+                  business_name: updated.business_name,
+                  contact_name: updated.contact_name,
+                  category: updated.category,
+                  contribution_amount: updated.contribution_amount,
+                },
+              });
+              await resend.emails.send({
+                from: FROM_EMAIL,
+                to: updated.email,
+                replyTo: REPLY_TO_EMAIL,
+                subject,
+                html,
+              });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (supabase as any).from("email_logs").insert({
+                email_type: "vendor_application_received",
+                recipient_email: updated.email,
+                subject,
+                sent_at: new Date().toISOString(),
+                status: "sent",
+              });
+            }
+          } catch (emailErr) {
+            console.error("[webhook] vendor email send error:", emailErr);
+          }
+          break;
+        }
 
         if (session.mode === "payment") {
           // One-time donation
-          const metadata = session.metadata || {};
+          const metadata = sessionMetadata;
 
           // Find or create donor
           let donorId: string | null = null;

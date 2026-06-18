@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { EventCard } from "@/components/shared/EventCard";
+import { FestivalPromoBanner } from "@/components/festival/FestivalPromoBanner";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
@@ -136,6 +137,13 @@ export default async function EventsPage() {
         title="Events & Activities"
         subtitle="Join us at our upcoming events or see what we've been up to."
       />
+
+      {/* Festival cross-promo */}
+      <section className="bg-brand-pale/40 pt-10 pb-2">
+        <div className="container mx-auto px-4">
+          <FestivalPromoBanner variant="tickets" />
+        </div>
+      </section>
 
       {/* Upcoming Events */}
       <section className="bg-white py-16 md:py-24">

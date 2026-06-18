@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { FESTIVAL_SLUG } from "@/lib/festival";
 
 interface ChildData {
   name: string;
@@ -193,7 +194,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send confirmation email
+    // Send confirmation email — festival registrations use the tickets endpoint
+    // (which also generates festival_tickets rows). Waitlisted festival registrations
+    // fall back to the generic waitlist email since no tickets are issued.
     try {
       let siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
       if (!siteUrl && process.env.VERCEL_URL) {
@@ -203,9 +206,15 @@ export async function POST(request: NextRequest) {
         siteUrl = "http://localhost:3000";
       }
 
-      console.log("Sending email to:", `${siteUrl}/api/email/send-registration`);
+      const isFestival =
+        event.slug === FESTIVAL_SLUG && status === "confirmed";
+      const emailPath = isFestival
+        ? "/api/email/send-festival-tickets"
+        : "/api/email/send-registration";
 
-      const emailResponse = await fetch(`${siteUrl}/api/email/send-registration`, {
+      console.log("Sending email via:", `${siteUrl}${emailPath}`);
+
+      const emailResponse = await fetch(`${siteUrl}${emailPath}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ registrationId: registration.id }),

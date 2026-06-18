@@ -1,5 +1,6 @@
 export function MarqueeBanner() {
-  const text = "Small acts create big impact · Inclusion · Empowerment · Integrity · Community · Joy · ";
+  const text =
+    "Evolution Fest 2026 · Sat 25 July · Free tickets · Strood Youth Centre · Small acts, big impact · ";
 
   return (
     <div className="bg-brand-green -rotate-1 scale-105 py-4 border-y-4 border-white overflow-hidden">
