@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Calendar,
@@ -56,9 +57,14 @@ export default async function FestivalHubPage() {
   // we degrade gracefully and use FESTIVAL constants only.
   const { data: eventRow } = await supabase
     .from("events")
-    .select("id, status, total_slots, publish_at")
+    .select("id, status, total_slots, publish_at, hero_image_url, card_image_url")
     .eq("slug", FESTIVAL.slug)
     .maybeSingle();
+
+  const heroImage =
+    (eventRow?.hero_image_url as string | null) ??
+    (eventRow?.card_image_url as string | null) ??
+    null;
 
   const eventId = eventRow?.id ?? null;
   const now = new Date();
@@ -159,63 +165,81 @@ export default async function FestivalHubPage() {
         <div className="absolute -bottom-20 -right-20 w-[28rem] h-[28rem] bg-brand-blue rounded-full opacity-20 blur-3xl" />
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl">
-            <p className="font-heading text-xs uppercase tracking-widest text-brand-accent mb-4">
-              The festival · CIC · Medway
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            <div className="lg:col-span-7">
+              <p className="font-heading text-xs uppercase tracking-widest text-brand-accent mb-4">
+                The festival · CIC · Medway
+              </p>
 
-            <h1 className="font-heading font-black text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-none mb-6">
-              EVOLUTION
-              <br />
-              FEST 2026
-            </h1>
+              <h1 className="font-heading font-black text-5xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl leading-none mb-6">
+                EVOLUTION
+                <br />
+                FEST 2026
+              </h1>
 
-            <p className="font-heading font-bold text-brand-accent text-xl md:text-2xl mb-6">
-              {FESTIVAL.tagline}
-            </p>
+              <p className="font-heading font-bold text-brand-accent text-xl md:text-2xl mb-6">
+                {FESTIVAL.tagline}
+              </p>
 
-            <p className="text-lg text-white/70 max-w-2xl mb-10 leading-relaxed">
-              A free family festival celebrating one year of impact — supporting
-              our campaign to help{" "}
-              <span className="text-white font-semibold">
-                {FIRST_YEAR_STATS.goalChildren} children in Medway
-              </span>{" "}
-              start school with confidence.
-            </p>
+              <p className="text-lg text-white/70 max-w-2xl mb-10 leading-relaxed">
+                A free family festival celebrating one year of impact —
+                supporting our campaign to help{" "}
+                <span className="text-white font-semibold">
+                  {FIRST_YEAR_STATS.goalChildren} children in Medway
+                </span>{" "}
+                start school with confidence.
+              </p>
 
-            <div className="flex flex-wrap gap-3 mb-10">
-              <Pill icon={<Calendar className="h-4 w-4" />} text={FESTIVAL.dateLabel} />
-              <Pill icon={<Clock className="h-4 w-4" />} text={FESTIVAL.timeLabel} />
-              <Pill
-                icon={<MapPin className="h-4 w-4" />}
-                text={`${FESTIVAL.venueName}, ${FESTIVAL.venueArea}`}
-              />
-              <Pill
-                icon={<Users className="h-4 w-4" />}
-                text={`${FESTIVAL.expectedAttendance} expected`}
-              />
+              <div className="flex flex-wrap gap-3 mb-10">
+                <Pill icon={<Calendar className="h-4 w-4" />} text={FESTIVAL.dateLabel} />
+                <Pill icon={<Clock className="h-4 w-4" />} text={FESTIVAL.timeLabel} />
+                <Pill
+                  icon={<MapPin className="h-4 w-4" />}
+                  text={`${FESTIVAL.venueName}, ${FESTIVAL.venueArea}`}
+                />
+                <Pill
+                  icon={<Users className="h-4 w-4" />}
+                  text={`${FESTIVAL.expectedAttendance} expected`}
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
+                >
+                  <Link href={ticketsCtaHref}>
+                    Get free tickets
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white hover:text-brand-dark"
+                >
+                  <Link href="#vendors">Apply as a vendor</Link>
+                </Button>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                asChild
-                size="lg"
-                className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
-              >
-                <Link href={ticketsCtaHref}>
-                  Get free tickets
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white hover:text-brand-dark"
-              >
-                <Link href="#vendors">Apply as a vendor</Link>
-              </Button>
-            </div>
+            {/* Event flyer */}
+            {heroImage && (
+              <div className="lg:col-span-5">
+                <div className="relative aspect-[4/5] w-full max-w-md mx-auto lg:max-w-none rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 rotate-1 hover:rotate-0 transition-transform duration-500">
+                  <Image
+                    src={heroImage}
+                    alt="Evolution Fest 2026"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 90vw, 40vw"
+                    priority
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
