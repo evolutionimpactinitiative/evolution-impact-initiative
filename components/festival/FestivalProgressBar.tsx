@@ -1,20 +1,27 @@
 import { FESTIVAL, FIRST_YEAR_STATS } from "@/lib/festival";
 
 interface FestivalProgressBarProps {
-  raisedPence: number;
+  /**
+   * Total raised so far in WHOLE POUNDS (matches how `donations.amount`
+   * is stored throughout this codebase — see admin DonationsView).
+   */
+  raisedPounds: number;
   className?: string;
 }
 
 export function FestivalProgressBar({
-  raisedPence,
+  raisedPounds,
   className = "",
 }: FestivalProgressBarProps) {
-  const targetPence = FESTIVAL.campaignTarget * 100;
-  const raisedPounds = Math.floor(raisedPence / 100);
-  const percent = Math.min(100, Math.round((raisedPence / targetPence) * 100));
+  const target = FESTIVAL.campaignTarget;
+  const percent = Math.min(
+    100,
+    target > 0 ? Math.round((raisedPounds / target) * 100) : 0,
+  );
+  // £25 covers a full uniform package for one child (per the campaign pack)
   const childrenReached = Math.min(
     FIRST_YEAR_STATS.goalChildren,
-    Math.floor(raisedPounds / 20), // £20 ≈ 1 child (rough)
+    Math.floor(raisedPounds / 25),
   );
 
   return (
@@ -24,7 +31,7 @@ export function FestivalProgressBar({
           Back to School 2026 campaign
         </p>
         <p className="text-xs text-white/60 font-heading">
-          {percent}% of £{FESTIVAL.campaignTarget.toLocaleString("en-GB")} goal
+          {percent}% of £{target.toLocaleString("en-GB")} goal
         </p>
       </div>
 
@@ -33,7 +40,7 @@ export function FestivalProgressBar({
           £{raisedPounds.toLocaleString("en-GB")}
         </span>
         <span className="text-white/60 text-sm">
-          raised of £{FESTIVAL.campaignTarget.toLocaleString("en-GB")}
+          raised of £{target.toLocaleString("en-GB")}
         </span>
       </div>
 

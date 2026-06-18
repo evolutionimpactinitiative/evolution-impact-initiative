@@ -26,12 +26,29 @@ export async function POST(request: NextRequest) {
     }
 
     const isRecurring = frequency === "monthly";
+    const normalisedCampaign =
+      typeof campaign === "string" && campaign.trim()
+        ? campaign.trim()
+        : "general";
     const metadata = {
       donor_name: donorName || "",
       gift_aid: giftAid ? "yes" : "no",
       frequency: frequency || "one-time",
-      campaign: typeof campaign === "string" && campaign.trim() ? campaign.trim() : "general",
+      campaign: normalisedCampaign,
     };
+
+    // Send campaign-specific donations to their own thank-you / cancel pages.
+    const isBackToSchool = normalisedCampaign === "back-to-school-2026";
+    const successUrl = isBackToSchool
+      ? `${BASE_URL}/back-to-school/thank-you?session_id={CHECKOUT_SESSION_ID}`
+      : `${BASE_URL}/donate/thank-you?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = isBackToSchool
+      ? `${BASE_URL}/back-to-school?cancelled=true`
+      : `${BASE_URL}/donate?cancelled=true`;
+
+    const productDisplayName = isBackToSchool
+      ? "Back to School Campaign 2026"
+      : "Donation to Evolution Impact Initiative";
 
     let session;
 
@@ -42,7 +59,9 @@ export async function POST(request: NextRequest) {
         currency: "gbp",
         recurring: { interval: "month" },
         product_data: {
-          name: "Monthly Donation to Evolution Impact Initiative",
+          name: isBackToSchool
+            ? "Monthly donation — Back to School Campaign 2026"
+            : "Monthly Donation to Evolution Impact Initiative",
         },
       });
 
@@ -60,8 +79,8 @@ export async function POST(request: NextRequest) {
         subscription_data: {
           metadata,
         },
-        success_url: `${BASE_URL}/donate/thank-you?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${BASE_URL}/donate?cancelled=true`,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
       });
     } else {
       // One-time donation
@@ -73,7 +92,7 @@ export async function POST(request: NextRequest) {
             price_data: {
               currency: "gbp",
               product_data: {
-                name: "Donation to Evolution Impact Initiative",
+                name: productDisplayName,
                 description: giftAid
                   ? "One-time donation with Gift Aid"
                   : "One-time donation",
@@ -85,8 +104,8 @@ export async function POST(request: NextRequest) {
         ],
         customer_email: donorEmail || undefined,
         metadata,
-        success_url: `${BASE_URL}/donate/thank-you?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${BASE_URL}/donate?cancelled=true`,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
       });
     }
 

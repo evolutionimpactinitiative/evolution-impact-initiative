@@ -122,16 +122,18 @@ export default async function FestivalHubPage() {
     );
   }
 
-  // Donations raised for Back to School campaign
-  let raisedPence = 0;
+  // Donations raised for Back to School campaign.
+  // donations.amount is stored in WHOLE POUNDS throughout this codebase
+  // (see app/admin/donations/page.tsx for the canonical interpretation).
+  let raisedPounds = 0;
   const { data: donations } = await supabase
     .from("donations")
     .select("amount")
     .eq("campaign", FESTIVAL.campaignKey)
     .eq("status", "completed");
   if (donations) {
-    raisedPence = (donations as { amount: number }[]).reduce(
-      (sum, d) => sum + d.amount,
+    raisedPounds = (donations as { amount: number }[]).reduce(
+      (sum, d) => sum + (d.amount ?? 0),
       0,
     );
   }
@@ -406,7 +408,7 @@ export default async function FestivalHubPage() {
       <section className="bg-brand-dark text-white py-16 md:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <FestivalProgressBar raisedPence={raisedPence} />
+            <FestivalProgressBar raisedPounds={raisedPounds} />
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Button asChild className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white">
                 <Link href="/back-to-school">

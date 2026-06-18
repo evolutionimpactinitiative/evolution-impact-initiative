@@ -43,16 +43,17 @@ const SUPPLY_ITEMS = [
 export default async function BackToSchoolPage() {
   const supabase = createAdminClient();
 
-  // Live donation total for the campaign
-  let raisedPence = 0;
+  // Live donation total for the campaign (whole pounds — matches the codebase
+  // convention; see app/admin/donations/page.tsx).
+  let raisedPounds = 0;
   const { data: donations } = await supabase
     .from("donations")
     .select("amount")
     .eq("campaign", FESTIVAL.campaignKey)
     .eq("status", "completed");
   if (donations) {
-    raisedPence = (donations as { amount: number }[]).reduce(
-      (sum, d) => sum + d.amount,
+    raisedPounds = (donations as { amount: number }[]).reduce(
+      (sum, d) => sum + (d.amount ?? 0),
       0,
     );
   }
@@ -102,7 +103,7 @@ export default async function BackToSchoolPage() {
       <section className="bg-brand-dark text-white pb-16 md:pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl">
-            <FestivalProgressBar raisedPence={raisedPence} />
+            <FestivalProgressBar raisedPounds={raisedPounds} />
           </div>
         </div>
       </section>

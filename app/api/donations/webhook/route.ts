@@ -172,16 +172,26 @@ export async function POST(request: NextRequest) {
           // One-time donation
           const metadata = sessionMetadata;
 
+          // Prefer the email Stripe collected at checkout (customer_details)
+          // and fall back to the one the user pre-filled on our form.
+          // Both can be null if the customer somehow skipped email entry.
+          const donorEmail =
+            session.customer_details?.email ||
+            session.customer_email ||
+            null;
+          const donorNameFromStripe =
+            session.customer_details?.name || metadata.donor_name || "";
+
           // Find or create donor
           let donorId: string | null = null;
 
-          if (session.customer_email) {
+          if (donorEmail) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: existingDonor } = await (supabase as any)
               .from("donors")
               .select("id")
-              .eq("email", session.customer_email)
-              .single();
+              .eq("email", donorEmail)
+              .maybeSingle();
 
             if (existingDonor) {
               donorId = existingDonor.id;
@@ -190,8 +200,8 @@ export async function POST(request: NextRequest) {
               const { data: newDonor } = await (supabase as any)
                 .from("donors")
                 .insert({
-                  email: session.customer_email,
-                  name: metadata.donor_name || "Anonymous",
+                  email: donorEmail,
+                  name: donorNameFromStripe || "Anonymous",
                   gift_aid_declaration: metadata.gift_aid === "yes",
                 })
                 .select()
@@ -221,13 +231,13 @@ export async function POST(request: NextRequest) {
           });
 
           // Send donation receipt email
-          if (session.customer_email) {
+          if (donorEmail) {
             const resend = getResendClient();
             if (resend) {
               try {
                 const { subject, html } = donationReceiptEmail(
-                  metadata.donor_name || "",
-                  session.customer_email,
+                  donorNameFromStripe,
+                  donorEmail,
                   donationAmount,
                   donationCurrency,
                   giftAidClaimed,
@@ -235,17 +245,30 @@ export async function POST(request: NextRequest) {
                   session.payment_intent as string
                 );
 
-                await resend.emails.send({
+                const { error: emailSendError } = await resend.emails.send({
                   from: FROM_EMAIL,
-                  to: session.customer_email,
+                  to: donorEmail,
                   replyTo: REPLY_TO_EMAIL,
                   subject,
                   html,
                 });
+                if (emailSendError) {
+                  console.error("[webhook] receipt resend error:", emailSendError);
+                }
               } catch (emailError) {
-                console.error("Failed to send donation receipt email:", emailError);
+                console.error("[webhook] receipt error:", emailError);
               }
+            } else {
+              console.warn(
+                "[webhook] RESEND_API_KEY not set — skipping receipt to",
+                donorEmail,
+              );
             }
+          } else {
+            console.warn(
+              "[webhook] no email on session for payment_intent",
+              session.payment_intent,
+            );
           }
         }
         break;
