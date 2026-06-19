@@ -227,3 +227,101 @@ export async function deleteTestRegistration(
   revalidatePath("/admin/registrations");
   return { ok: true };
 }
+
+/**
+ * Clear every check-in on festival tickets without deleting the tickets
+ * themselves — useful when you want to re-test the scanning flow against
+ * the same tickets.
+ */
+export async function resetAllFestivalCheckIns(): Promise<
+  { ok: true; cleared: number } | { ok: false; error: string }
+> {
+  const server = await createClient();
+  const {
+    data: { user },
+  } = await server.auth.getUser();
+  if (!user?.email) return { ok: false, error: "Not authenticated" };
+  const { data: member } = await server
+    .from("team_members")
+    .select("id")
+    .eq("email", user.email)
+    .maybeSingle();
+  if (!member) return { ok: false, error: "Not authorised" };
+
+  const admin = createAdminClient();
+  const { data: eventRow } = await admin
+    .from("events")
+    .select("id")
+    .eq("slug", FESTIVAL_SLUG)
+    .maybeSingle();
+  if (!eventRow) return { ok: false, error: "Festival event not found" };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const eventId = (eventRow as any).id;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: updated, error } = await (admin as any)
+    .from("festival_tickets")
+    .update({ checked_in_at: null, checked_in_by_token_id: null })
+    .eq("event_id", eventId)
+    .not("checked_in_at", "is", null)
+    .select("id");
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/festival/check-in");
+  revalidatePath("/admin/festival/test-ticket-email");
+  return { ok: true, cleared: updated?.length ?? 0 };
+}
+
+/**
+ * Delete every registration on the festival event — cascade removes
+ * festival_tickets, registration_children, registration_attendees. Hard
+ * reset for testing; only enabled until the festival is live with real
+ * bookings (intentionally has no scope filter because the team-decision
+ * point is the confirmation step in the UI, not here).
+ */
+export async function resetAllFestivalRegistrations(): Promise<
+  { ok: true; deleted: number } | { ok: false; error: string }
+> {
+  const server = await createClient();
+  const {
+    data: { user },
+  } = await server.auth.getUser();
+  if (!user?.email) return { ok: false, error: "Not authenticated" };
+  const { data: member } = await server
+    .from("team_members")
+    .select("id, role")
+    .eq("email", user.email)
+    .maybeSingle();
+  if (!member) return { ok: false, error: "Not authorised" };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const role = (member as any).role;
+  if (role !== "admin") {
+    return { ok: false, error: "Only admins can reset registrations" };
+  }
+
+  const admin = createAdminClient();
+  const { data: eventRow } = await admin
+    .from("events")
+    .select("id")
+    .eq("slug", FESTIVAL_SLUG)
+    .maybeSingle();
+  if (!eventRow) return { ok: false, error: "Festival event not found" };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const eventId = (eventRow as any).id;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: deleted, error } = await (admin as any)
+    .from("registrations")
+    .delete()
+    .eq("event_id", eventId)
+    .select("id");
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/festival/check-in");
+  revalidatePath("/admin/festival/test-ticket-email");
+  revalidatePath("/admin/registrations");
+  revalidatePath("/evolution-fest-2026");
+  return { ok: true, deleted: deleted?.length ?? 0 };
+}
