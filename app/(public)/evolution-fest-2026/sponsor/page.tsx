@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { SponsorApplyForm } from "@/components/festival/SponsorApplyForm";
 import { FESTIVAL, FESTIVAL_SLUG, SPONSOR_TIERS } from "@/lib/festival";
+import { festivalMetadata } from "@/lib/festival/meta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = festivalMetadata({
   title: "Become a sponsor · Evolution Fest 2026",
   description:
     "Sponsor Evolution Fest 2026 and the Back to School campaign — premium tiers, community ladder (£50–£750), and activity zones (from £300).",
-};
+});
 
 // Live capacity for capped tiers (Title Partner + activity zones)
 export const revalidate = 0;

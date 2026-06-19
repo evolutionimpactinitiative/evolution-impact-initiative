@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { VolunteerApplyForm } from "@/components/festival/VolunteerApplyForm";
 import { FESTIVAL, FESTIVAL_SLUG } from "@/lib/festival";
+import { festivalMetadata } from "@/lib/festival/meta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = festivalMetadata({
   title: "Volunteer at Evolution Fest 2026",
   description:
     "Volunteer at Evolution Fest 2026 — Saturday 25 July 2026, Strood Youth Centre. Setup, AM, PM and packdown shifts available. T-shirt and refreshments provided.",
-};
+});
 
 // Reflects live event status — never cache
 export const revalidate = 0;

@@ -3,11 +3,14 @@ import Link from "next/link";
 import { CheckCircle2, Calendar, MapPin, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FESTIVAL } from "@/lib/festival";
+import { festivalMetadata } from "@/lib/festival/meta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = festivalMetadata({
   title: "Sponsorship confirmed · Evolution Fest 2026",
-  robots: { index: false, follow: false },
-};
+  description:
+    "Thank you for sponsoring Evolution Fest 2026 and the Back to School campaign.",
+  noindex: true,
+});
 
 export default function SponsorSuccessPage() {
   return (

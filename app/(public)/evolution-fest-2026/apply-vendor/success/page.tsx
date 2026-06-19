@@ -3,11 +3,14 @@ import Link from "next/link";
 import { CheckCircle2, Calendar, MapPin, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FESTIVAL } from "@/lib/festival";
+import { festivalMetadata } from "@/lib/festival/meta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = festivalMetadata({
   title: "Application received · Evolution Fest 2026",
-  robots: { index: false, follow: false },
-};
+  description:
+    "Your vendor application for Evolution Fest 2026 has been received and is pending review.",
+  noindex: true,
+});
 
 export default function VendorSuccessPage() {
   return (

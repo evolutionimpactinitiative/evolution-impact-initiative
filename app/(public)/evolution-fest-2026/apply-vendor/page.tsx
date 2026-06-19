@@ -12,12 +12,13 @@ import {
   VENDOR_TOTAL_CAP,
   type VendorCategoryKey,
 } from "@/lib/festival";
+import { festivalMetadata } from "@/lib/festival/meta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = festivalMetadata({
   title: "Apply as a vendor · Evolution Fest 2026",
   description:
     "Apply to trade at Evolution Fest 2026 — a free family festival on Saturday 25 July 2026 in Medway. Food, drinks, sweet treats, retail, and community organisations welcome.",
-};
+});
 
 // Live capacity per category — never cache
 export const revalidate = 0;

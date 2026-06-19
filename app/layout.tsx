@@ -18,6 +18,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      "https://www.evolutionimpactinitiative.co.uk",
+  ),
   title: "Evolution Impact Initiative CIC | Small Acts, Big Impact · Medway, Kent",
   description:
     "Community-led workshops, youth sport, creative arts and family support in Medway. Where small acts create big impact.",

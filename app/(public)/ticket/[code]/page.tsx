@@ -5,14 +5,15 @@ import { Calendar, MapPin, Clock, CheckCircle2, Sparkles } from "lucide-react";
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FESTIVAL } from "@/lib/festival";
+import { festivalMetadata } from "@/lib/festival/meta";
 import { ticketUrl } from "@/lib/festival/tickets";
 import type { Event, FestivalTicket } from "@/lib/supabase/types";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = festivalMetadata({
   title: `Your ticket · ${FESTIVAL.title}`,
   description: `Your ticket for ${FESTIVAL.title} — ${FESTIVAL.dateLabel}, ${FESTIVAL.venueName}.`,
-  robots: { index: false, follow: false },
-};
+  noindex: true,
+});
 
 interface PageProps {
   params: Promise<{ code: string }>;

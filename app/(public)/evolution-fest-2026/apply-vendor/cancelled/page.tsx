@@ -3,11 +3,14 @@ import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FESTIVAL } from "@/lib/festival";
+import { festivalMetadata } from "@/lib/festival/meta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = festivalMetadata({
   title: "Application cancelled · Evolution Fest 2026",
-  robots: { index: false, follow: false },
-};
+  description:
+    "Your vendor application checkout was cancelled. You can return to finish before the deadline.",
+  noindex: true,
+});
 
 export default function VendorCancelledPage() {
   return (
