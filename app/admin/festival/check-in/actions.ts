@@ -78,6 +78,30 @@ export async function revokeStewardToken(
   return { ok: true };
 }
 
+export async function undoCheckIn(
+  ticketId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const server = await createClient();
+  const {
+    data: { user },
+  } = await server.auth.getUser();
+  if (!user?.email) return { ok: false, error: "Not authenticated" };
+
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any)
+    .from("festival_tickets")
+    .update({
+      checked_in_at: null,
+      checked_in_by_token_id: null,
+    })
+    .eq("id", ticketId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/festival/check-in");
+  return { ok: true };
+}
+
 export async function adminManualCheckIn(
   code: string,
 ): Promise<

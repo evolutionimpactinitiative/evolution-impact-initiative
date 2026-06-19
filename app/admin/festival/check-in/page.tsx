@@ -5,6 +5,10 @@ import { StatCard } from "@/components/admin/StatCard";
 import { FestivalAdminTabs } from "@/components/admin/festival/FestivalAdminTabs";
 import { StewardTokensView } from "@/components/admin/festival/StewardTokensView";
 import { ManualCheckInForm } from "@/components/admin/festival/ManualCheckInForm";
+import {
+  CheckedInList,
+  type CheckedInRow,
+} from "@/components/admin/festival/CheckedInList";
 import type { FestivalStewardToken } from "@/lib/supabase/types";
 
 interface HeadcountRow {
@@ -77,6 +81,37 @@ export default async function FestivalCheckInAdminPage() {
     scanUrl: stewardScanUrl(t.token),
   }));
 
+  // Recent check-ins (with the lead booker's name from the joined registration)
+  const { data: checkedInData } = await supabase
+    .from("festival_tickets")
+    .select(
+      `id, ticket_code, holder_name, holder_type, checked_in_at,
+       registrations!inner (parent_name)`,
+    )
+    .eq("event_id", event.id)
+    .not("checked_in_at", "is", null)
+    .order("checked_in_at", { ascending: false })
+    .limit(200);
+
+  type CheckedInRaw = {
+    id: string;
+    ticket_code: string;
+    holder_name: string | null;
+    holder_type: "lead" | "adult" | "child";
+    checked_in_at: string;
+    registrations: { parent_name: string };
+  };
+  const checkedInRows: CheckedInRow[] = (
+    (checkedInData as CheckedInRaw[] | null) ?? []
+  ).map((row) => ({
+    id: row.id,
+    ticket_code: row.ticket_code,
+    holder_name: row.holder_name,
+    holder_type: row.holder_type,
+    checked_in_at: row.checked_in_at,
+    parent_name: row.registrations?.parent_name ?? "Guest",
+  }));
+
   return (
     <div className="space-y-6">
       <FestivalAdminTabs />
@@ -123,6 +158,9 @@ export default async function FestivalCheckInAdminPage() {
           iconBgColor="bg-purple-100"
         />
       </div>
+
+      {/* Checked-in list */}
+      <CheckedInList rows={checkedInRows} />
 
       {/* Steward tokens */}
       <StewardTokensView
