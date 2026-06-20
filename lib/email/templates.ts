@@ -1418,3 +1418,91 @@ export function eventPhotosEmail(
     html: emailWrapper(content, heroImage, BRAND.green),
   };
 }
+
+// -----------------------------------------------------------------------------
+// Outcomes — invitation to fill in a well-being survey
+// -----------------------------------------------------------------------------
+export function outcomeInvitationEmail(
+  recipientName: string | null,
+  instrumentName: string,
+  surveyUrl: string,
+  contextLabel: string | null,
+  timepoint: "baseline" | "midpoint" | "follow_up" | "one_off",
+): { subject: string; html: string } {
+  const displayName = recipientName || "there";
+  const timepointLabel =
+    timepoint === "baseline"
+      ? "baseline"
+      : timepoint === "midpoint"
+        ? "mid-point check-in"
+        : timepoint === "follow_up"
+          ? "follow-up"
+          : "one-off";
+
+  const content = `
+    <h1 style="margin: 0 0 20px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      Quick<br><span style="color: ${BRAND.green};">Wellbeing Check</span>
+    </h1>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Hi <strong>${displayName}</strong>,
+    </p>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      We'd really appreciate two minutes of your time to complete a short
+      ${timepointLabel} wellbeing survey. Your answers help us understand
+      how our programmes are landing — and report back honestly to our
+      funders and community.
+    </p>
+
+    ${
+      contextLabel
+        ? `<p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 14px; color: #888888; font-style: italic;">${contextLabel}</p>`
+        : ""
+    }
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 12px; margin-bottom: 25px;">
+      <tr>
+        <td style="padding: 20px 25px;">
+          <p style="margin: 0 0 6px; font-family: 'Montserrat', sans-serif; font-size: 12px; color: ${BRAND.dark}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            What you'll be answering
+          </p>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 15px; color: ${BRAND.dark}; line-height: 22px;">
+            <strong>${instrumentName}</strong>
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 10px auto 30px;">
+      <tr>
+        <td style="border-radius: 4px; background: ${BRAND.blue}; text-align: center;">
+          <a href="${surveyUrl}" target="_blank" class="button-primary" style="background: ${BRAND.blue}; font-family: 'Montserrat', sans-serif; font-size: 14px; text-decoration: none; padding: 14px 32px; color: #ffffff; display: block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+            Start the survey
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 20px; font-family: 'Inter', sans-serif; font-size: 13px; color: #888888; line-height: 20px; text-align: center;">
+      Or paste this link into your browser:<br>
+      <a href="${surveyUrl}" style="color: ${BRAND.blue}; word-break: break-all;">${surveyUrl}</a>
+    </p>
+
+    <p style="margin: 30px 0 8px; font-family: 'Inter', sans-serif; font-size: 13px; color: #777777; line-height: 20px;">
+      Your responses are confidential. We only share aggregate, anonymised
+      numbers with funders — never individual answers.
+    </p>
+
+    <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6;">
+      Thank you,<br>
+      <strong>The Evolution Impact Initiative Team</strong>
+    </p>
+  `;
+
+  return {
+    subject: `2-minute wellbeing check: ${instrumentName}`,
+    html: emailWrapper(content, undefined, BRAND.green),
+  };
+}

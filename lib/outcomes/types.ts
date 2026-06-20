@@ -47,7 +47,10 @@ export interface OutcomeInvitation {
   instrument_id: string;
   participant_id: string | null;
   context_label: string | null;
+  programme_strand: string | null;
   timepoint: Timepoint;
+  recipient_email: string | null;
+  email_sent_at: string | null;
   expires_at: string | null;
   response_id: string | null;
   created_by: string | null;
@@ -60,6 +63,7 @@ export interface OutcomeResponse {
   instrument_id: string;
   participant_id: string | null;
   context_label: string | null;
+  programme_strand: string | null;
   timepoint: Timepoint;
   score_raw: number | null;
   score_transformed: number | null;
