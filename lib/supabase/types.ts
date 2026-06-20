@@ -45,7 +45,7 @@ export interface Database {
           id: string;
           email: string;
           name: string;
-          role: "admin" | "editor";
+          role: "admin" | "editor" | "treasurer";
           avatar_url: string | null;
           created_at: string;
           updated_at: string;
@@ -54,7 +54,7 @@ export interface Database {
           id?: string;
           email: string;
           name: string;
-          role?: "admin" | "editor";
+          role?: "admin" | "editor" | "treasurer";
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -63,7 +63,7 @@ export interface Database {
           id?: string;
           email?: string;
           name?: string;
-          role?: "admin" | "editor";
+          role?: "admin" | "editor" | "treasurer";
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;

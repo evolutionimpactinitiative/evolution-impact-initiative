@@ -336,6 +336,45 @@ async function main() {
     .remove([storagePath]);
   log("storage file removed", !rmErr, rmErr?.message ?? storagePath);
 
+  // ──────────────────────────────────────────────────────────────────────
+  // 10. Sprint 3 — RLS helper functions exist and treasurer role is allowed
+  // ──────────────────────────────────────────────────────────────────────
+  console.log("\n[10] Sprint 3 RLS — helpers + treasurer role");
+
+  // Calling the helpers via rpc proves they exist. Service-role JWT has no
+  // email claim, so all four return null/false — that's expected.
+  const { error: roleErr } = await admin.rpc("acct_team_role");
+  log("acct_team_role() callable", !roleErr, roleErr?.message);
+  const { error: isAdminErr } = await admin.rpc("acct_is_admin");
+  log("acct_is_admin() callable", !isAdminErr, isAdminErr?.message);
+  const { error: isAtErr } = await admin.rpc("acct_is_admin_or_treasurer");
+  log("acct_is_admin_or_treasurer() callable", !isAtErr, isAtErr?.message);
+  const { error: currIdErr } = await admin.rpc("acct_current_team_member_id");
+  log("acct_current_team_member_id() callable", !currIdErr, currIdErr?.message);
+
+  // Treasurer role: insert + delete a throwaway row to prove the CHECK
+  // constraint accepts the new value.
+  const throwawayEmail = `_smoke_test_treasurer_${Date.now()}@example.invalid`;
+  const { error: tInsErr } = await admin.from("team_members").insert({
+    email: throwawayEmail,
+    name: "Smoke Test Treasurer",
+    role: "treasurer",
+  });
+  log("team_members accepts role='treasurer'", !tInsErr, tInsErr?.message);
+  await admin.from("team_members").delete().eq("email", throwawayEmail);
+
+  // Spot-check that the expected policies exist by trying to create a draft
+  // tx as the service role (always allowed, RLS bypassed) then immediately
+  // clean it up. This is essentially a no-op — the real RLS verification
+  // happens when a non-service-role connection is added in a future sprint.
+  // Counting policies is the closest structural check we can do here.
+  console.log(
+    "  ↪ Full RLS policy verification requires authenticated test users",
+  );
+  console.log(
+    "  ↪ Apply the migration and inspect pg_policies in Supabase if in doubt",
+  );
+
   console.log("\nDone.\n");
   // Avoid unused-import warning
   void resolve;

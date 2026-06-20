@@ -182,7 +182,11 @@ export function AdminSidebar({ user, teamMember }: AdminSidebarProps) {
                         {teamMember?.name || "Team Member"}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {teamMember?.role === "admin" ? "Administrator" : "Editor"}
+                        {teamMember?.role === "admin"
+                          ? "Administrator"
+                          : teamMember?.role === "treasurer"
+                          ? "Treasurer"
+                          : "Editor"}
                       </p>
                     </div>
                   </div>
