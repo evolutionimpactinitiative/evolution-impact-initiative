@@ -12,6 +12,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatPence, formatPenceShort, formatDate } from "@/lib/accounting/format";
 import type { Fund, AccountingPeriod } from "@/lib/accounting/types";
 import { DonationsBridgeBackfillCard } from "@/components/admin/accounting/DonationsBridgeBackfillCard";
+import { VatThresholdCard } from "@/components/admin/accounting/VatThresholdCard";
+
+// Account codes counted toward VATable turnover (trading + festival paid services).
+// Donations (4000, 4010), grants (41xx), and 4900 Other income are NOT counted.
+const VAT_INCOME_CODES = ["4200", "4210", "4300", "4310", "4320"];
 
 export const dynamic = "force-dynamic";
 
@@ -163,6 +168,35 @@ export default async function AccountingLandingPage() {
     .eq("status", "completed")
     .is("accounting_transaction_id", null);
 
+  // 3c. VAT threshold: rolling 12-month VATable income
+  const vatWindowEnd = new Date();
+  const vatWindowStart = new Date(vatWindowEnd);
+  vatWindowStart.setFullYear(vatWindowStart.getFullYear() - 1);
+  const vatStartIso = vatWindowStart.toISOString().slice(0, 10);
+  const vatEndIso = vatWindowEnd.toISOString().slice(0, 10);
+
+  const { data: vatLineData } = await admin
+    .from("journal_lines")
+    .select(
+      `
+      credit_pence,
+      account:accounts!inner ( code, account_type ),
+      transaction:transactions!inner ( transaction_date, status )
+    `,
+    )
+    .eq("transaction.status", "posted")
+    .in("account.code", VAT_INCOME_CODES)
+    .gte("transaction.transaction_date", vatStartIso)
+    .lte("transaction.transaction_date", vatEndIso);
+
+  const vatRollingPence = ((vatLineData ?? []) as unknown as {
+    credit_pence: number;
+    account: { account_type: string } | null;
+  }[]).reduce(
+    (sum, l) => (l.account?.account_type === "income" ? sum + l.credit_pence : sum),
+    0,
+  );
+
   // 4. Recent 10 transactions
   const { data: recentData } = await admin
     .from("transactions")
@@ -230,6 +264,13 @@ export default async function AccountingLandingPage() {
         unbridgedCount={unbridgedDonationCount ?? 0}
       />
 
+      {/* VAT threshold tracker */}
+      <VatThresholdCard
+        rollingTotalPence={vatRollingPence}
+        windowStart={vatStartIso}
+        windowEnd={vatEndIso}
+      />
+
       {/* Fund cards */}
       {funds.length === 0 ? (
         <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-12 text-center">
@@ -248,9 +289,10 @@ export default async function AccountingLandingPage() {
               current_pence: 0,
             };
             return (
-              <div
+              <Link
                 key={fund.id}
-                className="bg-white border border-gray-100 rounded-xl shadow-sm p-5"
+                href={`/admin/accounting/funds/${fund.code}`}
+                className="bg-white border border-gray-100 rounded-xl shadow-sm p-5 block hover:border-brand-blue hover:shadow-md transition-all"
               >
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="min-w-0">
@@ -307,7 +349,7 @@ export default async function AccountingLandingPage() {
                     </span>
                   </div>
                 )}
-              </div>
+              </Link>
             );
           })}
         </div>
