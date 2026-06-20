@@ -435,3 +435,193 @@ export async function getAttachmentDownloadUrl(
     };
   }
 }
+
+// ----------------------------------------------------------------------------
+// Bulk post (CSV import): iterate over rows, create draft + lines + post each.
+// Commit-what-works semantics: per-row failures don't roll back earlier rows;
+// they're reported back so the user can fix and re-import the failures only.
+// ----------------------------------------------------------------------------
+export interface BulkPostRow {
+  source_index: number; // for surfacing errors back to the UI
+  transaction_date: string;
+  description: string;
+  reference: string | null;
+  amount_pence: number; // SIGNED: positive = inflow, negative = outflow
+  fund_id: string;
+  fund_category_id: string;
+  // For outflow rows: expense account. For inflow: income account.
+  ledger_account_id: string;
+  // Asset account — bank/cash side of the entry.
+  bank_account_id: string;
+}
+
+export interface BulkPostResult {
+  posted: number;
+  failures: { source_index: number; error: string }[];
+}
+
+export async function bulkPostPayments(
+  rows: BulkPostRow[],
+): Promise<ActionResult<BulkPostResult>> {
+  try {
+    const me = await getCurrentTeamMember();
+    if (!me) return { ok: false, error: "Not authenticated" };
+    if (rows.length === 0) return { ok: false, error: "Nothing to post" };
+
+    const admin = createAdminClient();
+    const failures: { source_index: number; error: string }[] = [];
+    let posted = 0;
+
+    // Cache periods so we don't lookup the same date repeatedly
+    const periodCache = new Map<string, string | null>();
+    async function getPeriod(date: string): Promise<string | null> {
+      if (periodCache.has(date)) return periodCache.get(date) ?? null;
+      const id = await findPeriodForDate(admin, date);
+      periodCache.set(date, id);
+      return id;
+    }
+
+    for (const row of rows) {
+      try {
+        if (
+          !row.fund_id ||
+          !row.fund_category_id ||
+          !row.ledger_account_id ||
+          !row.bank_account_id
+        ) {
+          failures.push({
+            source_index: row.source_index,
+            error: "Missing fund/category/account",
+          });
+          continue;
+        }
+        if (row.amount_pence === 0) {
+          failures.push({ source_index: row.source_index, error: "Zero amount" });
+          continue;
+        }
+        const period_id = await getPeriod(row.transaction_date);
+        if (!period_id) {
+          failures.push({
+            source_index: row.source_index,
+            error: `No open period covers ${row.transaction_date}`,
+          });
+          continue;
+        }
+
+        const abs = Math.abs(row.amount_pence);
+        const isOutflow = row.amount_pence < 0;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: tx, error: txErr } = await (admin as any)
+          .from("transactions")
+          .insert({
+            transaction_date: row.transaction_date,
+            period_id,
+            description: row.description,
+            reference: row.reference,
+            status: "draft",
+            created_by: me.id,
+          })
+          .select()
+          .single();
+
+        if (txErr || !tx) {
+          failures.push({
+            source_index: row.source_index,
+            error: txErr?.message ?? "Failed to create transaction",
+          });
+          continue;
+        }
+
+        // Outflow: DEBIT expense (ledger), CREDIT asset (bank)
+        // Inflow:  DEBIT asset (bank), CREDIT income (ledger)
+        const lines = isOutflow
+          ? [
+              {
+                transaction_id: tx.id,
+                account_id: row.ledger_account_id,
+                fund_id: row.fund_id,
+                fund_category_id: row.fund_category_id,
+                debit_pence: abs,
+                credit_pence: 0,
+                display_order: 1,
+              },
+              {
+                transaction_id: tx.id,
+                account_id: row.bank_account_id,
+                fund_id: row.fund_id,
+                fund_category_id: row.fund_category_id,
+                debit_pence: 0,
+                credit_pence: abs,
+                display_order: 2,
+              },
+            ]
+          : [
+              {
+                transaction_id: tx.id,
+                account_id: row.bank_account_id,
+                fund_id: row.fund_id,
+                fund_category_id: row.fund_category_id,
+                debit_pence: abs,
+                credit_pence: 0,
+                display_order: 1,
+              },
+              {
+                transaction_id: tx.id,
+                account_id: row.ledger_account_id,
+                fund_id: row.fund_id,
+                fund_category_id: row.fund_category_id,
+                debit_pence: 0,
+                credit_pence: abs,
+                display_order: 2,
+              },
+            ];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: linesErr } = await (admin as any)
+          .from("journal_lines")
+          .insert(lines);
+        if (linesErr) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (admin as any).from("transactions").delete().eq("id", tx.id);
+          failures.push({
+            source_index: row.source_index,
+            error: linesErr.message,
+          });
+          continue;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: postErr } = await (admin as any)
+          .from("transactions")
+          .update({ status: "posted", posted_by: me.id })
+          .eq("id", tx.id);
+        if (postErr) {
+          failures.push({
+            source_index: row.source_index,
+            error: postErr.message,
+          });
+          continue;
+        }
+
+        posted++;
+      } catch (err) {
+        failures.push({
+          source_index: row.source_index,
+          error: err instanceof Error ? err.message : "Unexpected error",
+        });
+      }
+    }
+
+    revalidatePath("/admin/accounting");
+    revalidatePath("/admin/accounting/transactions");
+
+    return { ok: true, data: { posted, failures } };
+  } catch (err) {
+    console.error("[bulkPostPayments]", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Unexpected error",
+    };
+  }
+}

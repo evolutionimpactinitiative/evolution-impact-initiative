@@ -208,9 +208,11 @@ export default async function AccountingLandingPage() {
               New transaction
             </Link>
           </Button>
-          <Button variant="outline" disabled title="Coming Sprint 2.5">
-            <Upload className="w-4 h-4 mr-2" />
-            Import bank CSV
+          <Button variant="outline" asChild>
+            <Link href="/admin/accounting/import">
+              <Upload className="w-4 h-4 mr-2" />
+              Import bank CSV
+            </Link>
           </Button>
         </div>
       </div>
