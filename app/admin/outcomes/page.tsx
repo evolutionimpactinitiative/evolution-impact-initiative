@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Activity, ArrowRight, BarChart3 } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, Plus, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { bandLabel } from "@/lib/outcomes/scoring";
 import { formatDate } from "@/lib/accounting/format";
@@ -11,6 +12,7 @@ interface JoinedResponse {
   submitted_at: string;
   timepoint: string;
   context_label: string | null;
+  programme_strand: string | null;
   score_raw: number | null;
   score_transformed: number | null;
   score_band: string | null;
@@ -55,6 +57,7 @@ export default async function AdminOutcomesPage() {
       submitted_at,
       timepoint,
       context_label,
+      programme_strand,
       score_raw,
       score_transformed,
       score_band,
@@ -111,15 +114,37 @@ export default async function AdminOutcomesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading font-black text-xl lg:text-2xl text-gray-900">
-          Outcomes
-        </h1>
-        <p className="text-gray-600 text-sm lg:text-base mt-1">
-          Participant well-being measurement via ONS4 + SWEMWBS. {responses.length} response
-          {responses.length === 1 ? "" : "s"} recorded · {pendingCount ?? 0} invitation
-          {pendingCount === 1 ? "" : "s"} pending.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-heading font-black text-xl lg:text-2xl text-gray-900">
+            Outcomes
+          </h1>
+          <p className="text-gray-600 text-sm lg:text-base mt-1">
+            Participant well-being measurement via ONS4 + SWEMWBS. {responses.length} response
+            {responses.length === 1 ? "" : "s"} recorded ·{" "}
+            <Link
+              href="/admin/outcomes/invitations"
+              className="text-brand-blue hover:underline"
+            >
+              {pendingCount ?? 0} invitation{pendingCount === 1 ? "" : "s"} pending
+            </Link>
+            .
+          </p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button asChild>
+            <Link href="/admin/outcomes/invitations/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Send invitation
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/admin/outcomes/invitations">
+              <Mail className="w-4 h-4 mr-2" />
+              All invitations
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Per-instrument summary cards */}
@@ -192,6 +217,7 @@ export default async function AdminOutcomesPage() {
                   <p className="text-xs text-gray-500 mt-0.5">
                     {formatDate(r.submitted_at)}
                     {r.participant?.name ? ` · ${r.participant.name}` : ""}
+                    {r.programme_strand ? ` · ${r.programme_strand}` : ""}
                     {r.context_label ? ` · ${r.context_label}` : ""}
                   </p>
                 </div>
@@ -214,7 +240,7 @@ export default async function AdminOutcomesPage() {
       </div>
 
       <p className="text-xs text-gray-400 text-center">
-        Sprint 2 will add: admin invitation UI · email sending · programme-strand tagging · trend charts ·{" "}
+        Future: trend charts · baseline-vs-followup deltas ·{" "}
         <Link
           href="https://warwick.ac.uk/fac/sci/med/research/platform/wemwbs/"
           target="_blank"

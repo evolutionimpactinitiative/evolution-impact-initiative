@@ -66,6 +66,11 @@ export default async function PublicOutcomeSurveyPage({ params }: PageProps) {
               {invitation.context_label}
             </p>
           )}
+          {invitation.programme_strand && !invitation.context_label && (
+            <p className="text-xs text-gray-400 mt-3 uppercase tracking-wide">
+              {invitation.programme_strand.replace(/_/g, " ")}
+            </p>
+          )}
         </header>
 
         {alreadySubmitted ? (
