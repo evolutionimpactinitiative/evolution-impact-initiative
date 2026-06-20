@@ -7,6 +7,7 @@ import {
   sponsorConfirmedEmail,
   vendorApplicationReceivedEmail,
 } from "@/lib/email/festival-templates";
+import { postDonationToAccounting } from "@/lib/accounting/donations-bridge";
 import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -218,17 +219,35 @@ export async function POST(request: NextRequest) {
           const giftAidAmount = giftAidClaimed ? donationAmount * 0.25 : 0;
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase as any).from("donations").insert({
-            donor_id: donorId,
-            amount: donationAmount,
-            currency: donationCurrency,
-            donation_type: "one_time",
-            stripe_payment_intent_id: session.payment_intent as string,
-            gift_aid_amount: giftAidAmount,
-            campaign: metadata.campaign || "general",
-            status: "completed",
-            completed_at: new Date().toISOString(),
-          });
+          const { data: insertedDonation } = await (supabase as any)
+            .from("donations")
+            .insert({
+              donor_id: donorId,
+              amount: donationAmount,
+              currency: donationCurrency,
+              donation_type: "one_time",
+              stripe_payment_intent_id: session.payment_intent as string,
+              gift_aid_amount: giftAidAmount,
+              campaign: metadata.campaign || "general",
+              status: "completed",
+              completed_at: new Date().toISOString(),
+            })
+            .select("id")
+            .single();
+
+          // Bridge the donation into the accounting ledger.
+          // Fire-and-forget — failure here must NOT fail the Stripe webhook.
+          if (insertedDonation?.id) {
+            void postDonationToAccounting(insertedDonation.id).then((res) => {
+              if (!res.ok) {
+                console.error(
+                  "[webhook] accounting bridge failed for donation",
+                  insertedDonation.id,
+                  res.error,
+                );
+              }
+            });
+          }
 
           // Send donation receipt email
           if (donorEmail) {
@@ -309,18 +328,34 @@ export async function POST(request: NextRequest) {
           const recurringGiftAidAmount = recurringGiftAid ? recurringAmount * 0.25 : 0;
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase as any).from("donations").insert({
-            donor_id: donorId,
-            amount: recurringAmount,
-            currency: recurringCurrency,
-            donation_type: "recurring",
-            stripe_payment_intent_id: invoiceAny.payment_intent as string,
-            stripe_subscription_id: subscriptionId as string,
-            gift_aid_amount: recurringGiftAidAmount,
-            campaign: metadata.campaign || "general",
-            status: "completed",
-            completed_at: new Date().toISOString(),
-          });
+          const { data: insertedRecurring } = await (supabase as any)
+            .from("donations")
+            .insert({
+              donor_id: donorId,
+              amount: recurringAmount,
+              currency: recurringCurrency,
+              donation_type: "recurring",
+              stripe_payment_intent_id: invoiceAny.payment_intent as string,
+              stripe_subscription_id: subscriptionId as string,
+              gift_aid_amount: recurringGiftAidAmount,
+              campaign: metadata.campaign || "general",
+              status: "completed",
+              completed_at: new Date().toISOString(),
+            })
+            .select("id")
+            .single();
+
+          if (insertedRecurring?.id) {
+            void postDonationToAccounting(insertedRecurring.id).then((res) => {
+              if (!res.ok) {
+                console.error(
+                  "[webhook] accounting bridge failed for recurring donation",
+                  insertedRecurring.id,
+                  res.error,
+                );
+              }
+            });
+          }
 
           // Send donation receipt email for recurring payment
           if (customerEmail) {

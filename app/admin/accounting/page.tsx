@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatPence, formatPenceShort, formatDate } from "@/lib/accounting/format";
 import type { Fund, AccountingPeriod } from "@/lib/accounting/types";
+import { DonationsBridgeBackfillCard } from "@/components/admin/accounting/DonationsBridgeBackfillCard";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +156,13 @@ export default async function AccountingLandingPage() {
     }
   }
 
+  // 3b. Unbridged donation count (Phase 2 backfill prompt)
+  const { count: unbridgedDonationCount } = await admin
+    .from("donations")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "completed")
+    .is("accounting_transaction_id", null);
+
   // 4. Recent 10 transactions
   const { data: recentData } = await admin
     .from("transactions")
@@ -216,6 +224,11 @@ export default async function AccountingLandingPage() {
           </Button>
         </div>
       </div>
+
+      {/* Donations bridge backfill prompt (only renders if count > 0) */}
+      <DonationsBridgeBackfillCard
+        unbridgedCount={unbridgedDonationCount ?? 0}
+      />
 
       {/* Fund cards */}
       {funds.length === 0 ? (
