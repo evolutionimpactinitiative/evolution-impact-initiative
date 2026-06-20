@@ -20,6 +20,7 @@ import {
   UserPlus,
   ClipboardList,
   Sparkles,
+  Calculator,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -31,6 +32,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Events", href: "/admin/events", icon: Calendar },
   { name: "Festival 2026", href: "/admin/festival/vendors", icon: Sparkles },
+  { name: "Accounting", href: "/admin/accounting", icon: Calculator },
   { name: "Registrations", href: "/admin/registrations", icon: Users },
   { name: "Donations", href: "/admin/donations", icon: Heart },
   { name: "Subscribers", href: "/admin/subscribers", icon: UserPlus },
