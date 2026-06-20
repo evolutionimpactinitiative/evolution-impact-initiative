@@ -73,11 +73,13 @@ export default async function AdminOutcomesPage() {
   const { data: allRaw } = await admin
     .from("outcome_responses")
     .select(
-      `score_raw, score_transformed, instrument:outcome_instruments ( code, name )`,
+      `score_raw, score_transformed, programme_strand, timepoint, instrument:outcome_instruments ( code, name )`,
     );
   const all = (allRaw ?? []) as unknown as {
     score_raw: number | null;
     score_transformed: number | null;
+    programme_strand: string | null;
+    timepoint: string;
     instrument: { code: string; name: string } | null;
   }[];
 
@@ -105,6 +107,51 @@ export default async function AdminOutcomesPage() {
     avg_raw: s.n > 0 ? Number(((s.avg_raw ?? 0) / s.n).toFixed(2)) : null,
     avg_transformed: s.n > 0 ? Number(((s.avg_transformed ?? 0) / s.n).toFixed(2)) : null,
   }));
+
+  // Aggregates by programme strand — includes baseline-vs-follow-up deltas where both exist
+  interface StrandSummary {
+    strand: string;
+    n: number;
+    mean_score: number;
+    baseline_mean: number | null;
+    follow_up_mean: number | null;
+    delta: number | null;
+  }
+  const strandAcc = new Map<
+    string,
+    { total: number; n: number; baselineTotal: number; baselineN: number; followTotal: number; followN: number }
+  >();
+  for (const r of all) {
+    const strand = r.programme_strand;
+    if (!strand) continue;
+    const score = r.score_transformed ?? r.score_raw ?? null;
+    if (score == null) continue;
+    const cur = strandAcc.get(strand) ?? {
+      total: 0, n: 0, baselineTotal: 0, baselineN: 0, followTotal: 0, followN: 0,
+    };
+    cur.total += score;
+    cur.n += 1;
+    if (r.timepoint === "baseline") { cur.baselineTotal += score; cur.baselineN += 1; }
+    if (r.timepoint === "follow_up") { cur.followTotal += score; cur.followN += 1; }
+    strandAcc.set(strand, cur);
+  }
+  const strandSummary: StrandSummary[] = Array.from(strandAcc.entries())
+    .map(([strand, v]) => {
+      const baseline_mean = v.baselineN > 0 ? v.baselineTotal / v.baselineN : null;
+      const follow_up_mean = v.followN > 0 ? v.followTotal / v.followN : null;
+      const delta = baseline_mean != null && follow_up_mean != null
+        ? Number((follow_up_mean - baseline_mean).toFixed(2))
+        : null;
+      return {
+        strand,
+        n: v.n,
+        mean_score: Number((v.total / v.n).toFixed(2)),
+        baseline_mean: baseline_mean != null ? Number(baseline_mean.toFixed(2)) : null,
+        follow_up_mean: follow_up_mean != null ? Number(follow_up_mean.toFixed(2)) : null,
+        delta,
+      };
+    })
+    .sort((a, b) => b.n - a.n);
 
   // Pending invitation count
   const { count: pendingCount } = await admin
@@ -184,6 +231,66 @@ export default async function AdminOutcomesPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* By programme strand */}
+      {strandSummary.length > 0 && (
+        <div className="bg-white border border-gray-100 rounded-xl shadow-sm">
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="font-heading font-bold text-lg text-gray-900">
+              By programme strand
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Mean score per strand. Where both baseline and follow-up exist, the delta shows change.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <tr>
+                  <th className="px-4 py-2 text-left">Strand</th>
+                  <th className="px-4 py-2 text-right">Responses</th>
+                  <th className="px-4 py-2 text-right">Mean score</th>
+                  <th className="px-4 py-2 text-right">Baseline</th>
+                  <th className="px-4 py-2 text-right">Follow-up</th>
+                  <th className="px-4 py-2 text-right">Δ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {strandSummary.map((s) => (
+                  <tr key={s.strand}>
+                    <td className="px-4 py-3 text-gray-900 font-medium">
+                      {s.strand.replace(/_/g, " ")}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-700">{s.n}</td>
+                    <td className="px-4 py-3 text-right text-gray-900 font-semibold">
+                      {s.mean_score}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-500">
+                      {s.baseline_mean ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-500">
+                      {s.follow_up_mean ?? "—"}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-right font-semibold ${
+                        s.delta == null
+                          ? "text-gray-400"
+                          : s.delta > 0
+                            ? "text-green-700"
+                            : s.delta < 0
+                              ? "text-red-700"
+                              : "text-gray-600"
+                      }`}
+                    >
+                      {s.delta == null ? "—" : (s.delta > 0 ? "+" : "") + s.delta}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
