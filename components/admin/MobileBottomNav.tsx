@@ -14,6 +14,7 @@ import {
   Settings,
   X,
   ExternalLink,
+  Calculator,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -25,6 +26,7 @@ const primaryNav = [
 ];
 
 const moreNav = [
+  { name: "Accounting", href: "/admin/accounting", icon: Calculator, external: false },
   { name: "Emails", href: "/admin/emails", icon: Mail, external: false },
   { name: "Settings", href: "/admin/settings", icon: Settings, external: false },
   { name: "Visit Website", href: "/", icon: ExternalLink, external: true },

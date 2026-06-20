@@ -60,10 +60,16 @@ export default async function SettingsPage() {
                       className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
                         member.role === "admin"
                           ? "bg-purple-100 text-purple-700"
+                          : member.role === "treasurer"
+                          ? "bg-amber-100 text-amber-700"
                           : "bg-gray-100 text-gray-700"
                       }`}
                     >
-                      {member.role === "admin" ? "Admin" : "Editor"}
+                      {member.role === "admin"
+                        ? "Admin"
+                        : member.role === "treasurer"
+                        ? "Treasurer"
+                        : "Editor"}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 truncate mt-0.5">{member.email}</p>
