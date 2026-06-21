@@ -6,6 +6,7 @@ import { FestivalPromoBanner } from "@/components/festival/FestivalPromoBanner";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
+import { slotsForRegistration } from "@/lib/events";
 
 // Helper to format time (remove seconds if present)
 function formatTime(time: string | null | undefined): string {
@@ -87,15 +88,7 @@ export default async function EventsPage() {
       acc[reg.event_id] = { confirmed: 0, waitlisted: 0 };
     }
 
-    const eventType = eventTypeMap[reg.event_id];
-    let slotsForReg = 0;
-    if (eventType === "children") {
-      slotsForReg = reg.registration_children?.length || 0;
-    } else if (eventType === "adults") {
-      slotsForReg = reg.registration_attendees?.length || 0;
-    } else {
-      slotsForReg = (reg.registration_children?.length || 0) + (reg.registration_attendees?.length || 0);
-    }
+    const slotsForReg = slotsForRegistration(reg, eventTypeMap[reg.event_id]);
 
     if (reg.status === "confirmed") acc[reg.event_id].confirmed += slotsForReg;
     if (reg.status === "waitlisted") acc[reg.event_id].waitlisted += slotsForReg;

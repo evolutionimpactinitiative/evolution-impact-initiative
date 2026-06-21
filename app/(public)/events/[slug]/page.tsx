@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
+import { slotsForRegistration } from "@/lib/events";
 import { NotifyMeForm } from "@/components/shared/NotifyMeForm";
 import { CountdownTimer } from "@/components/shared/CountdownTimer";
 
@@ -61,15 +62,7 @@ async function getEvent(slug: string): Promise<EventWithAvailability | null> {
   let waitlistedSlotsUsed = 0;
 
   for (const reg of regs) {
-    let slotsForReg = 0;
-    if (event.event_type === "children") {
-      slotsForReg = reg.registration_children?.length || 0;
-    } else if (event.event_type === "adults") {
-      slotsForReg = reg.registration_attendees?.length || 0;
-    } else {
-      // mixed or default: count both
-      slotsForReg = (reg.registration_children?.length || 0) + (reg.registration_attendees?.length || 0);
-    }
+    const slotsForReg = slotsForRegistration(reg, event.event_type);
 
     if (reg.status === "confirmed") {
       confirmedSlotsUsed += slotsForReg;

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { RegistrationForm } from "@/components/registration/RegistrationForm";
 import type { Event } from "@/lib/supabase/types";
+import { slotsForRegistration } from "@/lib/events";
 import { ArrowLeft, Calendar, MapPin, Clock, AlertCircle, CheckCircle } from "lucide-react";
 
 // Helper to format time (remove seconds if present)
@@ -66,15 +67,7 @@ export default async function RegisterPage({ params }: Props) {
   let waitlistedSlotsUsed = 0;
 
   for (const reg of registrations) {
-    let slotsForReg = 0;
-    if (event.event_type === "children") {
-      slotsForReg = reg.registration_children?.length || 0;
-    } else if (event.event_type === "adults") {
-      slotsForReg = reg.registration_attendees?.length || 0;
-    } else {
-      // mixed or default: count both
-      slotsForReg = (reg.registration_children?.length || 0) + (reg.registration_attendees?.length || 0);
-    }
+    const slotsForReg = slotsForRegistration(reg, event.event_type);
 
     if (reg.status === "confirmed") {
       confirmedSlotsUsed += slotsForReg;

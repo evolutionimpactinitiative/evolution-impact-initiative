@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Plus, Calendar, Users, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Event } from "@/lib/supabase/types";
+import { slotsForRegistration } from "@/lib/events";
 
 export default async function EventsPage() {
   const supabase = await createClient();
@@ -14,21 +15,34 @@ export default async function EventsPage() {
 
   const events = (eventsData as Event[] | null) || [];
 
-  // Get registration counts for each event
+  // Get registration counts for each event (people, not bookings)
   const eventIds = events.map((e) => e.id);
   const { data: registrationCounts } = await supabase
     .from("registrations")
-    .select("event_id, status")
+    .select(`
+      event_id,
+      status,
+      registration_children (id),
+      registration_attendees (id)
+    `)
     .in("event_id", eventIds.length > 0 ? eventIds : ["none"]);
 
-  type RegCount = { event_id: string; status: string };
+  const eventTypeById = new Map(events.map((e) => [e.id, e.event_type]));
+
+  type RegCount = {
+    event_id: string;
+    status: string;
+    registration_children: { id: string }[];
+    registration_attendees: { id: string }[];
+  };
   const countsByEvent = ((registrationCounts as RegCount[] | null) || []).reduce(
     (acc, reg) => {
       if (!acc[reg.event_id]) {
         acc[reg.event_id] = { confirmed: 0, waitlisted: 0 };
       }
-      if (reg.status === "confirmed") acc[reg.event_id].confirmed++;
-      if (reg.status === "waitlisted") acc[reg.event_id].waitlisted++;
+      const slots = slotsForRegistration(reg, eventTypeById.get(reg.event_id));
+      if (reg.status === "confirmed") acc[reg.event_id].confirmed += slots;
+      if (reg.status === "waitlisted") acc[reg.event_id].waitlisted += slots;
       return acc;
     },
     {} as Record<string, { confirmed: number; waitlisted: number }>

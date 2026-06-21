@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FESTIVAL_SLUG } from "@/lib/festival";
+import { slotsForRegistration, slotsNeededForNewRegistration } from "@/lib/events";
 
 interface ChildData {
   name: string;
@@ -87,15 +88,7 @@ export async function POST(request: NextRequest) {
     let waitlistedSlotsUsed = 0;
 
     for (const reg of regs) {
-      let slotsForReg = 0;
-      if (event.event_type === "children") {
-        slotsForReg = reg.registration_children?.length || 0;
-      } else if (event.event_type === "adults") {
-        slotsForReg = reg.registration_attendees?.length || 0;
-      } else {
-        // mixed or default: count both
-        slotsForReg = (reg.registration_children?.length || 0) + (reg.registration_attendees?.length || 0);
-      }
+      const slotsForReg = slotsForRegistration(reg, event.event_type);
 
       if (reg.status === "confirmed") {
         confirmedSlotsUsed += slotsForReg;
@@ -111,14 +104,11 @@ export async function POST(request: NextRequest) {
     const validChildren = children.filter((c) => c.name?.trim() && c.age?.trim());
     const validAttendees = attendees.filter((a) => a.name?.trim());
 
-    let slotsNeeded = 0;
-    if (event.event_type === "children") {
-      slotsNeeded = validChildren.length;
-    } else if (event.event_type === "adults") {
-      slotsNeeded = validAttendees.length;
-    } else {
-      slotsNeeded = validChildren.length + validAttendees.length;
-    }
+    const slotsNeeded = slotsNeededForNewRegistration(
+      validChildren.length,
+      validAttendees.length,
+      event.event_type,
+    );
 
     let status: "confirmed" | "waitlisted";
     if (spotsRemaining >= slotsNeeded) {
