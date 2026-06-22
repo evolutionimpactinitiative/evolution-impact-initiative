@@ -76,8 +76,12 @@ export default async function FestivalHubPage() {
   // Treat as "live" only when status=published AND publish_at has passed (or is null)
   const isPublished = eventRow?.status === "published" && !isScheduled;
 
+  // Capacity comes from the DB so admin changes to total_slots flow through
+  // here. Fall back to the constant only when the event row is missing.
+  const totalTickets = eventRow?.total_slots ?? FESTIVAL.totalTickets;
+
   // Ticket availability — count registered attendees if event exists
-  let ticketsRemaining: number = FESTIVAL.totalTickets;
+  let ticketsRemaining: number = totalTickets;
   if (eventId) {
     const { data: regs } = await supabase
       .from("registrations")
@@ -98,10 +102,7 @@ export default async function FestivalHubPage() {
         (r.registration_attendees?.length || 0),
       0,
     );
-    ticketsRemaining = Math.max(
-      0,
-      (eventRow?.total_slots ?? FESTIVAL.totalTickets) - taken,
-    );
+    ticketsRemaining = Math.max(0, totalTickets - taken);
   }
 
   // Sponsors (confirmed only)
@@ -353,7 +354,7 @@ export default async function FestivalHubPage() {
               </h2>
               <p className="text-brand-dark/70 leading-relaxed mb-6">
                 The festival is free, but capacity is limited to{" "}
-                {FESTIVAL.totalTickets} people. Book one ticket per person —
+                {totalTickets} people. Book one ticket per person —
                 including children. A family of four = four tickets.
               </p>
               <ul className="space-y-3 mb-8 text-brand-dark/80">
@@ -380,7 +381,7 @@ export default async function FestivalHubPage() {
                 {ticketsRemaining}
                 <span className="text-2xl md:text-3xl text-brand-dark/40">
                   {" "}
-                  / {FESTIVAL.totalTickets}
+                  / {totalTickets}
                 </span>
               </p>
               <p className="text-brand-dark/70 mb-6">tickets available</p>
@@ -389,7 +390,7 @@ export default async function FestivalHubPage() {
                 <div
                   className="h-full bg-brand-blue rounded-full transition-all"
                   style={{
-                    width: `${Math.max(0, Math.min(100, ((FESTIVAL.totalTickets - ticketsRemaining) / FESTIVAL.totalTickets) * 100))}%`,
+                    width: `${Math.max(0, Math.min(100, ((totalTickets - ticketsRemaining) / totalTickets) * 100))}%`,
                   }}
                 />
               </div>
@@ -714,7 +715,7 @@ export default async function FestivalHubPage() {
             Save the date · {FESTIVAL.dateLabel}
           </h2>
           <p className="text-white/70 max-w-xl mx-auto mb-8">
-            Free tickets are limited to {FESTIVAL.totalTickets}. Book early to
+            Free tickets are limited to {totalTickets}. Book early to
             secure your spot.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
