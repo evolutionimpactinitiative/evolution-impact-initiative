@@ -3,6 +3,7 @@ import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
 import { RegistrationActions } from "@/components/admin/RegistrationActions";
 import { FestivalAdminTabs } from "@/components/admin/festival/FestivalAdminTabs";
 import { FESTIVAL_SLUG } from "@/lib/festival";
+import { slotsForRegistration } from "@/lib/events";
 import type {
   Event,
   Registration,
@@ -59,15 +60,11 @@ export default async function FestivalTicketsAdminPage() {
   const waitlisted = registrations.filter((r) => r.status === "waitlisted").length;
   const cancelled = registrations.filter((r) => r.status === "cancelled").length;
   const attended = registrations.filter((r) => r.attended === "yes").length;
-  const totalAttendees = registrations
+  // Tickets sold counts every person — lead booker + children + adult attendees —
+  // via the shared helper so admin and public pages always agree.
+  const ticketsSold = registrations
     .filter((r) => r.status === "confirmed")
-    .reduce(
-      (sum, r) =>
-        sum +
-        (r.registration_attendees?.length || 0) +
-        (r.registration_children?.length || 0),
-      0,
-    );
+    .reduce((sum, r) => sum + slotsForRegistration(r, event.event_type), 0);
 
   return (
     <div className="space-y-6">
@@ -99,11 +96,11 @@ export default async function FestivalTicketsAdminPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4">
-          <p className="text-xs lg:text-sm text-gray-500">Confirmed</p>
+          <p className="text-xs lg:text-sm text-gray-500">Bookings</p>
           <p className="text-xl lg:text-2xl font-bold text-green-600">
             {confirmed}
-            {event.total_slots ? `/${event.total_slots}` : ""}
           </p>
+          <p className="text-xs text-gray-500 mt-0.5">confirmed families</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4">
           <p className="text-xs lg:text-sm text-gray-500">Waitlist</p>
@@ -125,10 +122,12 @@ export default async function FestivalTicketsAdminPage() {
           </p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4 col-span-2 lg:col-span-1">
-          <p className="text-xs lg:text-sm text-gray-500">Total Attendees</p>
+          <p className="text-xs lg:text-sm text-gray-500">Tickets sold</p>
           <p className="text-xl lg:text-2xl font-bold text-purple-600">
-            {totalAttendees}
+            {ticketsSold}
+            {event.total_slots ? `/${event.total_slots}` : ""}
           </p>
+          <p className="text-xs text-gray-500 mt-0.5">people attending</p>
         </div>
       </div>
 
