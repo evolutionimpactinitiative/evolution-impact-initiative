@@ -58,7 +58,7 @@ export default async function FestivalHubPage() {
   // we degrade gracefully and use FESTIVAL constants only.
   const { data: eventRow } = await supabase
     .from("events")
-    .select("id, status, total_slots, publish_at, hero_image_url, card_image_url")
+    .select("id, status, total_slots, publish_at, hero_image_url, card_image_url, final_release")
     .eq("slug", FESTIVAL.slug)
     .maybeSingle();
 
@@ -79,6 +79,7 @@ export default async function FestivalHubPage() {
   // Capacity comes from the DB so admin changes to total_slots flow through
   // here. Fall back to the constant only when the event row is missing.
   const totalTickets = eventRow?.total_slots ?? FESTIVAL.totalTickets;
+  const isFinalRelease = eventRow?.final_release ?? false;
 
   // Ticket availability — count registered attendees if event exists
   let ticketsRemaining: number = totalTickets;
@@ -181,9 +182,16 @@ export default async function FestivalHubPage() {
                 FEST 2026
               </h1>
 
-              <p className="font-heading font-bold text-brand-accent text-xl md:text-2xl mb-6">
+              <p className="font-heading font-bold text-brand-accent text-xl md:text-2xl mb-3">
                 {FESTIVAL.tagline}
               </p>
+
+              {isFinalRelease && (
+                <p className="inline-flex items-center gap-2 text-sm font-heading font-semibold text-brand-accent mb-6">
+                  <span className="h-2 w-2 rounded-full bg-brand-accent animate-pulse" />
+                  First wave sold out · final release on sale now
+                </p>
+              )}
 
               <p className="text-lg text-white/70 max-w-2xl mb-10 leading-relaxed">
                 A free family festival celebrating one year of impact —
@@ -373,32 +381,54 @@ export default async function FestivalHubPage() {
               </div>
             </div>
 
-            <div className="bg-brand-pale/40 border border-brand-blue/10 rounded-2xl p-8 md:p-10">
-              <p className="font-heading text-xs uppercase tracking-widest text-brand-blue mb-3">
-                Capacity
-              </p>
-              <p className="font-heading font-black text-5xl md:text-6xl text-brand-dark mb-2 leading-none">
-                {ticketsRemaining}
-                <span className="text-2xl md:text-3xl text-brand-dark/40">
-                  {" "}
-                  / {totalTickets}
-                </span>
-              </p>
-              <p className="text-brand-dark/70 mb-6">tickets available</p>
+            <div className="space-y-5">
+              {isFinalRelease && (
+                <div className="rounded-2xl bg-brand-accent/15 border-2 border-brand-accent p-5 md:p-6">
+                  <p className="font-heading text-[11px] uppercase tracking-widest text-brand-dark/60 mb-1">
+                    Final release ·{" "}
+                    {ticketsRemaining > 0
+                      ? `${ticketsRemaining} left`
+                      : "sold out"}
+                  </p>
+                  <p className="font-heading font-black text-lg md:text-xl text-brand-dark leading-snug">
+                    The first wave sold out. These are the last tickets we&apos;re
+                    releasing — when they&apos;re gone, there won&apos;t be more.
+                  </p>
+                </div>
+              )}
 
-              <div className="h-2 bg-brand-blue/10 rounded-full overflow-hidden mb-6">
-                <div
-                  className="h-full bg-brand-blue rounded-full transition-all"
-                  style={{
-                    width: `${Math.max(0, Math.min(100, ((totalTickets - ticketsRemaining) / totalTickets) * 100))}%`,
-                  }}
-                />
+              <div className="bg-brand-pale/40 border border-brand-blue/10 rounded-2xl p-8 md:p-10">
+                {isFinalRelease && (
+                  <span className="inline-block bg-brand-accent text-brand-dark text-[10px] uppercase tracking-widest font-heading font-bold px-2.5 py-1 rounded-full mb-3">
+                    Final release
+                  </span>
+                )}
+                <p className="font-heading text-xs uppercase tracking-widest text-brand-blue mb-3">
+                  Capacity
+                </p>
+                <p className="font-heading font-black text-5xl md:text-6xl text-brand-dark mb-2 leading-none">
+                  {ticketsRemaining}
+                  <span className="text-2xl md:text-3xl text-brand-dark/40">
+                    {" "}
+                    / {totalTickets}
+                  </span>
+                </p>
+                <p className="text-brand-dark/70 mb-6">tickets available</p>
+
+                <div className="h-2 bg-brand-blue/10 rounded-full overflow-hidden mb-6">
+                  <div
+                    className="h-full bg-brand-blue rounded-full transition-all"
+                    style={{
+                      width: `${Math.max(0, Math.min(100, ((totalTickets - ticketsRemaining) / totalTickets) * 100))}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="text-sm text-brand-dark/60 leading-relaxed">
+                  Tickets are transferable — you can share with friends or family
+                  if your plans change.
+                </p>
               </div>
-
-              <p className="text-sm text-brand-dark/60 leading-relaxed">
-                Tickets are transferable — you can share with friends or family
-                if your plans change.
-              </p>
             </div>
           </div>
         </div>

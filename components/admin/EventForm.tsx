@@ -57,6 +57,7 @@ export function EventForm({ event }: EventFormProps) {
     max_children_per_registration: event?.max_children_per_registration || 2,
     max_attendees_per_registration: event?.max_attendees_per_registration || 2,
     registration_status: event?.registration_status || "auto",
+    final_release: event?.final_release ?? false,
     status: event?.status || "draft",
     send_reminder_24h: event?.send_reminder_24h ?? true,
     send_reminder_1h: event?.send_reminder_1h ?? true,
@@ -552,6 +553,25 @@ export function EventForm({ event }: EventFormProps) {
               <span className="text-sm">Auto-close on event day</span>
             </label>
           </div>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.final_release}
+              onChange={(e) => setFormData({ ...formData, final_release: e.target.checked })}
+              className="mt-1 text-brand-blue focus:ring-brand-blue rounded"
+            />
+            <div>
+              <span className="block text-sm font-medium text-gray-700">
+                Final release of tickets
+              </span>
+              <span className="block text-xs text-gray-500 mt-0.5">
+                Shows a &quot;final release · when they&apos;re gone, they&apos;re gone&quot; banner on the public event page. Use when you&apos;ve already sold out once and are adding a last batch.
+              </span>
+            </div>
+          </label>
         </div>
       </div>
 

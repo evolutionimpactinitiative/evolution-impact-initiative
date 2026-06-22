@@ -101,6 +101,7 @@ export interface Database {
           custom_fields: CustomField[] | null;
           photo_album_url: string | null;
           publish_at: string | null;
+          final_release: boolean;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -136,6 +137,7 @@ export interface Database {
           custom_fields?: CustomField[] | null;
           photo_album_url?: string | null;
           publish_at?: string | null;
+          final_release?: boolean;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -171,6 +173,7 @@ export interface Database {
           custom_fields?: CustomField[] | null;
           photo_album_url?: string | null;
           publish_at?: string | null;
+          final_release?: boolean;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
