@@ -390,7 +390,7 @@ export default async function FestivalHubPage() {
                       ? `${ticketsRemaining} left`
                       : "sold out"}
                   </p>
-                  <p className="font-heading font-black text-lg md:text-xl text-brand-dark leading-snug">
+                  <p className="text-base md:text-lg text-brand-dark leading-relaxed">
                     The first wave sold out. These are the last tickets we&apos;re
                     releasing — when they&apos;re gone, there won&apos;t be more.
                   </p>

@@ -7,13 +7,17 @@ import { ImpactSection } from "@/components/sections/ImpactSection";
 import { AnniversarySection } from "@/components/sections/AnniversarySection";
 import { DonateSection } from "@/components/sections/DonateSection";
 import { GetInvolvedSection } from "@/components/sections/GetInvolvedSection";
+import { getFestivalRelease } from "@/lib/festival/release";
 
-export default function Home() {
+export default async function Home() {
+  const release = await getFestivalRelease();
+  const finalRelease = release.finalRelease ? release.ticketsRemaining : null;
+
   return (
     <>
       <HeroSection />
-      <FestivalCountdownStrip />
-      <MarqueeBanner />
+      <FestivalCountdownStrip finalRelease={finalRelease} />
+      <MarqueeBanner finalRelease={finalRelease} />
       <AboutSection />
       <ProgrammesSection />
       <ImpactSection />
