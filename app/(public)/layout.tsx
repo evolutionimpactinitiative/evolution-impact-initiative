@@ -3,6 +3,10 @@ import { Footer } from "@/components/layout/Footer";
 import { TextureOverlay } from "@/components/layout/TextureOverlay";
 import { getFestivalRelease } from "@/lib/festival/release";
 
+// Keep all public pages live so the festival ticket count in the Navbar
+// (and any final-release UI surfaced via getFestivalRelease) is always fresh.
+export const revalidate = 0;
+
 export default async function PublicLayout({
   children,
 }: {
