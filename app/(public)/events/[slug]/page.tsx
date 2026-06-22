@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
-import { ArrowLeft, Calendar, Clock, MapPin, Users, Tag, Info, Bell } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Calendar, Clock, MapPin, Users, Tag, Info, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -392,7 +392,11 @@ export default async function EventPage({ params }: Props) {
                   </span>
                 )}
                 {event.registrationStatus === "open" && (
-                  <span>
+                  <span
+                    className={
+                      event.final_release ? "text-red-600 font-semibold" : ""
+                    }
+                  >
                     {event.spotsRemaining} of {event.total_slots} places available
                   </span>
                 )}
@@ -432,6 +436,26 @@ export default async function EventPage({ params }: Props) {
                     Enter your email and we&apos;ll notify you as soon as registration opens.
                   </p>
                   <NotifyMeForm eventId={event.id} eventTitle={event.title} />
+                </div>
+              </div>
+            )}
+
+            {isUpcoming && event.final_release && event.registrationStatus !== "scheduled" && (
+              <div className="mb-6 rounded-xl bg-red-50 border-2 border-red-500 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-heading font-bold text-red-700 text-sm uppercase tracking-wider mb-1">
+                      Final release ·{" "}
+                      {event.spotsRemaining > 0
+                        ? `${event.spotsRemaining} of ${event.total_slots} left`
+                        : "sold out"}
+                    </p>
+                    <p className="text-sm text-red-900/80 leading-relaxed">
+                      The first wave sold out. These are the last tickets we&apos;re
+                      releasing — when they&apos;re gone, there won&apos;t be more.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

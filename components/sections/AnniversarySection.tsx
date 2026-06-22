@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Calendar, MapPin, ArrowRight, Sparkles } from "lucide-react";
+import { AlertTriangle, Calendar, MapPin, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { FESTIVAL, FIRST_YEAR_STATS } from "@/lib/festival";
+import { getFestivalRelease } from "@/lib/festival/release";
 
-export function AnniversarySection() {
+export async function AnniversarySection() {
+  const release = await getFestivalRelease();
   return (
     <section className="bg-brand-dark text-white py-20 md:py-32 relative overflow-hidden">
       {/* Decorative orbs */}
@@ -75,8 +77,28 @@ export function AnniversarySection() {
                 </span>
               </div>
 
+              {release.finalRelease && (
+                <div className="inline-flex items-center gap-2 bg-red-600/15 border border-red-500/40 text-red-300 px-3 py-2 rounded-lg text-sm font-heading font-semibold mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>
+                    Final release ·{" "}
+                    {release.ticketsRemaining > 0
+                      ? `only ${release.ticketsRemaining} left`
+                      : "sold out"}
+                  </span>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button asChild size="lg" className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white">
+                <Button
+                  asChild
+                  size="lg"
+                  className={
+                    release.finalRelease
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
+                  }
+                >
                   <Link href={`/${FESTIVAL.slug}`}>
                     Get free tickets
                     <ArrowRight className="h-4 w-4 ml-2" />

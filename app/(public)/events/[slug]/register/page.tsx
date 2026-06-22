@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { RegistrationForm } from "@/components/registration/RegistrationForm";
 import type { Event } from "@/lib/supabase/types";
 import { slotsForRegistration } from "@/lib/events";
-import { ArrowLeft, Calendar, MapPin, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Calendar, MapPin, Clock, AlertCircle, CheckCircle } from "lucide-react";
 
 // Helper to format time (remove seconds if present)
 function formatTime(time: string | null | undefined): string {
@@ -102,6 +102,27 @@ export default async function RegisterPage({ params }: Props) {
 
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
+          {/* Final release strip */}
+          {event.final_release && !isFull && (
+            <div className="mb-6 rounded-xl bg-red-50 border-2 border-red-500 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-heading font-bold text-red-700 text-sm uppercase tracking-wider mb-1">
+                    Final release ·{" "}
+                    {spotsRemaining > 0
+                      ? `${spotsRemaining} left`
+                      : "sold out"}
+                  </p>
+                  <p className="text-sm text-red-900/80 leading-relaxed">
+                    The first wave sold out. These are the last tickets we&apos;re
+                    releasing — when they&apos;re gone, there won&apos;t be more.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Event summary card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
             <h1 className="font-heading font-black text-2xl md:text-3xl text-brand-dark mb-2">

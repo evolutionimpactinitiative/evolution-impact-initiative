@@ -187,8 +187,8 @@ export default async function FestivalHubPage() {
               </p>
 
               {isFinalRelease && (
-                <p className="inline-flex items-center gap-2 text-sm font-heading font-semibold text-brand-accent mb-6">
-                  <span className="h-2 w-2 rounded-full bg-brand-accent animate-pulse" />
+                <p className="inline-flex items-center gap-2 text-sm font-heading font-semibold text-red-400 mb-6">
+                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                   First wave sold out · final release on sale now
                 </p>
               )}
@@ -383,8 +383,8 @@ export default async function FestivalHubPage() {
 
             <div className="space-y-5">
               {isFinalRelease && (
-                <div className="rounded-2xl bg-brand-accent/15 border-2 border-brand-accent p-5 md:p-6">
-                  <p className="font-heading text-[11px] uppercase tracking-widest text-brand-dark/60 mb-1">
+                <div className="rounded-2xl bg-red-50 border-2 border-red-500 p-5 md:p-6">
+                  <p className="font-heading text-[11px] uppercase tracking-widest text-red-700 mb-1">
                     Final release ·{" "}
                     {ticketsRemaining > 0
                       ? `${ticketsRemaining} left`
@@ -399,7 +399,7 @@ export default async function FestivalHubPage() {
 
               <div className="bg-brand-pale/40 border border-brand-blue/10 rounded-2xl p-8 md:p-10">
                 {isFinalRelease && (
-                  <span className="inline-block bg-brand-accent text-brand-dark text-[10px] uppercase tracking-widest font-heading font-bold px-2.5 py-1 rounded-full mb-3">
+                  <span className="inline-block bg-red-600 text-white text-[10px] uppercase tracking-widest font-heading font-bold px-2.5 py-1 rounded-full mb-3">
                     Final release
                   </span>
                 )}

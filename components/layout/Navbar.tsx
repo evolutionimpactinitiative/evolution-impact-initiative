@@ -14,9 +14,25 @@ import {
 import { navLinks } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-export function Navbar() {
+type NavbarProps = {
+  // If set, the festival event is in "final release" mode — the CTA pill
+  // should show the live remaining count in red instead of the usual green.
+  finalRelease?: number | null;
+};
+
+export function Navbar({ finalRelease = null }: NavbarProps = {}) {
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+
+  const isFinalRelease = typeof finalRelease === "number";
+  const ticketsCtaClass = isFinalRelease
+    ? "bg-red-600 text-white hover:bg-red-700 ring-2 ring-red-200"
+    : "bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white";
+  const ticketsCtaLabel = isFinalRelease
+    ? finalRelease > 0
+      ? `Fest 2026 · Final ${finalRelease} tickets`
+      : "Fest 2026 · Sold out"
+    : "Fest 2026 · Free tickets";
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -59,11 +75,8 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Button
-            asChild
-            className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
-          >
-            <Link href="/evolution-fest-2026">Fest 2026 · Free tickets</Link>
+          <Button asChild className={ticketsCtaClass}>
+            <Link href="/evolution-fest-2026">{ticketsCtaLabel}</Link>
           </Button>
         </div>
 
@@ -98,13 +111,13 @@ export function Navbar() {
                 </nav>
                 <Button
                   asChild
-                  className="w-full mt-4 bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
+                  className={`w-full mt-4 ${ticketsCtaClass}`}
                 >
                   <Link
                     href="/evolution-fest-2026"
                     onClick={() => setOpen(false)}
                   >
-                    Fest 2026 · Free tickets
+                    {ticketsCtaLabel}
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full">
