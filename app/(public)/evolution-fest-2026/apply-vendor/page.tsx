@@ -57,6 +57,9 @@ export default async function ApplyVendorPage() {
       }
     }
   }
+  for (const c of VENDOR_CATEGORIES) {
+    capacity[c.key] += c.manualTaken ?? 0;
+  }
 
   // Deadline gate
   const now = new Date();

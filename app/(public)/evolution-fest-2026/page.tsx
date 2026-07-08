@@ -492,7 +492,8 @@ export default async function FestivalHubPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {VENDOR_CATEGORIES.map((cat) => {
-              const taken = vendorCounts[cat.key] ?? 0;
+              const taken =
+                (vendorCounts[cat.key] ?? 0) + (cat.manualTaken ?? 0);
               const remaining = Math.max(0, cat.cap - taken);
               const full = remaining === 0;
               return (

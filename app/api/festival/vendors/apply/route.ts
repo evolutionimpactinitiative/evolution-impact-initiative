@@ -128,7 +128,8 @@ export async function POST(request: NextRequest) {
     };
     const counts = (countRows as CountRow[] | null) ?? [];
     const activeForCategory =
-      counts.find((c) => c.category === category)?.active_total ?? 0;
+      (counts.find((c) => c.category === category)?.active_total ?? 0) +
+      (categoryDef.manualTaken ?? 0);
     if (activeForCategory >= categoryDef.cap) {
       return NextResponse.json(
         {

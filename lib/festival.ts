@@ -81,6 +81,9 @@ export type VendorCategory = {
   contributionPence: number; // 0 = free
   contributionLabel: string;
   cap: number;
+  // Slots claimed outside the applications flow (e.g. offline bookings).
+  // Added to live application counts everywhere capacity is shown or enforced.
+  manualTaken?: number;
 };
 
 export const VENDOR_CATEGORIES: VendorCategory[] = [
@@ -90,7 +93,8 @@ export const VENDOR_CATEGORIES: VendorCategory[] = [
     examples: ["Burgers", "Chicken", "African", "Caribbean", "Desserts", "Street food"],
     contributionPence: 5000,
     contributionLabel: "£50",
-    cap: 6,
+    cap: 3,
+    manualTaken: 3,
   },
   {
     key: "drinks",
@@ -98,7 +102,8 @@ export const VENDOR_CATEGORIES: VendorCategory[] = [
     examples: ["Fresh juice", "Mocktails", "Coffee", "Tea", "Soft drinks"],
     contributionPence: 5000,
     contributionLabel: "£50",
-    cap: 3,
+    cap: 1,
+    manualTaken: 1,
   },
   {
     key: "sweet_treats",
@@ -107,6 +112,7 @@ export const VENDOR_CATEGORIES: VendorCategory[] = [
     contributionPence: 5000,
     contributionLabel: "£50",
     cap: 2,
+    manualTaken: 1,
   },
   {
     key: "retail",
@@ -129,7 +135,7 @@ export const VENDOR_CATEGORIES: VendorCategory[] = [
 export const VENDOR_TOTAL_CAP = VENDOR_CATEGORIES.reduce(
   (sum, c) => sum + c.cap,
   0,
-); // 6 + 3 + 2 + 2 + 2 = 15
+); // 3 + 1 + 2 + 2 + 2 = 10
 
 // ============================================
 // Sponsor catalog (matches Community Partnership & Sponsorship Pack)
