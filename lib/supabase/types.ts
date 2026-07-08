@@ -37,6 +37,27 @@ export interface VolunteerAvailability {
   packdown?: boolean;
 }
 
+// Festival 2026: volunteer DBS check level
+export type DbsLevel =
+  | "basic"
+  | "standard"
+  | "enhanced"
+  | "enhanced_child_barred"
+  | "enhanced_adult_barred"
+  | "enhanced_both_barred";
+
+export const DBS_LEVELS: { value: DbsLevel; label: string }[] = [
+  { value: "basic", label: "Basic" },
+  { value: "standard", label: "Standard" },
+  { value: "enhanced", label: "Enhanced" },
+  { value: "enhanced_child_barred", label: "Enhanced with Child Barred List" },
+  { value: "enhanced_adult_barred", label: "Enhanced with Adult Barred List" },
+  {
+    value: "enhanced_both_barred",
+    label: "Enhanced with Child & Adult Barred List",
+  },
+];
+
 export interface Database {
   public: {
     Tables: {
@@ -919,6 +940,15 @@ export interface Database {
           emergency_contact_name: string;
           emergency_contact_phone: string;
           consent_to_contact: boolean;
+          has_dbs: boolean | null;
+          dbs_level: DbsLevel | null;
+          has_safeguarding_training: boolean | null;
+          safeguarding_training_notes: string | null;
+          parent_guardian_name: string | null;
+          parent_guardian_phone: string | null;
+          parent_guardian_email: string | null;
+          parent_guardian_relationship: string | null;
+          parental_consent_confirmed: boolean | null;
           status: "pending" | "approved" | "assigned" | "declined" | "cancelled";
           assigned_role: string | null;
           reviewed_by: string | null;
@@ -944,6 +974,15 @@ export interface Database {
           emergency_contact_name: string;
           emergency_contact_phone: string;
           consent_to_contact?: boolean;
+          has_dbs?: boolean | null;
+          dbs_level?: DbsLevel | null;
+          has_safeguarding_training?: boolean | null;
+          safeguarding_training_notes?: string | null;
+          parent_guardian_name?: string | null;
+          parent_guardian_phone?: string | null;
+          parent_guardian_email?: string | null;
+          parent_guardian_relationship?: string | null;
+          parental_consent_confirmed?: boolean | null;
           status?: "pending" | "approved" | "assigned" | "declined" | "cancelled";
           assigned_role?: string | null;
           reviewed_by?: string | null;
@@ -969,6 +1008,15 @@ export interface Database {
           emergency_contact_name?: string;
           emergency_contact_phone?: string;
           consent_to_contact?: boolean;
+          has_dbs?: boolean | null;
+          dbs_level?: DbsLevel | null;
+          has_safeguarding_training?: boolean | null;
+          safeguarding_training_notes?: string | null;
+          parent_guardian_name?: string | null;
+          parent_guardian_phone?: string | null;
+          parent_guardian_email?: string | null;
+          parent_guardian_relationship?: string | null;
+          parental_consent_confirmed?: boolean | null;
           status?: "pending" | "approved" | "assigned" | "declined" | "cancelled";
           assigned_role?: string | null;
           reviewed_by?: string | null;

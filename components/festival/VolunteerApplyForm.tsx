@@ -2,19 +2,22 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { DBS_LEVELS, type DbsLevel } from "@/lib/supabase/types";
 
 type TShirtSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
+type YesNo = "yes" | "no" | "";
+type RelationshipChoice = "Parent" | "Guardian" | "Other" | "";
 
 interface FormState {
   fullName: string;
   email: string;
   phone: string;
-  isOver18: boolean;
+  dateOfBirth: string; // YYYY-MM-DD
   setup: boolean;
   am: boolean;
   pm: boolean;
@@ -24,6 +27,19 @@ interface FormState {
   accessibilityNeeds: string;
   skills: string;
   priorExperience: string;
+  // Safeguarding & DBS
+  hasDbs: YesNo;
+  dbsLevel: DbsLevel | "";
+  hasSafeguardingTraining: YesNo;
+  safeguardingTrainingNotes: string;
+  // Parental consent (only used if age < 18)
+  parentName: string;
+  parentPhone: string;
+  parentEmail: string;
+  parentRelationship: RelationshipChoice;
+  parentRelationshipOther: string;
+  parentalConsentConfirmed: boolean;
+  // Emergency
   emergencyContactName: string;
   emergencyContactPhone: string;
   consent: boolean;
@@ -33,7 +49,7 @@ const initial: FormState = {
   fullName: "",
   email: "",
   phone: "",
-  isOver18: true,
+  dateOfBirth: "",
   setup: false,
   am: false,
   pm: false,
@@ -43,6 +59,16 @@ const initial: FormState = {
   accessibilityNeeds: "",
   skills: "",
   priorExperience: "",
+  hasDbs: "",
+  dbsLevel: "",
+  hasSafeguardingTraining: "",
+  safeguardingTrainingNotes: "",
+  parentName: "",
+  parentPhone: "",
+  parentEmail: "",
+  parentRelationship: "",
+  parentRelationshipOther: "",
+  parentalConsentConfirmed: false,
   emergencyContactName: "",
   emergencyContactPhone: "",
   consent: false,
@@ -59,12 +85,37 @@ const SHIFT_LABELS: Array<{
   { key: "packdown", label: "Packdown", hint: "from 6pm" },
 ];
 
+// Max DOB = today (can't be born in the future).
+// Min DOB = 100 years ago (reasonable ceiling for a festival volunteer form).
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+function hundredYearsAgoIso(): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 100);
+  return d.toISOString().slice(0, 10);
+}
+
+function ageFromDob(dob: string): number | null {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (Number.isNaN(d.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  const m = today.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+  return age;
+}
+
 export function VolunteerApplyForm() {
   const router = useRouter();
   const [form, setForm] = React.useState<FormState>(initial);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
+
+  const age = ageFromDob(form.dateOfBirth);
+  const isMinor = age !== null && age < 18;
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -86,10 +137,43 @@ export function VolunteerApplyForm() {
       );
       return;
     }
+    if (!form.dateOfBirth) {
+      setError("Please enter your date of birth.");
+      return;
+    }
+    if (age === null || age < 0 || age > 120) {
+      setError("Please enter a valid date of birth.");
+      return;
+    }
+    if (form.hasDbs === "yes" && !form.dbsLevel) {
+      setError("Please select your DBS level.");
+      return;
+    }
+    if (isMinor) {
+      if (
+        !form.parentName.trim() ||
+        !form.parentPhone.trim() ||
+        !form.parentEmail.trim() ||
+        !form.parentRelationship ||
+        (form.parentRelationship === "Other" &&
+          !form.parentRelationshipOther.trim()) ||
+        !form.parentalConsentConfirmed
+      ) {
+        setError(
+          "You're under 18, so we need your parent/guardian's details and their consent to continue.",
+        );
+        return;
+      }
+    }
     if (!form.consent) {
       setError("Please tick the declaration to continue.");
       return;
     }
+
+    const relationship =
+      form.parentRelationship === "Other"
+        ? form.parentRelationshipOther.trim()
+        : form.parentRelationship;
 
     setSubmitting(true);
     try {
@@ -100,7 +184,7 @@ export function VolunteerApplyForm() {
           fullName: form.fullName.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
-          isOver18: form.isOver18,
+          dateOfBirth: form.dateOfBirth,
           availability: {
             setup: form.setup,
             am: form.am,
@@ -112,6 +196,23 @@ export function VolunteerApplyForm() {
           accessibilityNeeds: form.accessibilityNeeds.trim() || undefined,
           skills: form.skills.trim() || undefined,
           priorExperience: form.priorExperience.trim() || undefined,
+          hasDbs: form.hasDbs === "" ? undefined : form.hasDbs === "yes",
+          dbsLevel: form.hasDbs === "yes" ? form.dbsLevel : undefined,
+          hasSafeguardingTraining:
+            form.hasSafeguardingTraining === ""
+              ? undefined
+              : form.hasSafeguardingTraining === "yes",
+          safeguardingTrainingNotes:
+            form.hasSafeguardingTraining === "yes"
+              ? form.safeguardingTrainingNotes.trim() || undefined
+              : undefined,
+          parentGuardianName: isMinor ? form.parentName.trim() : undefined,
+          parentGuardianPhone: isMinor ? form.parentPhone.trim() : undefined,
+          parentGuardianEmail: isMinor ? form.parentEmail.trim() : undefined,
+          parentGuardianRelationship: isMinor ? relationship : undefined,
+          parentalConsentConfirmed: isMinor
+            ? form.parentalConsentConfirmed
+            : undefined,
           emergencyContactName: form.emergencyContactName.trim(),
           emergencyContactPhone: form.emergencyContactPhone.trim(),
           consent: form.consent,
@@ -163,6 +264,16 @@ export function VolunteerApplyForm() {
               required
             />
           </Field>
+          <Field label="Date of birth" required>
+            <Input
+              type="date"
+              value={form.dateOfBirth}
+              min={hundredYearsAgoIso()}
+              max={todayIso()}
+              onChange={(e) => update("dateOfBirth", e.target.value)}
+              required
+            />
+          </Field>
           <Field label="T-shirt size">
             <select
               value={form.tShirtSize}
@@ -180,12 +291,19 @@ export function VolunteerApplyForm() {
             </select>
           </Field>
         </div>
-
-        <CheckboxRow
-          checked={form.isOver18}
-          onChange={(v) => update("isOver18", v)}
-          label="I confirm I am 18 or over (under-18 volunteers welcome — get in touch first)"
-        />
+        {age !== null && (
+          <p className="text-xs text-brand-dark/60">
+            Age: <span className="font-bold text-brand-dark">{age}</span>
+            {isMinor && (
+              <>
+                {" · "}
+                <span className="text-brand-blue font-bold">
+                  Parental consent needed below
+                </span>
+              </>
+            )}
+          </p>
+        )}
       </Section>
 
       {/* AVAILABILITY */}
@@ -259,8 +377,150 @@ export function VolunteerApplyForm() {
         </Field>
       </Section>
 
-      {/* SAFETY */}
-      <Section title="4. Emergency contact">
+      {/* SAFEGUARDING & DBS */}
+      <Section title="4. Safeguarding & DBS">
+        <p className="text-sm text-brand-dark/70 mb-1">
+          Optional — helps us match you to the right role. Most volunteers
+          don&rsquo;t have these, and that&rsquo;s completely fine.
+        </p>
+
+        <Field label="Do you have a valid DBS check?">
+          <YesNoRadio
+            name="hasDbs"
+            value={form.hasDbs}
+            onChange={(v) => {
+              update("hasDbs", v);
+              if (v !== "yes") update("dbsLevel", "");
+            }}
+          />
+        </Field>
+
+        {form.hasDbs === "yes" && (
+          <Field label="What level?" required>
+            <select
+              value={form.dbsLevel}
+              onChange={(e) =>
+                update("dbsLevel", e.target.value as DbsLevel | "")
+              }
+              className="w-full h-10 px-3 py-2 border border-brand-blue/15 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+              required
+            >
+              <option value="">Choose…</option>
+              {DBS_LEVELS.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+
+        <Field label="Have you completed safeguarding training?">
+          <YesNoRadio
+            name="hasSafeguardingTraining"
+            value={form.hasSafeguardingTraining}
+            onChange={(v) => {
+              update("hasSafeguardingTraining", v);
+              if (v !== "yes") update("safeguardingTrainingNotes", "");
+            }}
+          />
+        </Field>
+
+        {form.hasSafeguardingTraining === "yes" && (
+          <Field label="Provider & date (optional)">
+            <Input
+              value={form.safeguardingTrainingNotes}
+              onChange={(e) =>
+                update("safeguardingTrainingNotes", e.target.value)
+              }
+              placeholder="e.g. Kent Safeguarding Board · Mar 2025"
+            />
+          </Field>
+        )}
+      </Section>
+
+      {/* PARENTAL CONSENT (conditional) */}
+      {isMinor && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 md:p-8 space-y-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="h-6 w-6 text-amber-700 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-heading font-bold text-lg text-amber-900 mb-1">
+                5. Parental / guardian consent
+              </h3>
+              <p className="text-sm text-amber-900/85">
+                You&rsquo;ve told us you&rsquo;re under 18. We&rsquo;d love to
+                have you — we just need your parent or guardian to confirm.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Parent/guardian full name" required>
+              <Input
+                value={form.parentName}
+                onChange={(e) => update("parentName", e.target.value)}
+                required={isMinor}
+              />
+            </Field>
+            <Field label="Relationship" required>
+              <select
+                value={form.parentRelationship}
+                onChange={(e) =>
+                  update(
+                    "parentRelationship",
+                    e.target.value as RelationshipChoice,
+                  )
+                }
+                className="w-full h-10 px-3 py-2 border border-brand-blue/15 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                required={isMinor}
+              >
+                <option value="">Choose…</option>
+                <option value="Parent">Parent</option>
+                <option value="Guardian">Guardian</option>
+                <option value="Other">Other</option>
+              </select>
+            </Field>
+            {form.parentRelationship === "Other" && (
+              <Field label="Please specify" required>
+                <Input
+                  value={form.parentRelationshipOther}
+                  onChange={(e) =>
+                    update("parentRelationshipOther", e.target.value)
+                  }
+                  placeholder="e.g. Aunt, Grandparent"
+                  required={isMinor}
+                />
+              </Field>
+            )}
+            <Field label="Parent/guardian phone" required>
+              <Input
+                type="tel"
+                value={form.parentPhone}
+                onChange={(e) => update("parentPhone", e.target.value)}
+                required={isMinor}
+              />
+            </Field>
+            <Field label="Parent/guardian email" required>
+              <Input
+                type="email"
+                value={form.parentEmail}
+                onChange={(e) => update("parentEmail", e.target.value)}
+                required={isMinor}
+              />
+            </Field>
+          </div>
+
+          <CheckboxRow
+            checked={form.parentalConsentConfirmed}
+            onChange={(v) => update("parentalConsentConfirmed", v)}
+            label="I confirm my parent/guardian has read the volunteer info and consents to me taking part. We may contact them to verify before the day."
+          />
+        </div>
+      )}
+
+      {/* EMERGENCY */}
+      <Section title={`${isMinor ? "6" : "5"}. Emergency contact`}>
         <p className="text-sm text-brand-dark/70 mb-3">
           We ask all volunteers for an emergency contact. Standard safeguarding
           and only used if needed on the day.
@@ -289,7 +549,7 @@ export function VolunteerApplyForm() {
       </Section>
 
       {/* SUBMIT */}
-      <Section title="5. Submit">
+      <Section title={`${isMinor ? "7" : "6"}. Submit`}>
         <CheckboxRow
           checked={form.consent}
           onChange={(v) => update("consent", v)}
@@ -382,6 +642,41 @@ function CheckboxRow({
       />
       <span className="text-sm text-brand-dark/85 leading-snug">{label}</span>
     </label>
+  );
+}
+
+function YesNoRadio({
+  name,
+  value,
+  onChange,
+}: {
+  name: string;
+  value: YesNo;
+  onChange: (v: YesNo) => void;
+}) {
+  return (
+    <div className="flex gap-2">
+      {(["yes", "no"] as const).map((opt) => {
+        const active = value === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(active ? "" : opt)}
+            className={[
+              "px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest border-2 transition-all",
+              active
+                ? "bg-brand-blue text-white border-brand-blue"
+                : "bg-white text-brand-dark border-brand-blue/15 hover:border-brand-blue",
+            ].join(" ")}
+            aria-pressed={active}
+            aria-label={`${name} ${opt}`}
+          >
+            {opt === "yes" ? "Yes" : "No"}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

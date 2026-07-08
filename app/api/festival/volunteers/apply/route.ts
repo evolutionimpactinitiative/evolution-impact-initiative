@@ -3,12 +3,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
 import { volunteerApplicationReceivedEmail } from "@/lib/email/festival-templates";
 import { FESTIVAL, FESTIVAL_SLUG } from "@/lib/festival";
+import type { DbsLevel } from "@/lib/supabase/types";
 
 interface ApplyRequest {
   fullName?: string;
   email?: string;
   phone?: string;
-  isOver18?: boolean;
+  dateOfBirth?: string;
   availability?: {
     setup?: boolean;
     am?: boolean;
@@ -20,13 +21,41 @@ interface ApplyRequest {
   accessibilityNeeds?: string;
   skills?: string;
   priorExperience?: string;
+  hasDbs?: boolean;
+  dbsLevel?: DbsLevel;
+  hasSafeguardingTraining?: boolean;
+  safeguardingTrainingNotes?: string;
+  parentGuardianName?: string;
+  parentGuardianPhone?: string;
+  parentGuardianEmail?: string;
+  parentGuardianRelationship?: string;
+  parentalConsentConfirmed?: boolean;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   consent?: boolean;
 }
 
+const VALID_DBS_LEVELS: DbsLevel[] = [
+  "basic",
+  "standard",
+  "enhanced",
+  "enhanced_child_barred",
+  "enhanced_adult_barred",
+  "enhanced_both_barred",
+];
+
 function isString(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
+}
+
+function ageFromDob(dob: string): number | null {
+  const d = new Date(dob);
+  if (Number.isNaN(d.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  const m = today.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+  return age;
 }
 
 export async function POST(request: NextRequest) {
@@ -46,13 +75,22 @@ export async function POST(request: NextRequest) {
       fullName,
       email,
       phone,
-      isOver18,
+      dateOfBirth,
       availability,
       tShirtSize,
       dietaryRequirements,
       accessibilityNeeds,
       skills,
       priorExperience,
+      hasDbs,
+      dbsLevel,
+      hasSafeguardingTraining,
+      safeguardingTrainingNotes,
+      parentGuardianName,
+      parentGuardianPhone,
+      parentGuardianEmail,
+      parentGuardianRelationship,
+      parentalConsentConfirmed,
       emergencyContactName,
       emergencyContactPhone,
       consent,
@@ -73,6 +111,50 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+    if (!isString(dateOfBirth)) {
+      return NextResponse.json(
+        { error: "Please enter your date of birth" },
+        { status: 400 },
+      );
+    }
+    const age = ageFromDob(dateOfBirth);
+    if (age === null || age < 0 || age > 120) {
+      return NextResponse.json(
+        { error: "Please enter a valid date of birth" },
+        { status: 400 },
+      );
+    }
+
+    // DBS: if they said yes, level must be valid
+    if (hasDbs === true) {
+      if (!dbsLevel || !VALID_DBS_LEVELS.includes(dbsLevel)) {
+        return NextResponse.json(
+          { error: "Please select a valid DBS level" },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Parental consent gate for minors — server-side re-validation
+    const isMinor = age < 18;
+    if (isMinor) {
+      if (
+        !isString(parentGuardianName) ||
+        !isString(parentGuardianPhone) ||
+        !isString(parentGuardianEmail) ||
+        !isString(parentGuardianRelationship) ||
+        parentalConsentConfirmed !== true
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Under-18 volunteers need a parent/guardian's details and consent",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     if (!consent) {
       return NextResponse.json(
         { error: "Please accept the declaration to continue" },
@@ -107,7 +189,8 @@ export async function POST(request: NextRequest) {
         full_name: fullName.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim(),
-        is_over_18: isOver18 !== false,
+        date_of_birth: dateOfBirth,
+        is_over_18: age >= 18,
         availability: {
           setup: !!availability?.setup,
           am: !!availability?.am,
@@ -124,6 +207,27 @@ export async function POST(request: NextRequest) {
         skills: isString(skills) ? skills.trim() : null,
         prior_experience: isString(priorExperience)
           ? priorExperience.trim()
+          : null,
+        has_dbs: typeof hasDbs === "boolean" ? hasDbs : null,
+        dbs_level: hasDbs === true && dbsLevel ? dbsLevel : null,
+        has_safeguarding_training:
+          typeof hasSafeguardingTraining === "boolean"
+            ? hasSafeguardingTraining
+            : null,
+        safeguarding_training_notes:
+          hasSafeguardingTraining === true && isString(safeguardingTrainingNotes)
+            ? safeguardingTrainingNotes.trim()
+            : null,
+        parent_guardian_name: isMinor ? parentGuardianName!.trim() : null,
+        parent_guardian_phone: isMinor ? parentGuardianPhone!.trim() : null,
+        parent_guardian_email: isMinor
+          ? parentGuardianEmail!.trim().toLowerCase()
+          : null,
+        parent_guardian_relationship: isMinor
+          ? parentGuardianRelationship!.trim()
+          : null,
+        parental_consent_confirmed: isMinor
+          ? parentalConsentConfirmed === true
           : null,
         emergency_contact_name: emergencyContactName.trim(),
         emergency_contact_phone: emergencyContactPhone.trim(),
