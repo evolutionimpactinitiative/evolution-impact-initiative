@@ -21,6 +21,9 @@ import {
   declineVolunteer,
 } from "@/app/admin/festival/volunteers/actions";
 import { DBS_LEVELS, type FestivalVolunteer } from "@/lib/supabase/types";
+import { VOLUNTEER_ROLES } from "@/lib/festival";
+
+const CUSTOM_ROLE_SENTINEL = "__custom__";
 
 function ageFromDob(dob: string | null): number | null {
   if (!dob) return null;
@@ -80,7 +83,30 @@ export function VolunteerAdminRow({ volunteer }: Props) {
   const [error, setError] = React.useState<string | null>(null);
   const [showAssign, setShowAssign] = React.useState(false);
   const [showDecline, setShowDecline] = React.useState(false);
-  const [role, setRole] = React.useState(volunteer.assigned_role ?? "");
+
+  // If the existing role matches a catalog entry, pre-select it. Otherwise
+  // treat it as a custom role so the admin can edit the free-text.
+  const existingRoleIsCatalog = React.useMemo(
+    () =>
+      !!volunteer.assigned_role &&
+      VOLUNTEER_ROLES.some((r) => r.label === volunteer.assigned_role),
+    [volunteer.assigned_role],
+  );
+  const [roleSelection, setRoleSelection] = React.useState<string>(
+    volunteer.assigned_role
+      ? existingRoleIsCatalog
+        ? volunteer.assigned_role
+        : CUSTOM_ROLE_SENTINEL
+      : "",
+  );
+  const [customRole, setCustomRole] = React.useState<string>(
+    existingRoleIsCatalog ? "" : (volunteer.assigned_role ?? ""),
+  );
+  const resolvedRole =
+    roleSelection === CUSTOM_ROLE_SENTINEL
+      ? customRole.trim()
+      : roleSelection;
+
   const [shiftNote, setShiftNote] = React.useState("");
   const [declineNote, setDeclineNote] = React.useState("");
 
@@ -92,7 +118,7 @@ export function VolunteerAdminRow({ volunteer }: Props) {
     setPending("assign");
     const res = await assignVolunteerRole(
       volunteer.id,
-      role,
+      resolvedRole,
       shiftNote.trim() || undefined,
     );
     setPending(null);
@@ -334,13 +360,19 @@ export function VolunteerAdminRow({ volunteer }: Props) {
             <div className="border-t border-gray-100 pt-4 space-y-3">
               {showAssign && (
                 <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
-                  <input
-                    type="text"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    placeholder="e.g. Kids' zone steward, Setup crew, Photographer"
-                    className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                  <RoleSelect
+                    value={roleSelection}
+                    onChange={setRoleSelection}
                   />
+                  {roleSelection === CUSTOM_ROLE_SENTINEL && (
+                    <input
+                      type="text"
+                      value={customRole}
+                      onChange={(e) => setCustomRole(e.target.value)}
+                      placeholder="Custom role name"
+                      className="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                    />
+                  )}
                   <textarea
                     value={shiftNote}
                     onChange={(e) => setShiftNote(e.target.value)}
@@ -393,7 +425,7 @@ export function VolunteerAdminRow({ volunteer }: Props) {
                   <>
                     <button
                       onClick={onAssign}
-                      disabled={!!pending || !role.trim()}
+                      disabled={!!pending || !resolvedRole}
                       className="inline-flex items-center gap-1.5 bg-brand-green text-white text-sm font-heading font-bold uppercase tracking-wider px-4 py-2 rounded-md hover:bg-brand-blue transition-colors disabled:opacity-50"
                     >
                       {pending === "assign" ? (
@@ -474,6 +506,52 @@ function KeyValue({
         {label}
       </p>
       <p className="text-sm text-gray-800 leading-relaxed">{children}</p>
+    </div>
+  );
+}
+
+function RoleSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const groups = React.useMemo(() => {
+    const map = new Map<string, typeof VOLUNTEER_ROLES>();
+    for (const role of VOLUNTEER_ROLES) {
+      const list = map.get(role.group) ?? [];
+      list.push(role);
+      map.set(role.group, list);
+    }
+    return Array.from(map.entries());
+  }, []);
+
+  const hint = React.useMemo(() => {
+    if (value === CUSTOM_ROLE_SENTINEL || !value) return null;
+    return VOLUNTEER_ROLES.find((r) => r.label === value)?.hint ?? null;
+  }, [value]);
+
+  return (
+    <div className="space-y-1">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border border-gray-200 rounded-lg p-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-blue"
+      >
+        <option value="">Choose a role…</option>
+        {groups.map(([group, roles]) => (
+          <optgroup key={group} label={group}>
+            {roles.map((r) => (
+              <option key={r.label} value={r.label}>
+                {r.label}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+        <option value={CUSTOM_ROLE_SENTINEL}>Custom…</option>
+      </select>
+      {hint && <p className="text-xs text-gray-500 px-1">{hint}</p>}
     </div>
   );
 }

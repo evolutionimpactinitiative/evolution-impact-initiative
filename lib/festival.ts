@@ -343,6 +343,123 @@ export function getSponsorsByPath(path: SponsorPath): SponsorTier[] {
 }
 
 // ============================================
+// Volunteer role catalog (used by the admin assign-role dropdown)
+// ============================================
+
+export type VolunteerRoleGroup =
+  | "Front of house"
+  | "Kids & families"
+  | "Food, drink & vendors"
+  | "Fundraising"
+  | "Stage & content"
+  | "Site logistics"
+  | "Safety & welfare";
+
+export type VolunteerRole = {
+  label: string;
+  group: VolunteerRoleGroup;
+  hint?: string;
+};
+
+export const VOLUNTEER_ROLES: VolunteerRole[] = [
+  // Front of house
+  {
+    label: "Registration & Welcome Desk",
+    group: "Front of house",
+    hint: "Check tickets, wristbands, direct guests",
+  },
+  {
+    label: "Site Steward / Marshal",
+    group: "Front of house",
+    hint: "Monitor entrances, direct foot traffic",
+  },
+
+  // Kids & families
+  {
+    label: "Kids' Activity Zone Lead",
+    group: "Kids & families",
+    hint: "DBS + safeguarding preferred",
+  },
+  {
+    label: "Kids' Zone Helper",
+    group: "Kids & families",
+    hint: "Safeguarding-aware; hands-on with the kids",
+  },
+  {
+    label: "Face Painting / Arts & Crafts Helper",
+    group: "Kids & families",
+    hint: "Creative station under Kids' Zone Lead",
+  },
+  {
+    label: "Sports Zone Steward",
+    group: "Kids & families",
+    hint: "Relays, games, keep the pitch safe",
+  },
+
+  // Food, drink & vendors
+  {
+    label: "Food Village Steward",
+    group: "Food, drink & vendors",
+    hint: "Vendor load-in, queue management, water station",
+  },
+  {
+    label: "Ice Cream Giveaway Steward",
+    group: "Food, drink & vendors",
+    hint: "Hand out sponsored ice cream, tally per child",
+  },
+
+  // Fundraising
+  {
+    label: "Back to School Donations Steward",
+    group: "Fundraising",
+    hint: "Bucket + card reader, pitch the £10k / 500 children ask",
+  },
+
+  // Stage & content
+  {
+    label: "Stage & Entertainment Assistant",
+    group: "Stage & content",
+    hint: "Cue acts on/off, keep the running order to time",
+  },
+  {
+    label: "Photography & Social Media",
+    group: "Stage & content",
+    hint: "Capture the day for socials and sponsor thank-yous",
+  },
+
+  // Site logistics
+  {
+    label: "Setup Crew",
+    group: "Site logistics",
+    hint: "10am–12pm — tables, signage, gazebos",
+  },
+  {
+    label: "Packdown Crew",
+    group: "Site logistics",
+    hint: "From 6pm — tear-down, waste out, load vans",
+  },
+  {
+    label: "Community Stall Support",
+    group: "Site logistics",
+    hint: "Help community orgs with setup, cover for breaks",
+  },
+
+  // Safety & welfare
+  {
+    label: "First Aid & Welfare Lead",
+    group: "Safety & welfare",
+    hint: "First-aid cert + DBS; lost-child protocol",
+  },
+
+  // Catch-all
+  {
+    label: "Roaming Helper / Floater",
+    group: "Front of house",
+    hint: "No fixed post; plugs gaps as they emerge",
+  },
+];
+
+// ============================================
 // What's on at the festival (from the pack)
 // ============================================
 
