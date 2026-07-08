@@ -108,7 +108,7 @@ export const VENDOR_CATEGORIES: VendorCategory[] = [
   {
     key: "sweet_treats",
     label: "Sweet Treat Vendors",
-    examples: ["Ice cream", "Cakes", "Donuts", "Sweets"],
+    examples: ["Ice cream", "Cakes", "Donuts", "Sweets", "Candy Floss", "Popcorn", "Slushies"],
     contributionPence: 5000,
     contributionLabel: "£50",
     cap: 2,
