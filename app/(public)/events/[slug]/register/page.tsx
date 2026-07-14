@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { RegistrationForm } from "@/components/registration/RegistrationForm";
 import type { Event } from "@/lib/supabase/types";
 import { slotsForRegistration } from "@/lib/events";
+import { B2S_SLUG } from "@/lib/back-to-school";
 import { AlertTriangle, ArrowLeft, Calendar, MapPin, Clock, AlertCircle, CheckCircle } from "lucide-react";
 
 // Helper to format time (remove seconds if present)
@@ -19,6 +20,13 @@ type Props = {
 
 export default async function RegisterPage({ params }: Props) {
   const { slug } = await params;
+
+  // Back to School Drive uses its own dedicated registration flow that
+  // captures uniform sizes/colours/needs. Bounce any standard-form hits.
+  if (slug === B2S_SLUG) {
+    redirect("/back-to-school/register");
+  }
+
   const supabase = await createClient();
 
   // Get event by slug

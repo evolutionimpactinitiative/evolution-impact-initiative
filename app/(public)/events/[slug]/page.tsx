@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
@@ -234,6 +234,14 @@ function formatDescription(text: string): string {
 
 export default async function EventPage({ params }: Props) {
   const { slug } = await params;
+
+  // Back to School Drive has its own campaign hub with the accurate live
+  // capacity count and the drive-specific admin flow. Redirect any hit on
+  // the standard event URL so all traffic lands on the hub.
+  if (slug === B2S_SLUG) {
+    redirect("/back-to-school");
+  }
+
   const event = await getEvent(slug);
 
   if (!event) {
