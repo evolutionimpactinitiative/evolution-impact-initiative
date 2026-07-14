@@ -12,7 +12,12 @@ import {
   ClipboardCheck,
   AlertTriangle,
   ArrowLeft,
+  Shirt,
 } from "lucide-react";
+import {
+  uniformChoicesSummary,
+  type UniformChoices,
+} from "@/lib/back-to-school";
 
 type Child = {
   id: string;
@@ -23,6 +28,7 @@ type Child = {
   school: string | null;
   needs: string[] | null;
   items_given: Record<string, boolean> | null;
+  uniform_choices: UniformChoices | null;
   notes: string | null;
   display_order: number;
 };
@@ -240,6 +246,46 @@ export function CollectionSheet({
                 </p>
               </div>
             </div>
+
+            {c.uniform_choices && (
+              <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-xl p-3 md:p-4 mb-3">
+                <p className="text-[10px] uppercase tracking-widest text-brand-blue font-heading font-bold mb-2 inline-flex items-center gap-1.5">
+                  <Shirt className="h-3 w-3" />
+                  Uniform request
+                </p>
+                <ul className="space-y-1 text-sm text-brand-dark">
+                  <li>
+                    <span className="text-brand-dark/60">Bottom:</span>{" "}
+                    <strong>
+                      {uniformChoicesSummary({
+                        bottom: c.uniform_choices.bottom,
+                        polo: null,
+                        shirt: null,
+                      })}
+                    </strong>
+                  </li>
+                  {c.uniform_choices.polo && (
+                    <li>
+                      <span className="text-brand-dark/60">Polo:</span>{" "}
+                      <strong>
+                        {c.uniform_choices.polo.colour === "white"
+                          ? "White"
+                          : "Blue"}
+                        , {c.uniform_choices.polo.sleeve} sleeve
+                      </strong>
+                    </li>
+                  )}
+                  {c.uniform_choices.shirt && (
+                    <li>
+                      <span className="text-brand-dark/60">Shirt:</span>{" "}
+                      <strong>
+                        White, {c.uniform_choices.shirt.sleeve} sleeve
+                      </strong>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
 
             {c.notes && (
               <div className="text-xs text-gray-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 italic">

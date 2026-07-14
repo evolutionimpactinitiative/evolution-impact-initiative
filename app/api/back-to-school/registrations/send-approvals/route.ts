@@ -11,6 +11,7 @@ type ChildRow = {
   child_age: number | null;
   uniform_size: string | null;
   needs: string[] | null;
+  uniform_choices: import("@/lib/back-to-school").UniformChoices | null;
   display_order: number;
 };
 
@@ -65,7 +66,7 @@ export async function POST(_request: NextRequest) {
       .from("registrations")
       .select(
         `id, parent_name, parent_email, qr_token,
-         registration_children ( child_name, child_age, uniform_size, needs, display_order )`,
+         registration_children ( child_name, child_age, uniform_size, needs, uniform_choices, display_order )`,
       )
       .eq("event_id", eventId)
       .eq("status", "approved")
@@ -107,6 +108,7 @@ export async function POST(_request: NextRequest) {
             child_age: c.child_age,
             uniform_size: c.uniform_size,
             needs: c.needs,
+            uniform_choices: c.uniform_choices,
           })),
         });
 

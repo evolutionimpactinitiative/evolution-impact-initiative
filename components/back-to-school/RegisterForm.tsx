@@ -12,9 +12,17 @@ import {
   UNIFORM_SIZES,
   CHILD_SEX_OPTIONS,
   NEED_OPTIONS,
+  UNIFORM_COLOURS,
+  BOTTOM_TYPES,
+  POLO_COLOURS,
+  SLEEVE_OPTIONS,
   type UniformSize,
   type ChildSex,
   type NeedCategory,
+  type UniformColour,
+  type BottomType,
+  type PoloColour,
+  type SleeveLength,
 } from "@/lib/back-to-school";
 
 interface ChildForm {
@@ -26,6 +34,14 @@ interface ChildForm {
   school: string;
   needs: NeedCategory[];
   notes: string;
+  // Uniform choices — only used when needs includes "uniform"
+  bottomType: BottomType | "";
+  bottomColour: UniformColour | "";
+  wantsPolo: boolean;
+  poloColour: PoloColour | "";
+  poloSleeve: SleeveLength | "";
+  wantsShirt: boolean;
+  shirtSleeve: SleeveLength | "";
 }
 
 interface FormState {
@@ -47,6 +63,13 @@ function newChild(): ChildForm {
     school: "",
     needs: [],
     notes: "",
+    bottomType: "",
+    bottomColour: "",
+    wantsPolo: false,
+    poloColour: "",
+    poloSleeve: "",
+    wantsShirt: false,
+    shirtSleeve: "",
   };
 }
 
@@ -147,6 +170,27 @@ export function RegisterForm() {
         setError(`Please tick at least one thing you need for ${c.name}.`);
         return;
       }
+      // Uniform choices required if uniform is ticked
+      if (c.needs.includes("uniform")) {
+        if (!c.bottomType || !c.bottomColour) {
+          setError(
+            `Please choose a bottom garment (type + colour) for ${c.name}.`,
+          );
+          return;
+        }
+        if (c.wantsPolo && (!c.poloColour || !c.poloSleeve)) {
+          setError(
+            `Please choose polo colour and sleeve length for ${c.name}, or untick the polo option.`,
+          );
+          return;
+        }
+        if (c.wantsShirt && !c.shirtSleeve) {
+          setError(
+            `Please choose shirt sleeve length for ${c.name}, or untick the shirt option.`,
+          );
+          return;
+        }
+      }
     }
 
     if (!form.disclaimersAccepted) {
@@ -173,6 +217,18 @@ export function RegisterForm() {
             school: c.school.trim() || undefined,
             needs: c.needs,
             notes: c.notes.trim() || undefined,
+            uniformChoices: c.needs.includes("uniform")
+              ? {
+                  bottom: {
+                    type: c.bottomType,
+                    colour: c.bottomColour,
+                  },
+                  polo: c.wantsPolo
+                    ? { colour: c.poloColour, sleeve: c.poloSleeve }
+                    : null,
+                  shirt: c.wantsShirt ? { sleeve: c.shirtSleeve } : null,
+                }
+              : undefined,
           })),
         }),
       });
@@ -375,6 +431,200 @@ export function RegisterForm() {
                   })}
                 </div>
               </div>
+
+              {/* Uniform preferences — only when "uniform" is ticked */}
+              {c.needs.includes("uniform") && (
+                <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-blue/10 space-y-4">
+                  <div>
+                    <p className="font-heading font-bold text-sm text-brand-dark mb-0.5">
+                      Uniform preferences
+                    </p>
+                    <p className="text-xs text-brand-dark/60">
+                      We stock uniforms in Grey, Black and Blue. Polos in
+                      White or Blue. Shirts in White.
+                    </p>
+                  </div>
+
+                  {/* Bottom garment */}
+                  <div>
+                    <Label className="block mb-2 text-sm font-heading font-semibold text-brand-dark">
+                      Bottom garment{" "}
+                      <span className="text-brand-blue">*</span>
+                    </Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                      {BOTTOM_TYPES.map((b) => {
+                        const isOn = c.bottomType === b.value;
+                        return (
+                          <button
+                            type="button"
+                            key={b.value}
+                            onClick={() =>
+                              updateChild(i, { bottomType: b.value })
+                            }
+                            aria-pressed={isOn}
+                            className={[
+                              "p-2.5 rounded-lg border-2 text-sm font-heading font-bold transition-all",
+                              isOn
+                                ? "bg-brand-blue text-white border-brand-blue"
+                                : "bg-white border-brand-blue/15 hover:border-brand-blue text-brand-dark",
+                            ].join(" ")}
+                          >
+                            {b.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {UNIFORM_COLOURS.map((col) => {
+                        const isOn = c.bottomColour === col.value;
+                        const swatch =
+                          col.value === "grey"
+                            ? "bg-gray-500"
+                            : col.value === "black"
+                              ? "bg-black"
+                              : "bg-brand-blue";
+                        return (
+                          <button
+                            type="button"
+                            key={col.value}
+                            onClick={() =>
+                              updateChild(i, { bottomColour: col.value })
+                            }
+                            aria-pressed={isOn}
+                            className={[
+                              "p-2.5 rounded-lg border-2 text-sm font-heading font-bold transition-all inline-flex items-center justify-center gap-2",
+                              isOn
+                                ? "bg-brand-blue text-white border-brand-blue"
+                                : "bg-white border-brand-blue/15 hover:border-brand-blue text-brand-dark",
+                            ].join(" ")}
+                          >
+                            <span
+                              className={`h-4 w-4 rounded-full border ${swatch} ${isOn ? "border-white/60" : "border-brand-dark/20"}`}
+                            />
+                            {col.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Polo (optional) */}
+                  <div className="pt-2 border-t border-brand-blue/10">
+                    <CheckboxRow
+                      checked={c.wantsPolo}
+                      onChange={(v) => {
+                        updateChild(i, { wantsPolo: v });
+                        if (!v) {
+                          updateChild(i, { poloColour: "", poloSleeve: "" });
+                        }
+                      }}
+                      label="Include a polo shirt"
+                    />
+                    {c.wantsPolo && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                        <Field label="Polo colour" required>
+                          <div className="grid grid-cols-2 gap-2">
+                            {POLO_COLOURS.map((col) => {
+                              const isOn = c.poloColour === col.value;
+                              const swatch =
+                                col.value === "white"
+                                  ? "bg-white border-brand-dark/30"
+                                  : "bg-brand-blue border-brand-blue";
+                              return (
+                                <button
+                                  type="button"
+                                  key={col.value}
+                                  onClick={() =>
+                                    updateChild(i, { poloColour: col.value })
+                                  }
+                                  aria-pressed={isOn}
+                                  className={[
+                                    "p-2 rounded-lg border-2 text-sm font-heading font-bold transition-all inline-flex items-center justify-center gap-2",
+                                    isOn
+                                      ? "bg-brand-blue text-white border-brand-blue"
+                                      : "bg-white border-brand-blue/15 hover:border-brand-blue text-brand-dark",
+                                  ].join(" ")}
+                                >
+                                  <span
+                                    className={`h-4 w-4 rounded-full border ${swatch}`}
+                                  />
+                                  {col.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </Field>
+                        <Field label="Sleeve length" required>
+                          <div className="grid grid-cols-2 gap-2">
+                            {SLEEVE_OPTIONS.map((s) => {
+                              const isOn = c.poloSleeve === s.value;
+                              return (
+                                <button
+                                  type="button"
+                                  key={s.value}
+                                  onClick={() =>
+                                    updateChild(i, { poloSleeve: s.value })
+                                  }
+                                  aria-pressed={isOn}
+                                  className={[
+                                    "p-2 rounded-lg border-2 text-sm font-heading font-bold transition-all",
+                                    isOn
+                                      ? "bg-brand-blue text-white border-brand-blue"
+                                      : "bg-white border-brand-blue/15 hover:border-brand-blue text-brand-dark",
+                                  ].join(" ")}
+                                >
+                                  {s.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </Field>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Shirt (optional) */}
+                  <div className="pt-2 border-t border-brand-blue/10">
+                    <CheckboxRow
+                      checked={c.wantsShirt}
+                      onChange={(v) => {
+                        updateChild(i, { wantsShirt: v });
+                        if (!v) updateChild(i, { shirtSleeve: "" });
+                      }}
+                      label="Include a white school shirt"
+                    />
+                    {c.wantsShirt && (
+                      <div className="mt-3 max-w-sm">
+                        <Field label="Sleeve length" required>
+                          <div className="grid grid-cols-2 gap-2">
+                            {SLEEVE_OPTIONS.map((s) => {
+                              const isOn = c.shirtSleeve === s.value;
+                              return (
+                                <button
+                                  type="button"
+                                  key={s.value}
+                                  onClick={() =>
+                                    updateChild(i, { shirtSleeve: s.value })
+                                  }
+                                  aria-pressed={isOn}
+                                  className={[
+                                    "p-2 rounded-lg border-2 text-sm font-heading font-bold transition-all",
+                                    isOn
+                                      ? "bg-brand-blue text-white border-brand-blue"
+                                      : "bg-white border-brand-blue/15 hover:border-brand-blue text-brand-dark",
+                                  ].join(" ")}
+                                >
+                                  {s.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </Field>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <Field label="Anything else? (optional)">
                 <Textarea

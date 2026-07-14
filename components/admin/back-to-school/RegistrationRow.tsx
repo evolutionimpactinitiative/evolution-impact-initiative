@@ -14,6 +14,7 @@ import {
   Clock,
   Send,
 } from "lucide-react";
+import { uniformChoicesSummary } from "@/lib/back-to-school";
 import type { B2SRegistration } from "@/app/admin/back-to-school/registrations/page";
 
 const NEED_LABEL: Record<string, string> = {
@@ -250,6 +251,11 @@ export function B2SRegistrationRow({ registration }: Props) {
                       );
                     })}
                   </div>
+                  {child.uniform_choices && (
+                    <p className="text-xs text-brand-blue mt-2 font-semibold">
+                      Uniform: {uniformChoicesSummary(child.uniform_choices)}
+                    </p>
+                  )}
                   {child.notes && (
                     <p className="text-xs text-gray-600 mt-2 italic">
                       &ldquo;{child.notes}&rdquo;

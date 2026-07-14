@@ -31,7 +31,7 @@ export default async function B2SVerifyPage({ params, searchParams }: Props) {
     .select(
       `id, parent_name, parent_phone, parent_postcode, status,
        distribution_status, distribution_recorded_at,
-       registration_children ( id, child_name, child_age, uniform_size, sex, school, needs, items_given, notes, display_order )`,
+       registration_children ( id, child_name, child_age, uniform_size, sex, school, needs, items_given, uniform_choices, notes, display_order )`,
     )
     .eq("qr_token", qr_token)
     .maybeSingle();

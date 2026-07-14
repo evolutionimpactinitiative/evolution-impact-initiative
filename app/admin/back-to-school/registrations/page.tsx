@@ -39,6 +39,7 @@ export type B2SRegistration = {
     school: string | null;
     needs: string[] | null;
     items_given: Record<string, boolean> | null;
+    uniform_choices: import("@/lib/back-to-school").UniformChoices | null;
     notes: string | null;
     display_order: number;
   }>;
@@ -95,7 +96,7 @@ export default async function B2SRegistrationsAdminPage({
       distribution_status, distribution_recorded_at, admin_notes, created_at,
       registration_children (
         id, child_name, child_age, uniform_size, sex, school, needs,
-        items_given, notes, display_order
+        items_given, uniform_choices, notes, display_order
       )
       `,
     )

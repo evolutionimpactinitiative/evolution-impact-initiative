@@ -1,5 +1,9 @@
 import QRCode from "qrcode";
-import { B2S } from "@/lib/back-to-school";
+import {
+  B2S,
+  uniformChoicesSummary,
+  type UniformChoices,
+} from "@/lib/back-to-school";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ||
@@ -171,6 +175,7 @@ interface ChildSummary {
   child_age: number | null;
   uniform_size: string | null;
   needs: string[] | null;
+  uniform_choices: UniformChoices | null;
 }
 
 interface RegistrationApprovedArgs {
@@ -214,17 +219,21 @@ export async function registrationApprovedEmail({
   const contentId = `b2s-qr-${qrToken}`;
 
   const childRows = children
-    .map(
-      (c) => `
+    .map((c) => {
+      const uniformLine = c.uniform_choices
+        ? `<br><span style="font-size: 13px; color: ${BRAND.blue}; font-weight: 600;">Uniform: ${uniformChoicesSummary(c.uniform_choices)}</span>`
+        : "";
+      return `
         <tr>
           <td style="padding: 10px 0; border-bottom: 1px solid ${BRAND.pale}; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
             <strong>${c.child_name}</strong>${c.child_age != null ? ` <span style="color: #888888;">(age ${c.child_age})</span>` : ""}
             <br>
             <span style="font-size: 13px; color: #666666;">Size ${c.uniform_size ?? "-"} · ${needsLabel(c.needs)}</span>
+            ${uniformLine}
           </td>
         </tr>
-      `,
-    )
+      `;
+    })
     .join("");
 
   const content = `

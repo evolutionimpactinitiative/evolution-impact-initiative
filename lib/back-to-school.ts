@@ -74,6 +74,62 @@ export const NEED_OPTIONS: Array<{
   { value: "bag", label: "School bag", hint: "Backpack" },
 ];
 
+// Uniform preferences captured at registration when the family ticks
+// "uniform" in the needs section. Stocked colour range is deliberately
+// tight (grey/black/blue) to match what we can actually source in bulk.
+
+export const UNIFORM_COLOURS = [
+  { value: "grey", label: "Grey" },
+  { value: "black", label: "Black" },
+  { value: "blue", label: "Blue" },
+] as const;
+export type UniformColour = (typeof UNIFORM_COLOURS)[number]["value"];
+
+export const BOTTOM_TYPES = [
+  { value: "trousers", label: "Trousers" },
+  { value: "skirt", label: "Skirt" },
+  { value: "dress", label: "Dress" },
+  { value: "shorts", label: "Shorts" },
+] as const;
+export type BottomType = (typeof BOTTOM_TYPES)[number]["value"];
+
+export const POLO_COLOURS = [
+  { value: "white", label: "White" },
+  { value: "blue", label: "Blue" },
+] as const;
+export type PoloColour = (typeof POLO_COLOURS)[number]["value"];
+
+export const SLEEVE_OPTIONS = [
+  { value: "short", label: "Short sleeve" },
+  { value: "long", label: "Long sleeve" },
+] as const;
+export type SleeveLength = (typeof SLEEVE_OPTIONS)[number]["value"];
+
+export type UniformChoices = {
+  bottom: { type: BottomType; colour: UniformColour };
+  polo: { colour: PoloColour; sleeve: SleeveLength } | null;
+  shirt: { sleeve: SleeveLength } | null;
+};
+
+// Human-readable summary for the admin list, approval email, and steward
+// collection sheet.
+export function uniformChoicesSummary(uc: UniformChoices | null): string {
+  if (!uc) return "";
+  const bottomLabel =
+    BOTTOM_TYPES.find((b) => b.value === uc.bottom.type)?.label ?? uc.bottom.type;
+  const colourLabel =
+    UNIFORM_COLOURS.find((c) => c.value === uc.bottom.colour)?.label ?? uc.bottom.colour;
+  const parts: string[] = [`${colourLabel} ${bottomLabel.toLowerCase()}`];
+  if (uc.polo) {
+    const c = POLO_COLOURS.find((p) => p.value === uc.polo!.colour)?.label ?? uc.polo.colour;
+    parts.push(`${c} polo (${uc.polo.sleeve})`);
+  }
+  if (uc.shirt) {
+    parts.push(`White shirt (${uc.shirt.sleeve})`);
+  }
+  return parts.join(" · ");
+}
+
 // Supply pledge items: what donors can pledge on the pledge form.
 export const SUPPLY_PLEDGE_ITEMS = [
   "White shirts",

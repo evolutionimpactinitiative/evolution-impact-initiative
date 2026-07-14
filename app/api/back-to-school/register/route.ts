@@ -4,6 +4,12 @@ import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend"
 import { registrationReceivedEmail } from "@/lib/email/back-to-school-templates";
 import { B2S, B2S_SLUG, UNIFORM_SIZES } from "@/lib/back-to-school";
 
+interface UniformChoicesPayload {
+  bottom?: { type?: string; colour?: string };
+  polo?: { colour?: string; sleeve?: string } | null;
+  shirt?: { sleeve?: string } | null;
+}
+
 interface ChildPayload {
   name?: string;
   age?: number;
@@ -12,6 +18,7 @@ interface ChildPayload {
   school?: string;
   needs?: string[];
   notes?: string;
+  uniformChoices?: UniformChoicesPayload;
 }
 
 interface RegisterPayload {
@@ -26,6 +33,10 @@ interface RegisterPayload {
 const VALID_SEX = ["male", "female", "other", "prefer_not_to_say"] as const;
 const VALID_NEEDS = ["uniform", "stationery", "bag"] as const;
 const VALID_UNIFORM_SIZES: readonly string[] = UNIFORM_SIZES;
+const VALID_BOTTOM_TYPES = ["trousers", "skirt", "dress", "shorts"] as const;
+const VALID_UNIFORM_COLOURS = ["grey", "black", "blue"] as const;
+const VALID_POLO_COLOURS = ["white", "blue"] as const;
+const VALID_SLEEVES = ["short", "long"] as const;
 
 function isNonEmptyString(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
@@ -128,6 +139,69 @@ export async function POST(request: NextRequest) {
           );
         }
       }
+
+      // Uniform choices required if uniform is in the needs list
+      if (c.needs.includes("uniform")) {
+        const uc = c.uniformChoices;
+        if (!uc || !uc.bottom) {
+          return NextResponse.json(
+            { error: `Please choose a bottom garment for ${label}.` },
+            { status: 400 },
+          );
+        }
+        if (
+          !uc.bottom.type ||
+          !VALID_BOTTOM_TYPES.includes(
+            uc.bottom.type as (typeof VALID_BOTTOM_TYPES)[number],
+          )
+        ) {
+          return NextResponse.json(
+            { error: `Invalid bottom garment type for ${label}.` },
+            { status: 400 },
+          );
+        }
+        if (
+          !uc.bottom.colour ||
+          !VALID_UNIFORM_COLOURS.includes(
+            uc.bottom.colour as (typeof VALID_UNIFORM_COLOURS)[number],
+          )
+        ) {
+          return NextResponse.json(
+            { error: `Invalid bottom garment colour for ${label}.` },
+            { status: 400 },
+          );
+        }
+        if (uc.polo) {
+          if (
+            !uc.polo.colour ||
+            !VALID_POLO_COLOURS.includes(
+              uc.polo.colour as (typeof VALID_POLO_COLOURS)[number],
+            ) ||
+            !uc.polo.sleeve ||
+            !VALID_SLEEVES.includes(
+              uc.polo.sleeve as (typeof VALID_SLEEVES)[number],
+            )
+          ) {
+            return NextResponse.json(
+              { error: `Invalid polo choices for ${label}.` },
+              { status: 400 },
+            );
+          }
+        }
+        if (uc.shirt) {
+          if (
+            !uc.shirt.sleeve ||
+            !VALID_SLEEVES.includes(
+              uc.shirt.sleeve as (typeof VALID_SLEEVES)[number],
+            )
+          ) {
+            return NextResponse.json(
+              { error: `Invalid shirt sleeve for ${label}.` },
+              { status: 400 },
+            );
+          }
+        }
+      }
     }
 
     if (body.disclaimersAccepted !== true) {
@@ -204,17 +278,38 @@ export async function POST(request: NextRequest) {
     const registrationId = (inserted as { id: string }).id;
 
     // Insert children
-    const childRows = body.children.map((c, i) => ({
-      registration_id: registrationId,
-      child_name: c.name!.trim(),
-      child_age: c.age!,
-      display_order: i + 1,
-      uniform_size: c.uniformSize,
-      sex: c.sex || null,
-      school: isNonEmptyString(c.school) ? c.school.trim() : null,
-      needs: c.needs,
-      notes: isNonEmptyString(c.notes) ? c.notes.trim() : null,
-    }));
+    const childRows = body.children.map((c, i) => {
+      let uniformChoices: unknown = null;
+      if (c.needs!.includes("uniform") && c.uniformChoices?.bottom) {
+        uniformChoices = {
+          bottom: {
+            type: c.uniformChoices.bottom.type,
+            colour: c.uniformChoices.bottom.colour,
+          },
+          polo: c.uniformChoices.polo
+            ? {
+                colour: c.uniformChoices.polo.colour,
+                sleeve: c.uniformChoices.polo.sleeve,
+              }
+            : null,
+          shirt: c.uniformChoices.shirt
+            ? { sleeve: c.uniformChoices.shirt.sleeve }
+            : null,
+        };
+      }
+      return {
+        registration_id: registrationId,
+        child_name: c.name!.trim(),
+        child_age: c.age!,
+        display_order: i + 1,
+        uniform_size: c.uniformSize,
+        sex: c.sex || null,
+        school: isNonEmptyString(c.school) ? c.school.trim() : null,
+        needs: c.needs,
+        uniform_choices: uniformChoices,
+        notes: isNonEmptyString(c.notes) ? c.notes.trim() : null,
+      };
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: childErr } = await (supabase as any)
