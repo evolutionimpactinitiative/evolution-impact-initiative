@@ -201,7 +201,7 @@ INSERT INTO events (
   'back-to-school-drive-2026',
   'Back to School Drive 2026',
   'Free school uniforms, stationery and bags for 500 children across Medway. Register your children, get an approval email with a QR code, and come to Sunlight Centre in Gillingham on Sat 22 Aug 12–3PM.',
-  'Every year Evolution Impact Initiative helps families start the school year with dignity. In 2026 we''re aiming to support 500 children with new school uniforms, stationery and school bags — completely free.\n\n**How it works**\n1. Register each child with their age, uniform size, and what they need.\n2. Registration closes Friday 21 August at 6PM.\n3. We''ll email you an approval on Friday 21 August with a QR code — bring it on the day.\n4. Come to Sunlight Centre, Gillingham on Saturday 22 August between 12PM and 3PM.',
+  E'Every year Evolution Impact Initiative helps families start the school year with dignity. In 2026 we''re aiming to support 500 children with new school uniforms, stationery and school bags, completely free.\n\nHow it works\n\n1. Register each child with their age, uniform size, and what they need.\n2. Registration closes Friday 21 August at 6PM.\n3. We''ll email you an approval on Friday 21 August with a QR code. Bring it on the day.\n4. Come to Sunlight Centre, Gillingham on Saturday 22 August between 12PM and 3PM.',
   'support',
   '2026-08-22',
   '12:00',
