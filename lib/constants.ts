@@ -473,6 +473,13 @@ export const teamMembers = [
     email: "nevien@evolutionimpactinitiative.co.uk",
     image: "/Team/Nevien.jpg",
   },
+  {
+    name: "W Ramba",
+    role: "Health, Safety & First Aid Lead",
+    bio: "Overseeing health and safety procedures, first aid provision, risk assessments, and emergency preparedness.",
+    email: "winnie@evolutionimpactinitiative.co.uk",
+    image: "/Team/Winnie.jpg",
+  },
 ];
 
 export const navLinks = [
