@@ -148,7 +148,7 @@ export default async function BackToSchoolPage() {
               </div>
 
               {/* Quick action CTAs */}
-              <div className="flex flex-nowrap gap-2 sm:gap-3">
+              <div className="flex flex-wrap gap-2 sm:gap-3">
                 <Button
                   asChild
                   size="sm"
