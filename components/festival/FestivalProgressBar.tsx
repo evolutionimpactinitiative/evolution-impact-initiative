@@ -18,10 +18,10 @@ export function FestivalProgressBar({
     100,
     target > 0 ? Math.round((raisedPounds / target) * 100) : 0,
   );
-  // £25 covers a full uniform package for one child (per the campaign pack)
+  // £20 covers a full uniform package for one child (£10k target ÷ 500 kids)
   const childrenReached = Math.min(
     FIRST_YEAR_STATS.goalChildren,
-    Math.floor(raisedPounds / 25),
+    Math.floor(raisedPounds / 20),
   );
 
   return (

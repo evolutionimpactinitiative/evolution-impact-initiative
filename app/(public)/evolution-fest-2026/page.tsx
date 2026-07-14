@@ -40,7 +40,7 @@ import { festivalMetadata } from "@/lib/festival/meta";
 export const metadata: Metadata = festivalMetadata({
   title: "Evolution Fest 2026 | Free Family Festival, Medway",
   description:
-    "A free family festival celebrating one year of Evolution Impact Initiative. Saturday 25 July 2026, 12pm–6pm at Strood Youth Centre. Get free tickets, become a vendor, sponsor or volunteer.",
+    "A free family festival celebrating one year of Evolution Impact Initiative. Saturday 25 July 2026, 12pm–6pm at Strood Youth Centre. Tickets sold out. Become a vendor, sponsor or volunteer.",
 });
 
 // Reflects live event status + ticket availability + sponsor wall on every request
@@ -155,7 +155,7 @@ export default async function FestivalHubPage() {
       })
     : null;
   const ticketsButtonLabel = isPublished
-    ? "Book free tickets"
+    ? "Sold out"
     : isScheduled && scheduledLabel
       ? `Tickets open ${scheduledLabel}`
       : "Tickets opening soon";
@@ -222,7 +222,7 @@ export default async function FestivalHubPage() {
                   className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
                 >
                   <Link href={ticketsCtaHref}>
-                    Get free tickets
+                    Sold out
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </Button>
@@ -756,7 +756,7 @@ export default async function FestivalHubPage() {
               className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
             >
               <Link href={ticketsCtaHref}>
-                Get free tickets
+                Sold out
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>

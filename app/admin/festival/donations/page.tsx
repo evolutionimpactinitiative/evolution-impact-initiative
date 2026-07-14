@@ -191,10 +191,10 @@ export default async function FestivalDonationsAdminPage() {
           <span className="font-heading font-bold text-brand-dark">
             {Math.min(
               FIRST_YEAR_STATS.goalChildren,
-              Math.floor(totalRaised / 25),
+              Math.floor(totalRaised / 20),
             )}
           </span>{" "}
-          of {FIRST_YEAR_STATS.goalChildren} children sponsored so far (£25 per
+          of {FIRST_YEAR_STATS.goalChildren} children sponsored so far (£20 per
           uniform).
         </p>
       </div>

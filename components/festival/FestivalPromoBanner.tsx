@@ -17,7 +17,7 @@ const COPY: Record<
     eyebrow: "Celebrating one year of impact",
     title: "Evolution Fest 2026 · Free family festival",
     body: "Our anniversary day out, raising money for our Back to School campaign. Free tickets are limited to 150.",
-    ctaLabel: "Get free tickets",
+    ctaLabel: "Sold out",
     href: `/${FESTIVAL.slug}`,
   },
   sponsor: {

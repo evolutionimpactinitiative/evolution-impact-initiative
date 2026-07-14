@@ -8,7 +8,6 @@ import {
   MapPin,
   MessageCircle,
   Sparkles,
-  ArrowRight,
 } from "lucide-react";
 import { footerNav, footerInvolve, footerGovernance } from "@/lib/constants";
 import { FESTIVAL } from "@/lib/festival";
@@ -17,32 +16,6 @@ import { FooterSubscribeForm } from "./FooterSubscribeForm";
 export function Footer() {
   return (
     <footer className="bg-[#111111] text-white">
-      {/* Festival 2026 strip */}
-      <div className="bg-brand-dark border-b border-white/10">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Sparkles className="h-6 w-6 text-brand-accent" />
-              <div>
-                <p className="font-heading text-[10px] uppercase tracking-widest text-brand-accent mb-0.5">
-                  One year of impact
-                </p>
-                <p className="font-heading font-black text-base md:text-lg leading-tight">
-                  {FESTIVAL.title} · {FESTIVAL.dateLabel} · Free tickets
-                </p>
-              </div>
-            </div>
-            <Link
-              href={`/${FESTIVAL.slug}`}
-              className="inline-flex items-center justify-center gap-2 bg-brand-accent text-brand-dark font-heading font-bold text-xs uppercase tracking-widest px-4 py-2.5 rounded-md hover:bg-brand-green hover:text-white transition-colors w-fit"
-            >
-              Get tickets
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Stay Updated Section */}
       <div className="border-b border-white/10">
         <div className="container mx-auto px-4 py-12">

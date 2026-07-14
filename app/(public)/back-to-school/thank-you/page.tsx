@@ -14,7 +14,7 @@ import { FESTIVAL, FIRST_YEAR_STATS } from "@/lib/festival";
 export const metadata: Metadata = {
   title: "Thank you · Back to School Campaign 2026",
   description:
-    "Thank you for donating to the Back to School Campaign 2026 — helping 500 children in Medway start school with confidence.",
+    "Thank you for donating to the Back to School Campaign 2026. You're helping 500 children in Medway start school with confidence.",
   robots: { index: false, follow: false },
 };
 
@@ -46,7 +46,7 @@ export default function BackToSchoolThankYouPage() {
                 <li className="flex items-start gap-2.5">
                   <Heart className="h-4 w-4 text-brand-green shrink-0 mt-0.5" />
                   <span>
-                    Your receipt is on its way by email — check your inbox (and
+                    Your receipt is on its way by email. Check your inbox (and
                     spam folder).
                   </span>
                 </li>
@@ -76,7 +76,7 @@ export default function BackToSchoolThankYouPage() {
               <Button asChild variant="outline">
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(
-                    "I just donated to Evolution Impact Initiative's Back to School Campaign 2026 — helping 500 children in Medway start school with confidence. Join me: https://www.evolutionimpactinitiative.co.uk/back-to-school",
+                    "I just donated to Evolution Impact Initiative's Back to School Campaign 2026, helping 500 children in Medway start school with confidence. Join me: https://www.evolutionimpactinitiative.co.uk/back-to-school",
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -97,7 +97,7 @@ export default function BackToSchoolThankYouPage() {
                 Celebrate with us
               </p>
               <h2 className="font-heading font-black text-xl md:text-2xl mb-3">
-                Come to {FESTIVAL.title} — it&rsquo;s free.
+                Come to {FESTIVAL.title}. It&rsquo;s free.
               </h2>
               <p className="text-white/70 text-sm mb-5 leading-relaxed">
                 The campaign culminates at our anniversary festival. Free
@@ -117,7 +117,7 @@ export default function BackToSchoolThankYouPage() {
                 href={`/${FESTIVAL.slug}`}
                 className="inline-flex items-center gap-2 bg-brand-accent text-brand-dark font-heading font-bold text-xs uppercase tracking-widest px-4 py-2.5 rounded-md hover:bg-brand-green hover:text-white transition-colors"
               >
-                Get free tickets
+                Sold out
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>

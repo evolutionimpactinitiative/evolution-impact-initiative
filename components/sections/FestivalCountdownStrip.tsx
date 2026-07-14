@@ -54,7 +54,7 @@ export function FestivalCountdownStrip({ finalRelease = null }: Props = {}) {
       ? `Final ${finalRelease} tickets`
       : isFinalRelease
         ? "Sold out"
-        : "Get free tickets";
+        : "Sold out";
 
   return (
     <section

@@ -100,7 +100,7 @@ export async function AnniversarySection() {
                   }
                 >
                   <Link href={`/${FESTIVAL.slug}`}>
-                    Get free tickets
+                    Sold out
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </Button>

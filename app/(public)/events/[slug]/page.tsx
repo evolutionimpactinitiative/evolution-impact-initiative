@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
 import { slotsForRegistration } from "@/lib/events";
+import { B2S_SLUG } from "@/lib/back-to-school";
 import { NotifyMeForm } from "@/components/shared/NotifyMeForm";
 import { CountdownTimer } from "@/components/shared/CountdownTimer";
 
@@ -464,12 +465,28 @@ export default async function EventPage({ params }: Props) {
               <div className="flex flex-col sm:flex-row gap-4">
                 {event.registrationStatus === "open" && (
                   <Button asChild size="lg">
-                    <Link href={`/events/${event.slug}/register`}>Register Now</Link>
+                    <Link
+                      href={
+                        event.slug === B2S_SLUG
+                          ? "/back-to-school/register"
+                          : `/events/${event.slug}/register`
+                      }
+                    >
+                      Register Now
+                    </Link>
                   </Button>
                 )}
                 {event.registrationStatus === "waitlist" && (
                   <Button asChild size="lg" variant="secondary">
-                    <Link href={`/events/${event.slug}/register`}>Join Waitlist</Link>
+                    <Link
+                      href={
+                        event.slug === B2S_SLUG
+                          ? "/back-to-school/register"
+                          : `/events/${event.slug}/register`
+                      }
+                    >
+                      Join Waitlist
+                    </Link>
                   </Button>
                 )}
                 {(event.registrationStatus === "full" || event.registrationStatus === "closed") && (
@@ -478,7 +495,13 @@ export default async function EventPage({ params }: Props) {
                   </Button>
                 )}
                 <Button asChild variant="outline" size="lg">
-                  <Link href="/donate">Support This Event</Link>
+                  <Link
+                    href={
+                      event.slug === B2S_SLUG ? "/back-to-school" : "/donate"
+                    }
+                  >
+                    Support This Event
+                  </Link>
                 </Button>
               </div>
             )}

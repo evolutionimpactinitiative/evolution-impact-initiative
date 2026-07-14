@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Heart, Check } from "lucide-react";
 
@@ -12,11 +12,40 @@ interface DonationFormProps {
    * School goal. Defaults to "general".
    */
   campaign?: string;
+  /**
+   * Seed the form with a specific amount. If the parent updates this later
+   * (e.g. a tier card is clicked outside the form), the form re-syncs.
+   */
+  defaultAmount?: number;
+  /**
+   * Hide the internal preset button row (£5, £10, £25, £50, £100). Useful
+   * when tier cards next to the form act as the amount picker.
+   */
+  hideAmountPresets?: boolean;
+  /**
+   * "dark" (default): summary uses bg-brand-dark. "blue": summary uses the
+   * B2S hero blue gradient. Only affects the black summary block at the
+   * bottom of the form.
+   */
+  summaryTheme?: "dark" | "blue";
 }
 
-export function DonationForm({ campaign = "general" }: DonationFormProps = {}) {
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(25);
+export function DonationForm({
+  campaign = "general",
+  defaultAmount = 25,
+  hideAmountPresets = false,
+  summaryTheme = "dark",
+}: DonationFormProps = {}) {
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(
+    defaultAmount,
+  );
   const [customAmount, setCustomAmount] = useState("");
+
+  // Sync when the parent bumps `defaultAmount` (e.g. B2S tier click).
+  useEffect(() => {
+    setSelectedAmount(defaultAmount);
+    setCustomAmount("");
+  }, [defaultAmount]);
   const [frequency, setFrequency] = useState<"one-time" | "monthly">("one-time");
   const [giftAid, setGiftAid] = useState(false);
   const [email, setEmail] = useState("");
@@ -117,25 +146,37 @@ export function DonationForm({ campaign = "general" }: DonationFormProps = {}) {
 
       {/* Amount Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Select Amount
-        </label>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
-          {DONATION_AMOUNTS.map((amount) => (
-            <button
-              key={amount}
-              type="button"
-              onClick={() => handleAmountSelect(amount)}
-              className={`py-3 px-4 rounded-lg border-2 font-bold text-lg transition-all ${
-                selectedAmount === amount
-                  ? "border-brand-green bg-brand-green/10 text-brand-green"
-                  : "border-gray-200 hover:border-brand-green text-gray-700"
-              }`}
-            >
-              £{amount}
-            </button>
-          ))}
-        </div>
+        {!hideAmountPresets && (
+          <>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Select Amount
+            </label>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
+              {DONATION_AMOUNTS.map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  onClick={() => handleAmountSelect(amount)}
+                  className={`py-3 px-4 rounded-lg border-2 font-bold text-lg transition-all ${
+                    selectedAmount === amount
+                      ? "border-brand-green bg-brand-green/10 text-brand-green"
+                      : "border-gray-200 hover:border-brand-green text-gray-700"
+                  }`}
+                >
+                  £{amount}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {hideAmountPresets && selectedAmount != null && !customAmount && (
+          <p className="text-sm text-gray-600 mb-2">
+            Amount:{" "}
+            <span className="font-heading font-bold text-brand-dark text-base">
+              £{selectedAmount}
+            </span>
+          </p>
+        )}
         <div className="relative">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
             £
@@ -152,33 +193,6 @@ export function DonationForm({ campaign = "general" }: DonationFormProps = {}) {
             }`}
           />
         </div>
-      </div>
-
-      {/* Gift Aid */}
-      <div className="bg-brand-pale rounded-xl p-4">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <div className="mt-1">
-            <input
-              type="checkbox"
-              checked={giftAid}
-              onChange={(e) => setGiftAid(e.target.checked)}
-              className="w-5 h-5 rounded border-gray-300 text-brand-green focus:ring-brand-green"
-            />
-          </div>
-          <div className="flex-1">
-            <span className="font-semibold text-brand-dark flex items-center gap-2">
-              Add Gift Aid
-              {giftAid && amount > 0 && (
-                <span className="text-sm font-normal bg-brand-green text-white px-2 py-0.5 rounded-full">
-                  +£{giftAidBonus.toFixed(2)} extra
-                </span>
-              )}
-            </span>
-            <p className="text-sm text-gray-600 mt-1">
-              I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year, it is my responsibility to pay any difference.
-            </p>
-          </div>
-        </label>
       </div>
 
       {/* Optional Contact Info */}
@@ -217,7 +231,13 @@ export function DonationForm({ campaign = "general" }: DonationFormProps = {}) {
       )}
 
       {/* Summary & Submit */}
-      <div className="bg-brand-dark rounded-xl p-6 text-white">
+      <div
+        className={
+          summaryTheme === "blue"
+            ? "bg-gradient-to-br from-brand-blue via-brand-blue to-brand-dark rounded-xl p-6 text-white"
+            : "bg-brand-dark rounded-xl p-6 text-white"
+        }
+      >
         <div className="flex items-center justify-between mb-4">
           <span className="text-white/70">Your donation</span>
           <span className="text-2xl font-bold">
@@ -227,19 +247,10 @@ export function DonationForm({ campaign = "general" }: DonationFormProps = {}) {
             )}
           </span>
         </div>
-        {giftAid && amount > 0 && (
-          <div className="flex items-center justify-between mb-4 text-brand-accent">
-            <span className="flex items-center gap-2">
-              <Check className="w-4 h-4" />
-              Gift Aid bonus
-            </span>
-            <span className="font-semibold">+£{giftAidBonus.toFixed(2)}</span>
-          </div>
-        )}
         <div className="border-t border-white/20 pt-4 flex items-center justify-between mb-6">
           <span className="font-semibold">Total impact</span>
           <span className="text-2xl font-bold text-brand-accent">
-            £{(amount + giftAidBonus).toFixed(2)}
+            £{amount.toFixed(2)}
             {frequency === "monthly" && (
               <span className="text-sm font-normal text-white/70">/month</span>
             )}

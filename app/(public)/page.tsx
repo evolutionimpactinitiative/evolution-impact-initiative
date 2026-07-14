@@ -7,6 +7,7 @@ import { ImpactSection } from "@/components/sections/ImpactSection";
 import { AnniversarySection } from "@/components/sections/AnniversarySection";
 import { DonateSection } from "@/components/sections/DonateSection";
 import { GetInvolvedSection } from "@/components/sections/GetInvolvedSection";
+import { HomepagePromoStrip } from "@/components/back-to-school/HomepagePromoStrip";
 import { getFestivalRelease } from "@/lib/festival/release";
 
 export default async function Home() {
@@ -18,6 +19,7 @@ export default async function Home() {
       <HeroSection />
       <FestivalCountdownStrip finalRelease={finalRelease} />
       <MarqueeBanner finalRelease={finalRelease} />
+      <HomepagePromoStrip />
       <AboutSection />
       <ProgrammesSection />
       <ImpactSection />
