@@ -18,6 +18,8 @@ import {
   Truck,
   Baby,
   Coins,
+  Building2,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -178,6 +180,14 @@ export default async function BackToSchoolPage() {
                   <Link href="/back-to-school/donate-supplies">
                     Pledge supplies
                   </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-white/30 text-white hover:bg-white hover:text-brand-dark"
+                >
+                  <Link href="/back-to-school/sponsor">Sponsor</Link>
                 </Button>
               </div>
             </div>
@@ -353,8 +363,59 @@ export default async function BackToSchoolPage() {
             />
           </div>
 
-          {/* Distribution day details */}
+          {/* FOR BUSINESSES — sponsor callout */}
           <div className="mt-10">
+            <div className="bg-white rounded-2xl border-2 border-brand-green/30 p-6 md:p-8 grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-6 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-brand-green/10 text-brand-green px-3 py-1 rounded-full text-xs font-heading font-bold uppercase tracking-widest mb-3">
+                  <Building2 className="h-3 w-3" />
+                  For businesses
+                </div>
+                <h3 className="font-heading font-black text-2xl md:text-3xl text-brand-dark mb-2 leading-tight">
+                  Sponsor the drive
+                </h3>
+                <p className="text-brand-dark/70 mb-4">
+                  Community tiers from £50 to £3,000+, with logo placement,
+                  named collection points and a feature in the impact report.
+                  Every gift lands in the same £10,000 goal.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <TierChip label="Friend · £50" />
+                  <TierChip label="Bronze · £100" />
+                  <TierChip label="Silver · £250" />
+                  <TierChip label="Gold · £500" />
+                  <TierChip label="Family · £750" />
+                  <TierChip label="Champion · £1,000+" highlight />
+                  <TierChip label="Major · £1,500" highlight />
+                  <TierChip label="Title · £3,000" highlight />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-brand-green text-white hover:bg-brand-dark w-full"
+                >
+                  <Link href="/back-to-school/sponsor">
+                    See partnership options
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
+                </Button>
+                <a
+                  href="/back-to-school-2026-sponsorship-pack.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-heading font-semibold text-brand-blue hover:text-brand-dark py-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Download sponsorship pack (PDF)
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Distribution day details */}
+          <div className="mt-6">
             <div className="bg-gradient-to-br from-brand-blue via-brand-blue to-brand-dark text-white rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start">
               <div className="flex-1">
                 <p className="font-heading text-xs uppercase tracking-widest text-brand-accent mb-2">
@@ -746,5 +807,25 @@ function BreakdownRow({
         {amount}
       </span>
     </div>
+  );
+}
+
+function TierChip({
+  label,
+  highlight = false,
+}: {
+  label: string;
+  highlight?: boolean;
+}) {
+  return (
+    <span
+      className={
+        highlight
+          ? "inline-block bg-brand-green/10 text-brand-green px-2.5 py-1 rounded-full text-xs font-heading font-semibold"
+          : "inline-block bg-brand-blue/10 text-brand-blue px-2.5 py-1 rounded-full text-xs font-heading font-semibold"
+      }
+    >
+      {label}
+    </span>
   );
 }

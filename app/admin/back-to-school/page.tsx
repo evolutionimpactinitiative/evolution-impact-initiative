@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, Package, ArrowRight } from "lucide-react";
+import { ClipboardList, Package, ArrowRight, Building2 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
 import { StatCard } from "@/components/admin/StatCard";
@@ -73,6 +73,15 @@ export default async function BackToSchoolAdminPage() {
     .select("id", { count: "exact", head: true })
     .eq("status", "received");
 
+  const { count: sponsorsPending } = await supabase
+    .from("back_to_school_sponsor_inquiries")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+  const { count: sponsorsConfirmed } = await supabase
+    .from("back_to_school_sponsor_inquiries")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "confirmed");
+
   const capacityPct = totalSlots > 0 ? (familiesRegistered / totalSlots) * 100 : 0;
 
   return (
@@ -134,7 +143,7 @@ export default async function BackToSchoolAdminPage() {
       </div>
 
       {/* QUICK LINKS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
           href="/admin/back-to-school/registrations"
           className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
@@ -165,6 +174,24 @@ export default async function BackToSchoolAdminPage() {
             Confirm collections and mark items in.
           </p>
           <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/back-to-school/sponsors"
+          className="group bg-white rounded-2xl p-6 border-2 border-brand-green/25 hover:border-brand-green transition-colors"
+        >
+          <Building2 className="h-6 w-6 text-brand-green mb-3" />
+          <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
+            Sponsor inquiries
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            {sponsorsPending ?? 0} pending · {sponsorsConfirmed ?? 0}{" "}
+            confirmed. Follow up within 2 working days.
+          </p>
+          <span className="inline-flex items-center gap-1 text-brand-green font-heading font-bold text-sm uppercase tracking-widest">
             Open
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </span>

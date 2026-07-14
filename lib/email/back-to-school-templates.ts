@@ -1,6 +1,7 @@
 import QRCode from "qrcode";
 import {
   B2S,
+  SPONSOR_CONTACT,
   uniformChoicesSummary,
   type UniformChoices,
 } from "@/lib/back-to-school";
@@ -369,6 +370,151 @@ export function supplyPledgeReceivedEmail({
 
   return {
     subject: `Thank you for your ${B2S.title} pledge`,
+    html: emailWrapper(content),
+  };
+}
+
+// ============================================
+// 4. Sponsor inquiry received — to the sponsor
+// ============================================
+
+const TIER_LABEL: Record<string, string> = {
+  friend: "Friend (£50)",
+  bronze: "Bronze (£100)",
+  silver: "Silver (£250)",
+  gold: "Gold (£500)",
+  family: "Family (£750)",
+  champion: "Back to School Champion (£1,000+)",
+  major: "Community Impact Partner (£1,500)",
+  title: "Title Partner (£3,000)",
+  custom: "Custom amount",
+  undecided: "Exploring options",
+};
+
+interface SponsorInquiryReceivedArgs {
+  contactName: string;
+  businessName: string;
+  tier: string;
+}
+
+export function sponsorInquiryReceivedEmail({
+  contactName,
+  businessName,
+  tier,
+}: SponsorInquiryReceivedArgs): { subject: string; html: string } {
+  const content = `
+    <h1 style="margin: 0 0 16px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      Thanks for backing <span style="color: ${BRAND.green};">Medway.</span>
+    </h1>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Hi <strong>${contactName}</strong>,
+    </p>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      We&rsquo;ve received your sponsorship inquiry on behalf of <strong>${businessName}</strong> at level: <strong>${TIER_LABEL[tier] || tier}</strong>. Luke will be in touch within 2 working days to arrange the details.
+    </p>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 12px; margin-bottom: 22px;">
+      <tr>
+        <td style="padding: 20px 22px; text-align: left;">
+          <p style="margin: 0 0 8px; font-family: 'Montserrat', sans-serif; font-size: 12px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Your point of contact
+          </p>
+          <p style="margin: 0 0 4px; font-family: 'Inter', sans-serif; font-size: 15px; color: ${BRAND.dark};">
+            <strong>${SPONSOR_CONTACT.name}</strong>
+          </p>
+          <p style="margin: 0 0 8px; font-family: 'Inter', sans-serif; font-size: 13px; color: #666;">
+            ${SPONSOR_CONTACT.role}
+          </p>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 13px; color: ${BRAND.dark};">
+            📞 ${SPONSOR_CONTACT.mobile} · ☎️ ${SPONSOR_CONTACT.landline}<br>
+            ✉️ <a href="mailto:${SPONSOR_CONTACT.email}" style="color: ${BRAND.blue};">${SPONSOR_CONTACT.email}</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${eventDetailsBlock()}
+
+    <p style="margin: 25px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6;">
+      With gratitude,<br>
+      <strong>The Evolution Impact Initiative team</strong>
+    </p>
+  `;
+
+  return {
+    subject: `Thanks for backing the ${B2S.title}, ${businessName}`,
+    html: emailWrapper(content),
+  };
+}
+
+// ============================================
+// 5. Sponsor inquiry — admin notification
+// ============================================
+
+interface SponsorInquiryAdminArgs {
+  businessName: string;
+  contactName: string;
+  contactRole: string | null;
+  contactEmail: string;
+  contactPhone: string;
+  tier: string;
+  amountGbp: number | null;
+  message: string | null;
+}
+
+export function sponsorInquiryAdminEmail(
+  args: SponsorInquiryAdminArgs,
+): { subject: string; html: string } {
+  const tierLabel = TIER_LABEL[args.tier] || args.tier;
+  const amountLine = args.amountGbp
+    ? `<p style="margin: 0 0 6px;"><strong>Amount:</strong> £${args.amountGbp.toLocaleString("en-GB")}</p>`
+    : "";
+  const roleLine = args.contactRole
+    ? `<p style="margin: 0 0 6px;"><strong>Role:</strong> ${args.contactRole}</p>`
+    : "";
+  const messageBlock = args.message
+    ? `
+        <p style="margin: 12px 0 4px; font-family: 'Montserrat', sans-serif; font-size: 11px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+          Message
+        </p>
+        <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: ${BRAND.dark}; white-space: pre-wrap;">${args.message}</p>
+      `
+    : "";
+
+  const content = `
+    <h1 style="margin: 0 0 16px; font-family: 'Montserrat', sans-serif; font-size: 22px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      New sponsor inquiry
+    </h1>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 15px; line-height: 24px; color: #555;">
+      A business has sent through a sponsorship inquiry for the ${B2S.title}. Details below. Follow up within 2 working days.
+    </p>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 12px; margin-bottom: 18px;">
+      <tr>
+        <td style="padding: 20px 22px; text-align: left; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark};">
+          <p style="margin: 0 0 6px;"><strong>Business:</strong> ${args.businessName}</p>
+          <p style="margin: 0 0 6px;"><strong>Contact:</strong> ${args.contactName}</p>
+          ${roleLine}
+          <p style="margin: 0 0 6px;"><strong>Email:</strong> <a href="mailto:${args.contactEmail}" style="color: ${BRAND.blue};">${args.contactEmail}</a></p>
+          <p style="margin: 0 0 6px;"><strong>Phone:</strong> <a href="tel:${args.contactPhone}" style="color: ${BRAND.blue};">${args.contactPhone}</a></p>
+          <p style="margin: 0 0 6px;"><strong>Tier:</strong> ${tierLabel}</p>
+          ${amountLine}
+          ${messageBlock}
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 20px 0 0; font-family: 'Inter', sans-serif; font-size: 13px; color: #888;">
+      View + manage in the admin at
+      <a href="${BASE_URL}/admin/back-to-school/sponsors" style="color: ${BRAND.blue};">/admin/back-to-school/sponsors</a>.
+    </p>
+  `;
+
+  return {
+    subject: `[Sponsor inquiry] ${args.businessName} · ${tierLabel}`,
     html: emailWrapper(content),
   };
 }
