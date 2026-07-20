@@ -60,12 +60,11 @@ function ageFromDob(dob: string): number | null {
 
 export async function POST(request: NextRequest) {
   try {
-    // Deadline: same as vendor/sponsor — allows the team to plan
     const now = new Date();
-    const deadline = new Date(`${FESTIVAL.applicationDeadline}T23:59:59`);
+    const deadline = new Date(`${FESTIVAL.volunteerDeadline}T23:59:59`);
     if (now > deadline) {
       return NextResponse.json(
-        { error: "Volunteer applications closed on 18 July 2026." },
+        { error: `Volunteer applications closed on ${FESTIVAL.volunteerDeadlineLabel}.` },
         { status: 410 },
       );
     }

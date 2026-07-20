@@ -28,7 +28,7 @@ export default async function VolunteerPage() {
   const eventId = (eventRow as { id: string } | null)?.id ?? null;
 
   const now = new Date();
-  const deadline = new Date(`${FESTIVAL.applicationDeadline}T23:59:59`);
+  const deadline = new Date(`${FESTIVAL.volunteerDeadline}T23:59:59`);
   const isClosed = now > deadline;
 
   return (
@@ -168,7 +168,7 @@ function ClosedState() {
       </h2>
       <p className="text-brand-dark/70 mb-6">
         Applications for {FESTIVAL.title} closed on{" "}
-        {FESTIVAL.applicationDeadlineLabel}. We&rsquo;d love to hear from you
+        {FESTIVAL.volunteerDeadlineLabel}. We&rsquo;d love to hear from you
         for next year.
       </p>
       <Button asChild>

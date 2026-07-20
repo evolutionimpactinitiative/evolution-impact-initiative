@@ -23,6 +23,8 @@ export const FESTIVAL = {
   campaignGoalChildren: 500,
   applicationDeadline: "2026-07-18",
   applicationDeadlineLabel: "Saturday 18 July 2026",
+  volunteerDeadline: "2026-07-22",
+  volunteerDeadlineLabel: "Wednesday 22 July 2026",
 } as const;
 
 // Anniversary headline stats — single source of truth
