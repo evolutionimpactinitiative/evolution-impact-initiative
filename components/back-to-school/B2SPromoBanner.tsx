@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Sparkles, Calendar, MapPin, ArrowRight } from "lucide-react";
-import { FESTIVAL } from "@/lib/festival";
+import { B2S } from "@/lib/back-to-school";
 
-type Variant = "tickets" | "sponsor" | "volunteer" | "vendor";
+type Variant = "register" | "sponsor" | "supplies";
 
-interface FestivalPromoBannerProps {
+interface B2SPromoBannerProps {
   variant?: Variant;
   className?: string;
 }
@@ -13,40 +13,33 @@ const COPY: Record<
   Variant,
   { eyebrow: string; title: string; body: string; ctaLabel: string; href: string }
 > = {
-  tickets: {
-    eyebrow: "Celebrating one year of impact",
-    title: "Evolution Fest 2026 · Free family festival",
-    body: "Our anniversary day out, raising money for our Back to School campaign. Free tickets are limited to 150.",
-    ctaLabel: "Sold out",
-    href: `/${FESTIVAL.slug}`,
+  register: {
+    eyebrow: "Now open · Register your family",
+    title: "Back to School Drive 2026",
+    body: `Free uniforms, stationery and school bags for ${B2S.goalChildren} children in Medway. Registration closes ${B2S.registrationDeadlineLabel}.`,
+    ctaLabel: "Register a family",
+    href: "/back-to-school/register",
   },
   sponsor: {
     eyebrow: "Lead the campaign",
-    title: "Sponsor Evolution Fest 2026",
-    body: "Three paths from £50 to £3,000+. Help 500 children in Medway start school with confidence.",
+    title: "Sponsor the Back to School Drive",
+    body: `Three sponsorship paths from £50 to £3,000+. Help ${B2S.goalChildren} children in Medway start school with confidence.`,
     ctaLabel: "Become a sponsor",
-    href: `/${FESTIVAL.slug}/sponsor`,
+    href: "/back-to-school/sponsor",
   },
-  volunteer: {
-    eyebrow: "Join the team",
-    title: "Volunteer at Evolution Fest 2026",
-    body: "Help us run our biggest event of the year — setup, AM, PM and packdown shifts available.",
-    ctaLabel: "Apply to volunteer",
-    href: `/${FESTIVAL.slug}/volunteer`,
-  },
-  vendor: {
-    eyebrow: "Trade at the Fest",
-    title: "Vendor applications open",
-    body: "Maximum 15 vendors across food, drinks, sweets, retail and community organisations. Deadline 18 July.",
-    ctaLabel: "Apply as a vendor",
-    href: `/${FESTIVAL.slug}/apply-vendor`,
+  supplies: {
+    eyebrow: "Give practically",
+    title: "Pledge new school supplies",
+    body: "Uniforms, stationery, school bags — brand new only. Drop off before distribution day.",
+    ctaLabel: "Pledge supplies",
+    href: "/back-to-school/donate-supplies",
   },
 };
 
-export function FestivalPromoBanner({
-  variant = "tickets",
+export function B2SPromoBanner({
+  variant = "register",
   className = "",
-}: FestivalPromoBannerProps) {
+}: B2SPromoBannerProps) {
   const copy = COPY[variant];
 
   return (
@@ -72,11 +65,11 @@ export function FestivalPromoBanner({
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-white/60 mb-6">
               <span className="inline-flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-brand-accent" />
-                {FESTIVAL.dateLabel} · {FESTIVAL.timeLabel}
+                {B2S.dateLabel} · {B2S.timeLabel}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-brand-accent" />
-                {FESTIVAL.venueName}, {FESTIVAL.venueArea}
+                {B2S.venueName}, {B2S.venueArea}
               </span>
             </div>
             <Link
@@ -90,9 +83,9 @@ export function FestivalPromoBanner({
 
           {/* Right: stat tiles */}
           <div className="lg:col-span-4 grid grid-cols-3 lg:grid-cols-1 gap-3">
-            <StatTile value="1 yr" label="Anniversary" />
-            <StatTile value="12" label="Events" />
-            <StatTile value="500" label="Children goal" />
+            <StatTile value={String(B2S.goalChildren)} label="Children goal" />
+            <StatTile value={`${B2S.minChildAge}–${B2S.maxChildAge}`} label="Age range" />
+            <StatTile value="Free" label="For families" />
           </div>
         </div>
       </div>

@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { AlertTriangle, Calendar, MapPin, ArrowRight, Sparkles } from "lucide-react";
+import { Calendar, MapPin, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/shared/SectionLabel";
-import { FESTIVAL, FIRST_YEAR_STATS } from "@/lib/festival";
-import { getFestivalRelease } from "@/lib/festival/release";
+import { FIRST_YEAR_STATS } from "@/lib/festival";
+import { B2S } from "@/lib/back-to-school";
 
-export async function AnniversarySection() {
-  const release = await getFestivalRelease();
+export function AnniversarySection() {
   return (
     <section className="bg-brand-dark text-white py-20 md:py-32 relative overflow-hidden">
       {/* Decorative orbs */}
@@ -40,7 +39,7 @@ export async function AnniversarySection() {
           <StatTile value={FIRST_YEAR_STATS.uniformsGiven} label="Uniforms handed out" />
         </div>
 
-        {/* Festival card */}
+        {/* B2S campaign card */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-10 lg:p-12 backdrop-blur-sm">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             <div className="lg:col-span-7">
@@ -50,62 +49,43 @@ export async function AnniversarySection() {
               </div>
 
               <h3 className="font-heading font-black text-2xl md:text-4xl lg:text-5xl leading-tight mb-4">
-                {FESTIVAL.title}
+                {B2S.title}
               </h3>
               <p className="text-brand-accent font-heading font-semibold text-lg md:text-xl mb-5">
-                {FESTIVAL.tagline}
+                Free uniforms, stationery and school bags for {B2S.goalChildren} children.
               </p>
 
               <p className="text-white/70 mb-6 leading-relaxed max-w-xl">
-                A free, family festival for all of Medway — and a fundraiser for
-                our biggest goal yet: helping{" "}
-                <span className="text-white font-semibold">
-                  {FIRST_YEAR_STATS.goalChildren} children
-                </span>{" "}
-                start school with confidence.
+                Our biggest campaign of the year — helping families across
+                Medway send their children back to school with everything they
+                need. Register your family, donate, or pledge new supplies.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 text-sm text-white/80 mb-8">
                 <span className="inline-flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-brand-accent" />
-                  {FESTIVAL.dateLabel} · {FESTIVAL.timeLabel}
+                  {B2S.dateLabel} · {B2S.timeLabel}
                 </span>
                 <span className="hidden sm:inline text-white/30">·</span>
                 <span className="inline-flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-brand-accent" />
-                  {FESTIVAL.venueName}, {FESTIVAL.venueArea}
+                  {B2S.venueName}, {B2S.venueArea}
                 </span>
               </div>
-
-              {release.finalRelease && (
-                <div className="inline-flex items-center gap-2 bg-red-600/15 border border-red-500/40 text-red-300 px-3 py-2 rounded-lg text-sm font-heading font-semibold mb-4">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span>
-                    Final release ·{" "}
-                    {release.ticketsRemaining > 0
-                      ? `only ${release.ticketsRemaining} left`
-                      : "sold out"}
-                  </span>
-                </div>
-              )}
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   asChild
                   size="lg"
-                  className={
-                    release.finalRelease
-                      ? "bg-red-600 text-white hover:bg-red-700"
-                      : "bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
-                  }
+                  className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
                 >
-                  <Link href={`/${FESTIVAL.slug}`}>
-                    Sold out
+                  <Link href="/back-to-school/register">
+                    Register a family
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white hover:text-brand-dark">
-                  <Link href="/our-first-year">See our first year</Link>
+                  <Link href="/back-to-school">Campaign hub</Link>
                 </Button>
               </div>
             </div>
@@ -113,23 +93,23 @@ export async function AnniversarySection() {
             {/* Right: secondary CTAs */}
             <div className="lg:col-span-5">
               <p className="text-xs uppercase tracking-widest text-white/50 mb-4 font-heading font-semibold">
-                Be part of the day
+                Other ways to help
               </p>
               <div className="space-y-3">
-                <FestivalCtaRow
-                  href={`/${FESTIVAL.slug}#vendors`}
-                  title="Trade as a vendor"
-                  subtitle="From £25 · deadline 18 July"
+                <CampaignCtaRow
+                  href="/back-to-school#donate-money"
+                  title="Donate to the drive"
+                  subtitle="£20 kits one child head-to-toe"
                 />
-                <FestivalCtaRow
-                  href={`/${FESTIVAL.slug}#sponsors`}
-                  title="Sponsor the day"
+                <CampaignCtaRow
+                  href="/back-to-school/sponsor"
+                  title="Sponsor the campaign"
                   subtitle="From £50 to £3,000+"
                 />
-                <FestivalCtaRow
-                  href={`/${FESTIVAL.slug}#volunteer`}
-                  title="Volunteer with us"
-                  subtitle="Join the on-day team"
+                <CampaignCtaRow
+                  href="/back-to-school/donate-supplies"
+                  title="Pledge new supplies"
+                  subtitle="Uniforms, stationery, school bags"
                 />
               </div>
             </div>
@@ -153,7 +133,7 @@ function StatTile({ value, label }: { value: number; label: string }) {
   );
 }
 
-function FestivalCtaRow({
+function CampaignCtaRow({
   href,
   title,
   subtitle,

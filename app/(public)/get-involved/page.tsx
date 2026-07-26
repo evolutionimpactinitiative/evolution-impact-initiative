@@ -5,7 +5,7 @@ import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { Button } from "@/components/ui/button";
 import { PolaroidCard } from "@/components/shared/PolaroidCard";
-import { FestivalPromoBanner } from "@/components/festival/FestivalPromoBanner";
+import { B2SPromoBanner } from "@/components/back-to-school/B2SPromoBanner";
 import { Users, Building2, CheckCircle } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -55,10 +55,10 @@ export default function GetInvolvedPage() {
         subtitle="There are many ways to support what we do, and none of them require a cape."
       />
 
-      {/* Festival cross-promo */}
+      {/* Featured campaign */}
       <section className="bg-brand-pale/40 pt-10 pb-2">
         <div className="container mx-auto px-4">
-          <FestivalPromoBanner variant="volunteer" />
+          <B2SPromoBanner variant="supplies" />
         </div>
       </section>
 

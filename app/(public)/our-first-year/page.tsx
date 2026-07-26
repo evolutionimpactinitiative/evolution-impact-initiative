@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { TestimonialCard } from "@/components/shared/TestimonialCard";
 import {
-  FESTIVAL,
   FIRST_YEAR_EVENTS,
   FIRST_YEAR_STATS,
   type FirstYearEvent,
 } from "@/lib/festival";
+import { B2S } from "@/lib/back-to-school";
 import { testimonials } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -157,7 +157,7 @@ export default function OurFirstYearPage() {
       </section>
 
       {/* ============================================
-          NEXT CHAPTER · FESTIVAL CTA
+          NEXT CHAPTER · BACK TO SCHOOL CTA
           ============================================ */}
       <section className="bg-brand-dark text-white py-20 md:py-28 relative overflow-hidden">
         <div className="absolute -top-20 -left-20 w-72 h-72 bg-brand-accent rounded-full opacity-10 blur-3xl" />
@@ -175,14 +175,15 @@ export default function OurFirstYearPage() {
               <span className="text-brand-accent">just getting started.</span>
             </h2>
             <p className="text-white/70 text-lg leading-relaxed mb-3">
-              This year&apos;s headline goal is our biggest yet — to help{" "}
+              Our next big push is our biggest yet — helping{" "}
               <span className="text-white font-semibold">
-                {FIRST_YEAR_STATS.goalChildren} children
+                {B2S.goalChildren} children
               </span>{" "}
-              start school with confidence.
+              in Medway start school with confidence.
             </p>
             <p className="text-white/70 leading-relaxed mb-8">
-              Come and be part of it. Free family festival, Saturday 25 July.
+              Free uniforms, stationery and school bags. Register your family,
+              donate, or pledge new supplies.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-10">
@@ -191,8 +192,8 @@ export default function OurFirstYearPage() {
                 size="lg"
                 className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
               >
-                <Link href={`/${FESTIVAL.slug}`}>
-                  Go to Evolution Fest 2026
+                <Link href="/back-to-school/register">
+                  Register a family
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Link>
               </Button>
@@ -209,11 +210,11 @@ export default function OurFirstYearPage() {
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/60">
               <span className="inline-flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-brand-accent" />
-                {FESTIVAL.dateLabel} · {FESTIVAL.timeLabel}
+                {B2S.dateLabel} · {B2S.timeLabel}
               </span>
               <span className="inline-flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-brand-accent" />
-                {FESTIVAL.venueName}, {FESTIVAL.venueArea}
+                {B2S.venueName}, {B2S.venueArea}
               </span>
             </div>
           </div>

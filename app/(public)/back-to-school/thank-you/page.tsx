@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  CheckCircle2,
-  Heart,
-  Share2,
-  ArrowRight,
-  Calendar,
-  MapPin,
-} from "lucide-react";
+import { CheckCircle2, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FESTIVAL, FIRST_YEAR_STATS } from "@/lib/festival";
+import { FIRST_YEAR_STATS } from "@/lib/festival";
 
 export const metadata: Metadata = {
   title: "Thank you · Back to School Campaign 2026",
@@ -89,39 +82,6 @@ export default function BackToSchoolThankYouPage() {
             </div>
           </div>
 
-          {/* Festival tie-in */}
-          <div className="bg-brand-dark text-white rounded-2xl p-6 md:p-8 mt-6 relative overflow-hidden">
-            <div className="absolute -top-12 -right-12 w-48 h-48 bg-brand-accent rounded-full opacity-15 blur-3xl" />
-            <div className="relative z-10">
-              <p className="font-heading text-[10px] uppercase tracking-widest text-brand-accent mb-2">
-                Celebrate with us
-              </p>
-              <h2 className="font-heading font-black text-xl md:text-2xl mb-3">
-                Come to {FESTIVAL.title}. It&rsquo;s free.
-              </h2>
-              <p className="text-white/70 text-sm mb-5 leading-relaxed">
-                The campaign culminates at our anniversary festival. Free
-                tickets, family-friendly, all day.
-              </p>
-              <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-white/60 mb-5">
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-brand-accent" />
-                  {FESTIVAL.dateLabel} · {FESTIVAL.timeLabel}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-brand-accent" />
-                  {FESTIVAL.venueName}
-                </span>
-              </div>
-              <Link
-                href={`/${FESTIVAL.slug}`}
-                className="inline-flex items-center gap-2 bg-brand-accent text-brand-dark font-heading font-bold text-xs uppercase tracking-widest px-4 py-2.5 rounded-md hover:bg-brand-green hover:text-white transition-colors"
-              >
-                Sold out
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </section>

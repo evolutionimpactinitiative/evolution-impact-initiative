@@ -14,25 +14,14 @@ import {
 import { navLinks } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-type NavbarProps = {
-  // If set, the festival event is in "final release" mode — the CTA pill
-  // should show the live remaining count in red instead of the usual green.
-  finalRelease?: number | null;
-};
-
-export function Navbar({ finalRelease = null }: NavbarProps = {}) {
+export function Navbar() {
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
 
-  const isFinalRelease = typeof finalRelease === "number";
-  const ticketsCtaClass = isFinalRelease
-    ? "bg-red-600 text-white hover:bg-red-700 ring-2 ring-red-200"
-    : "bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white";
-  const ticketsCtaLabel = isFinalRelease
-    ? finalRelease > 0
-      ? `Fest 2026 · Final ${finalRelease} tickets`
-      : "Fest 2026 · Sold out"
-    : "Fest 2026 · Free tickets";
+  const ctaClass =
+    "bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white";
+  const ctaLabel = "Back to School · Register";
+  const ctaHref = "/back-to-school/register";
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -75,8 +64,8 @@ export function Navbar({ finalRelease = null }: NavbarProps = {}) {
               {link.label}
             </Link>
           ))}
-          <Button asChild className={ticketsCtaClass}>
-            <Link href="/evolution-fest-2026">{ticketsCtaLabel}</Link>
+          <Button asChild className={ctaClass}>
+            <Link href={ctaHref}>{ctaLabel}</Link>
           </Button>
         </div>
 
@@ -111,13 +100,10 @@ export function Navbar({ finalRelease = null }: NavbarProps = {}) {
                 </nav>
                 <Button
                   asChild
-                  className={`w-full mt-4 ${ticketsCtaClass}`}
+                  className={`w-full mt-4 ${ctaClass}`}
                 >
-                  <Link
-                    href="/evolution-fest-2026"
-                    onClick={() => setOpen(false)}
-                  >
-                    {ticketsCtaLabel}
+                  <Link href={ctaHref} onClick={() => setOpen(false)}>
+                    {ctaLabel}
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full">
