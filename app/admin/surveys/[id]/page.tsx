@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import { SurveyResponsesView } from "@/components/admin/SurveyResponsesView";
-import { ArrowLeft, Edit, ExternalLink, Copy } from "lucide-react";
+import { QrShareCard } from "@/components/admin/QrShareCard";
+import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
 import type { Survey, SurveyResponse, SurveyQuestion } from "@/lib/supabase/types";
 
 type Props = {
@@ -42,6 +44,13 @@ export default async function SurveyDetailPage({ params }: Props) {
 
   const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
   const surveyLink = `${BASE_URL}/feedback/${id}`;
+
+  const qrSrc = await QRCode.toDataURL(surveyLink, {
+    width: 480,
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: { dark: "#1E1E1E", light: "#FFFFFF" },
+  });
 
   return (
     <div className="space-y-6">
@@ -98,24 +107,15 @@ export default async function SurveyDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Share Link */}
-      <div className="bg-brand-pale/30 rounded-lg p-4">
-        <p className="text-sm font-medium text-gray-700 mb-2">Share this survey:</p>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 bg-white px-3 py-2 rounded border text-sm text-gray-600 truncate">
-            {surveyLink}
-          </code>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              navigator.clipboard.writeText(surveyLink);
-            }}
-          >
-            <Copy className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+      {/* Share Link + QR */}
+      <QrShareCard
+        link={surveyLink}
+        qrSrc={qrSrc}
+        title={survey.title}
+        linkLabel="Share this survey:"
+        posterSubtitle="Scan to share your feedback"
+        description="Print or display this so attendees can scan and open the survey on their phone."
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

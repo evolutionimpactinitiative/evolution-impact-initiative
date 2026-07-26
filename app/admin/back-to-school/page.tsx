@@ -1,8 +1,10 @@
 import Link from "next/link";
+import QRCode from "qrcode";
 import { ClipboardList, Package, ArrowRight, Building2 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
 import { StatCard } from "@/components/admin/StatCard";
+import { QrShareCard } from "@/components/admin/QrShareCard";
 
 export default async function BackToSchoolAdminPage() {
   const supabase = createAdminClient();
@@ -83,6 +85,16 @@ export default async function BackToSchoolAdminPage() {
     .eq("status", "confirmed");
 
   const capacityPct = totalSlots > 0 ? (familiesRegistered / totalSlots) * 100 : 0;
+
+  const BASE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
+  const donateLink = `${BASE_URL}/back-to-school`;
+  const donateQrSrc = await QRCode.toDataURL(donateLink, {
+    width: 480,
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: { dark: "#1E1E1E", light: "#FFFFFF" },
+  });
 
   return (
     <div className="space-y-8">
@@ -196,6 +208,26 @@ export default async function BackToSchoolAdminPage() {
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </span>
         </Link>
+      </div>
+
+      {/* SHARE / QR */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-4">
+        <div>
+          <h3 className="font-heading font-bold text-lg text-brand-dark">
+            Promote the drive
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Print or display this QR code so people can scan to register, donate money, or pledge supplies.
+          </p>
+        </div>
+        <QrShareCard
+          link={donateLink}
+          qrSrc={donateQrSrc}
+          title={B2S.title}
+          linkLabel="Public drive page:"
+          posterSubtitle="Scan to donate or pledge supplies"
+          description="Print or display this QR on flyers, posters, or at events."
+        />
       </div>
 
       {!eventRow && (
