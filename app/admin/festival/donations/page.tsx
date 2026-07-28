@@ -70,7 +70,8 @@ export default async function FestivalDonationsAdminPage() {
 
   // Stats — only completed donations count toward "raised"
   const completed = donations.filter((d) => d.status === "completed");
-  const totalRaised = completed.reduce((sum, d) => sum + (d.amount ?? 0), 0);
+  const stripeRaised = completed.reduce((sum, d) => sum + (d.amount ?? 0), 0);
+  const totalRaised = stripeRaised + FESTIVAL.campaignOfflineRaisedPounds;
   const giftAidTotal = completed.reduce(
     (sum, d) => sum + (d.gift_aid_amount ?? 0),
     0,

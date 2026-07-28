@@ -85,21 +85,27 @@ export default function ContactPage() {
                   </h3>
                   <div className="flex gap-4">
                     <a
-                      href="#"
+                      href="https://www.instagram.com/evolutionimpactinitiative"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="Instagram"
                       className="bg-brand-pale p-3 rounded-lg text-brand-dark hover:bg-brand-blue hover:text-white transition-colors"
                     >
                       <Instagram className="h-6 w-6" />
                     </a>
                     <a
-                      href="#"
+                      href="https://www.facebook.com/share/1AhvjnBzca/?mibextid=wwXIfr"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="Facebook"
                       className="bg-brand-pale p-3 rounded-lg text-brand-dark hover:bg-brand-blue hover:text-white transition-colors"
                     >
                       <Facebook className="h-6 w-6" />
                     </a>
                     <a
-                      href="#"
+                      href="https://www.linkedin.com/company/evolution-impact-initiative-cic/"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="LinkedIn"
                       className="bg-brand-pale p-3 rounded-lg text-brand-dark hover:bg-brand-blue hover:text-white transition-colors"
                     >

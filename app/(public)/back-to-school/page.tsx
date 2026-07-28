@@ -56,6 +56,7 @@ export default async function BackToSchoolPage() {
       0,
     );
   }
+  raisedPounds += FESTIVAL.campaignOfflineRaisedPounds;
 
   // Live drive event stats: families registered, children on the list, pledges received.
   let familiesRegistered = 0;

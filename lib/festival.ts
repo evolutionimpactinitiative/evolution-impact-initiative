@@ -20,6 +20,10 @@ export const FESTIVAL = {
   expectedAttendance: "200+",
   campaignKey: "back-to-school-2026",
   campaignTarget: 10000, // GBP (whole pounds)
+  // Offline donations collected outside Stripe (cash, vendor contributions).
+  // Added to the live Stripe total wherever "raised so far" is shown.
+  // Breakdown: £250 cash donations + £100 vendor contributions.
+  campaignOfflineRaisedPounds: 350,
   campaignGoalChildren: 500,
   applicationDeadline: "2026-07-18",
   applicationDeadlineLabel: "Saturday 18 July 2026",

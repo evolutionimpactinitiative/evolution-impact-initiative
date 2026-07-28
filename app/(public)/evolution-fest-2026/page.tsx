@@ -140,6 +140,7 @@ export default async function FestivalHubPage() {
       0,
     );
   }
+  raisedPounds += FESTIVAL.campaignOfflineRaisedPounds;
 
   const ticketsCtaHref = isPublished
     ? `/events/${FESTIVAL.slug}/register`
