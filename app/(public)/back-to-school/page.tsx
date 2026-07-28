@@ -238,15 +238,15 @@ export default async function BackToSchoolPage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <StatCard
-              icon={Users}
-              value={familiesRegistered}
-              label="Families registered"
+              icon={Baby}
+              value={childrenOnTheList}
+              label="Kids registered"
               accent="brand-accent"
             />
             <StatCard
-              icon={Baby}
-              value={childrenOnTheList}
-              label="Children on the list"
+              icon={Users}
+              value={familiesRegistered}
+              label="Families registered"
               accent="brand-accent"
             />
             <StatCard

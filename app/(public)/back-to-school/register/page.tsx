@@ -24,19 +24,26 @@ export default async function BackToSchoolRegisterPage() {
     .eq("slug", B2S_SLUG)
     .maybeSingle();
 
-  let registeredCount = 0;
+  let childrenCount = 0;
   if (event) {
-    const { count } = await supabase
+    const { data: activeRegs } = await supabase
       .from("registrations")
-      .select("id", { count: "exact", head: true })
+      .select("id")
       .eq("event_id", (event as { id: string }).id)
       .in("status", ["pending", "approved", "confirmed"]);
-    registeredCount = count ?? 0;
+    const activeIds = (activeRegs as Array<{ id: string }> | null)?.map((r) => r.id) ?? [];
+    if (activeIds.length > 0) {
+      const { count } = await supabase
+        .from("registration_children")
+        .select("id", { count: "exact", head: true })
+        .in("registration_id", activeIds);
+      childrenCount = count ?? 0;
+    }
   }
 
   const totalSlots =
     (event as { total_slots?: number } | null)?.total_slots ?? B2S.totalSlots;
-  const isFull = event ? registeredCount >= totalSlots : false;
+  const isFull = event ? childrenCount >= totalSlots : false;
   const deadline = new Date(B2S.registrationDeadline);
   const isPastDeadline = new Date() > deadline;
   const isClosed = !event || isFull || isPastDeadline;
@@ -102,13 +109,13 @@ export default async function BackToSchoolRegisterPage() {
                       ? "past-deadline"
                       : "full"
                 }
-                registeredCount={registeredCount}
+                childrenCount={childrenCount}
                 totalSlots={totalSlots}
               />
             ) : (
               <>
                 <CapacityStrip
-                  registeredCount={registeredCount}
+                  childrenCount={childrenCount}
                   totalSlots={totalSlots}
                 />
                 <RegisterForm />
@@ -122,22 +129,22 @@ export default async function BackToSchoolRegisterPage() {
 }
 
 function CapacityStrip({
-  registeredCount,
+  childrenCount,
   totalSlots,
 }: {
-  registeredCount: number;
+  childrenCount: number;
   totalSlots: number;
 }) {
-  const pct = totalSlots > 0 ? (registeredCount / totalSlots) * 100 : 0;
-  const remaining = Math.max(0, totalSlots - registeredCount);
+  const pct = totalSlots > 0 ? (childrenCount / totalSlots) * 100 : 0;
+  const remaining = Math.max(0, totalSlots - childrenCount);
   return (
     <div className="bg-white rounded-2xl p-4 md:p-5 border border-brand-blue/10 mb-6">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <p className="text-sm font-heading font-bold text-brand-dark">
-          {registeredCount} / {totalSlots} families registered
+          {childrenCount} / {totalSlots} kids registered
         </p>
         <p className="text-xs text-brand-dark/60 uppercase tracking-widest">
-          {remaining} spots left
+          {remaining} kids left
         </p>
       </div>
       <div className="h-2 rounded-full bg-brand-blue/10 overflow-hidden">
@@ -152,11 +159,11 @@ function CapacityStrip({
 
 function ClosedState({
   reason,
-  registeredCount,
+  childrenCount,
   totalSlots,
 }: {
   reason: "not-configured" | "past-deadline" | "full";
-  registeredCount: number;
+  childrenCount: number;
   totalSlots: number;
 }) {
   const copy = {
@@ -170,7 +177,7 @@ function ClosedState({
     },
     full: {
       title: "We're at capacity",
-      body: `All ${totalSlots} spots are taken (${registeredCount} families registered). If you'd still like to help, please come and see us on ${B2S.dateLabel}. If there are supplies left after everyone approved has collected, you're welcome.`,
+      body: `All ${totalSlots} kid spots are taken (${childrenCount} kids registered). If you'd still like to help, please come and see us on ${B2S.dateLabel}. If there are supplies left after everyone approved has collected, you're welcome.`,
     },
   }[reason];
 

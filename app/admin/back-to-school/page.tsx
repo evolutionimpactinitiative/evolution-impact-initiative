@@ -84,7 +84,7 @@ export default async function BackToSchoolAdminPage() {
     .select("id", { count: "exact", head: true })
     .eq("status", "confirmed");
 
-  const capacityPct = totalSlots > 0 ? (familiesRegistered / totalSlots) * 100 : 0;
+  const capacityPct = totalSlots > 0 ? (childrenOnTheList / totalSlots) * 100 : 0;
 
   const BASE_URL =
     process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
@@ -111,10 +111,10 @@ export default async function BackToSchoolAdminPage() {
       <div className="bg-white rounded-2xl p-6 border border-gray-200">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <p className="text-sm font-heading font-bold text-brand-dark">
-            {familiesRegistered} / {totalSlots} families registered
+            {childrenOnTheList} / {totalSlots} kids registered
           </p>
           <p className="text-xs text-gray-500 uppercase tracking-widest">
-            {Math.max(0, totalSlots - familiesRegistered)} spots left
+            {Math.max(0, totalSlots - childrenOnTheList)} kids left
           </p>
         </div>
         <div className="h-2 rounded-full bg-brand-blue/10 overflow-hidden">
@@ -142,8 +142,8 @@ export default async function BackToSchoolAdminPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         <StatCard
-          title="Children on the list"
-          value={childrenOnTheList}
+          title="Families registered"
+          value={familiesRegistered}
           icon="Users"
         />
         <StatCard title="Declined" value={declined} icon="XCircle" />
