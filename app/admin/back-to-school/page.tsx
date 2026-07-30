@@ -1,8 +1,9 @@
 import Link from "next/link";
 import QRCode from "qrcode";
-import { ClipboardList, Package, ArrowRight, Building2, Boxes } from "lucide-react";
+import { ClipboardList, Package, ArrowRight, Building2, Boxes, Heart } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
+import { FESTIVAL } from "@/lib/festival";
 import { StatCard } from "@/components/admin/StatCard";
 import { QrShareCard } from "@/components/admin/QrShareCard";
 
@@ -93,6 +94,41 @@ export default async function BackToSchoolAdminPage() {
   const stockTotal = stockList.reduce((s, r) => s + (r.quantity ?? 0), 0);
   const stockSkuCount = stockList.length;
 
+  // Donations tagged to the Back to School campaign. amount is stored in
+  // whole pounds (see webhook), so no /100 conversion.
+  const { data: donationsData } = await supabase
+    .from("donations")
+    .select("amount, donor_id, created_at")
+    .eq("campaign", FESTIVAL.campaignKey)
+    .eq("status", "completed");
+  const donationsList =
+    (donationsData as Array<{
+      amount: number;
+      donor_id: string | null;
+      created_at: string;
+    }> | null) ?? [];
+  const donationStripePounds = donationsList.reduce(
+    (s, d) => s + (d.amount ?? 0),
+    0,
+  );
+  const donationTotalPounds =
+    donationStripePounds + FESTIVAL.campaignOfflineRaisedPounds;
+  const uniqueDonorIds = new Set(
+    donationsList.map((d) => d.donor_id).filter(Boolean),
+  );
+  const donationCount = donationsList.length;
+  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const donationsThisWeek = donationsList
+    .filter((d) => new Date(d.created_at) >= oneWeekAgo)
+    .reduce((s, d) => s + (d.amount ?? 0), 0);
+  const donationGoalPct =
+    FESTIVAL.campaignTarget > 0
+      ? Math.min(
+          100,
+          Math.round((donationTotalPounds / FESTIVAL.campaignTarget) * 100),
+        )
+      : 0;
+
   const capacityPct = totalSlots > 0 ? (childrenOnTheList / totalSlots) * 100 : 0;
 
   const BASE_URL =
@@ -161,6 +197,72 @@ export default async function BackToSchoolAdminPage() {
           value={pledgesPending ?? 0}
           icon="Gift"
         />
+      </div>
+
+      {/* DONATIONS */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h3 className="font-heading font-bold text-lg text-brand-dark inline-flex items-center gap-2">
+              <Heart className="h-5 w-5 text-brand-green" />
+              Donations to the drive
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Everything tagged{" "}
+              <code className="bg-gray-100 px-1.5 py-0.5 rounded">
+                {FESTIVAL.campaignKey}
+              </code>{" "}
+              plus £{FESTIVAL.campaignOfflineRaisedPounds} offline offset.
+            </p>
+          </div>
+          <Link
+            href="/admin/festival/donations"
+            className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest hover:text-brand-dark"
+          >
+            All donations
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
+          <MoneyTile
+            label="Raised so far"
+            value={`£${donationTotalPounds.toLocaleString("en-GB")}`}
+            sub={`${donationGoalPct}% of £${FESTIVAL.campaignTarget.toLocaleString("en-GB")}`}
+          />
+          <MoneyTile
+            label="This week"
+            value={`£${donationsThisWeek.toLocaleString("en-GB")}`}
+          />
+          <MoneyTile
+            label="Donations"
+            value={String(donationCount)}
+            sub={`${uniqueDonorIds.size} donor${uniqueDonorIds.size === 1 ? "" : "s"}`}
+          />
+          <MoneyTile
+            label="Children sponsored"
+            value={String(
+              Math.min(B2S.goalChildren, Math.floor(donationTotalPounds / 20)),
+            )}
+            sub={`£20 covers 1 kid`}
+          />
+        </div>
+
+        <div className="h-2 rounded-full bg-brand-blue/10 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-brand-green transition-all duration-500"
+            style={{ width: `${donationGoalPct}%` }}
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          £
+          {Math.max(
+            0,
+            FESTIVAL.campaignTarget - donationTotalPounds,
+          ).toLocaleString("en-GB")}{" "}
+          to go to hit the £
+          {FESTIVAL.campaignTarget.toLocaleString("en-GB")} goal.
+        </p>
       </div>
 
       {/* QUICK LINKS */}
@@ -266,6 +368,28 @@ export default async function BackToSchoolAdminPage() {
           to seed it.
         </div>
       )}
+    </div>
+  );
+}
+
+function MoneyTile({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <div className="bg-brand-pale/40 rounded-xl p-4">
+      <p className="text-xs text-gray-500 uppercase tracking-widest font-heading font-bold">
+        {label}
+      </p>
+      <p className="text-xl md:text-2xl font-heading font-black text-brand-dark mt-1">
+        {value}
+      </p>
+      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
     </div>
   );
 }
