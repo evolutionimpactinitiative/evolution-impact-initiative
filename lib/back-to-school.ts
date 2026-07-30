@@ -24,9 +24,10 @@ export const B2S = {
   maxChildAge: 12,
 } as const;
 
-// Uniform size dropdown values, exactly as requested by the user.
-// Displayed as "Age {value}" on the form so parents pick the size their child wears.
+// Uniform size dropdown values, displayed as "Age {value}" on the form.
+// Range matches the stock we actually carry (see back_to_school_stock).
 export const UNIFORM_SIZES = [
+  "3-4",
   "4",
   "4-5",
   "5",
@@ -43,6 +44,7 @@ export const UNIFORM_SIZES = [
   "10-11",
   "11",
   "11-12",
+  "12-13",
 ] as const;
 
 export type UniformSize = (typeof UNIFORM_SIZES)[number];

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import QRCode from "qrcode";
-import { ClipboardList, Package, ArrowRight, Building2 } from "lucide-react";
+import { ClipboardList, Package, ArrowRight, Building2, Boxes } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
 import { StatCard } from "@/components/admin/StatCard";
@@ -84,6 +84,15 @@ export default async function BackToSchoolAdminPage() {
     .select("id", { count: "exact", head: true })
     .eq("status", "confirmed");
 
+  // Stock summary — sum quantity + count unique SKUs
+  const { data: stockRows } = await supabase
+    .from("back_to_school_stock")
+    .select("quantity");
+  const stockList =
+    (stockRows as Array<{ quantity: number }> | null) ?? [];
+  const stockTotal = stockList.reduce((s, r) => s + (r.quantity ?? 0), 0);
+  const stockSkuCount = stockList.length;
+
   const capacityPct = totalSlots > 0 ? (childrenOnTheList / totalSlots) * 100 : 0;
 
   const BASE_URL =
@@ -155,7 +164,7 @@ export default async function BackToSchoolAdminPage() {
       </div>
 
       {/* QUICK LINKS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link
           href="/admin/back-to-school/registrations"
           className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
@@ -166,6 +175,24 @@ export default async function BackToSchoolAdminPage() {
           </h3>
           <p className="text-sm text-gray-600 mb-3">
             Approve, decline, and send approval emails to families.
+          </p>
+          <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/back-to-school/stock"
+          className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
+        >
+          <Boxes className="h-6 w-6 text-brand-blue mb-3" />
+          <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
+            Stock
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            {stockTotal} items across {stockSkuCount} SKUs. See what&rsquo;s in
+            the store vs. what&rsquo;s been requested and add new stock.
           </p>
           <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
             Open

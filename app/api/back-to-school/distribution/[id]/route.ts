@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { B2S_SLUG } from "@/lib/back-to-school";
+import { B2S_SLUG, type ChildSex, type UniformSize, type UniformChoices } from "@/lib/back-to-school";
+import { fitFromSex, type StockCategory, type StockColour } from "@/lib/back-to-school-stock";
 
 const VALID_STATUS = ["collected", "partial", "no_show"] as const;
 type DistStatus = (typeof VALID_STATUS)[number];
@@ -109,7 +110,10 @@ export async function POST(
       );
     }
 
-    // Update per-child items_given records
+    // Update per-child items_given records + decrement stock for uniform items
+    // actually handed out. If a specific SKU has already run out we still record
+    // the give-out (steward's on-the-day record is source of truth), but leave
+    // stock at 0 rather than going negative.
     const itemsGiven = body.itemsGiven || {};
     for (const [childId, given] of Object.entries(itemsGiven)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,6 +122,8 @@ export async function POST(
         .update({ items_given: given })
         .eq("id", childId)
         .eq("registration_id", id);
+
+      await decrementStockForChild(supabase, id, childId, given);
     }
 
     // Touch the steward token last-used timestamp
@@ -134,5 +140,95 @@ export async function POST(
       { error: err instanceof Error ? err.message : "Internal error" },
       { status: 500 },
     );
+  }
+}
+
+// Records negative stock movements for each uniform item marked given for this
+// child. Reads the child's stored uniform_choices, uniform_size and sex, and
+// resolves the SKU for each item flag that's true (uniform_bottom, uniform_polo,
+// uniform_shirt). Silently skips items where the SKU can't be resolved — the
+// steward record on the child is still the source of truth.
+async function decrementStockForChild(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  registrationId: string,
+  childId: string,
+  given: Record<string, boolean>,
+) {
+  const wantsBottom = given.uniform_bottom === true || given.uniform === true;
+  const wantsPolo = given.uniform_polo === true;
+  const wantsShirt = given.uniform_shirt === true;
+  if (!wantsBottom && !wantsPolo && !wantsShirt) return;
+
+  const { data: childRow } = await supabase
+    .from("registration_children")
+    .select("uniform_size, sex, uniform_choices")
+    .eq("id", childId)
+    .maybeSingle();
+  const child = childRow as {
+    uniform_size: UniformSize | null;
+    sex: ChildSex | null;
+    uniform_choices: UniformChoices | null;
+  } | null;
+  if (!child || !child.uniform_size || !child.uniform_choices) return;
+
+  const fit = fitFromSex(child.sex);
+  const size = child.uniform_size;
+
+  interface Ask {
+    category: StockCategory;
+    colour: StockColour;
+    sleeve: "short" | "long" | null;
+  }
+  const asks: Ask[] = [];
+
+  if (wantsBottom && child.uniform_choices.bottom) {
+    asks.push({
+      category: child.uniform_choices.bottom.type as StockCategory,
+      colour: child.uniform_choices.bottom.colour as StockColour,
+      sleeve: null,
+    });
+  }
+  if (wantsPolo && child.uniform_choices.polo) {
+    asks.push({
+      category: "polo",
+      colour: child.uniform_choices.polo.colour as StockColour,
+      sleeve: child.uniform_choices.polo.sleeve,
+    });
+  }
+  if (wantsShirt && child.uniform_choices.shirt) {
+    asks.push({
+      category: "shirt",
+      colour: "white",
+      sleeve: child.uniform_choices.shirt.sleeve,
+    });
+  }
+
+  for (const ask of asks) {
+    const query = supabase
+      .from("back_to_school_stock")
+      .select("id, quantity")
+      .eq("category", ask.category)
+      .eq("colour", ask.colour)
+      .eq("fit", fit)
+      .eq("size", size);
+    const { data: sku } = ask.sleeve
+      ? await query.eq("sleeve", ask.sleeve).maybeSingle()
+      : await query.is("sleeve", null).maybeSingle();
+
+    const row = sku as { id: string; quantity: number } | null;
+    if (!row) continue; // no matching SKU — nothing to decrement
+    if (row.quantity <= 0) continue; // already at 0, don't go negative
+
+    await supabase
+      .from("back_to_school_stock_movements")
+      .insert({
+        stock_id: row.id,
+        delta: -1,
+        reason: "distributed",
+        registration_id: registrationId,
+        child_id: childId,
+        notes: null,
+      });
   }
 }

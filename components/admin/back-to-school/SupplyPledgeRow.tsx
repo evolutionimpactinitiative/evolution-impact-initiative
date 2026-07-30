@@ -101,9 +101,11 @@ export function SupplyPledgeRow({ pledge }: Props) {
   const [expanded, setExpanded] = React.useState(false);
   const [busy, setBusy] = React.useState<SupplyPledge["status"] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [notice, setNotice] = React.useState<string | null>(null);
 
   async function transitionTo(newStatus: SupplyPledge["status"]) {
     setError(null);
+    setNotice(null);
     setBusy(newStatus);
     try {
       const res = await fetch(
@@ -116,6 +118,18 @@ export function SupplyPledgeRow({ pledge }: Props) {
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed");
+      if (newStatus === "received") {
+        const logged = Number(data?.stockLogged ?? 0);
+        const skipped = Number(data?.stockSkipped ?? 0);
+        if (logged > 0 || skipped > 0) {
+          setNotice(
+            `Logged ${logged} line${logged === 1 ? "" : "s"} to stock` +
+              (skipped > 0
+                ? ` · ${skipped} couldn't be matched — add via the Stock page`
+                : ""),
+          );
+        }
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -270,6 +284,11 @@ export function SupplyPledgeRow({ pledge }: Props) {
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm">
               {error}
+            </div>
+          )}
+          {notice && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-emerald-900 text-sm">
+              {notice}
             </div>
           )}
 
