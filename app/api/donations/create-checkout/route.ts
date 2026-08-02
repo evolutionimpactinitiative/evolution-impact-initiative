@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeClient } from "@/lib/stripe/client";
+import { resolveDonationCampaign } from "@/lib/festival";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -26,10 +27,11 @@ export async function POST(request: NextRequest) {
     }
 
     const isRecurring = frequency === "monthly";
-    const normalisedCampaign =
-      typeof campaign === "string" && campaign.trim()
-        ? campaign.trim()
-        : "general";
+    // resolveDonationCampaign forces `back-to-school-2026` while the
+    // FESTIVAL.donationCampaignOverrideUntil window is active, so both the
+    // Stripe checkout product label and the DB row line up with what the
+    // admin sees on the drive dashboard.
+    const normalisedCampaign = resolveDonationCampaign(campaign);
     const metadata = {
       donor_name: donorName || "",
       gift_aid: giftAid ? "yes" : "no",
