@@ -8,6 +8,7 @@ import {
   vendorApplicationReceivedEmail,
 } from "@/lib/email/festival-templates";
 import { postDonationToAccounting } from "@/lib/accounting/donations-bridge";
+import { resolveDonationCampaign } from "@/lib/festival";
 import Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -228,7 +229,7 @@ export async function POST(request: NextRequest) {
               donation_type: "one_time",
               stripe_payment_intent_id: session.payment_intent as string,
               gift_aid_amount: giftAidAmount,
-              campaign: metadata.campaign || "general",
+              campaign: resolveDonationCampaign(metadata.campaign),
               status: "completed",
               completed_at: new Date().toISOString(),
             })
@@ -338,7 +339,7 @@ export async function POST(request: NextRequest) {
               stripe_payment_intent_id: invoiceAny.payment_intent as string,
               stripe_subscription_id: subscriptionId as string,
               gift_aid_amount: recurringGiftAidAmount,
-              campaign: metadata.campaign || "general",
+              campaign: resolveDonationCampaign(metadata.campaign),
               status: "completed",
               completed_at: new Date().toISOString(),
             })

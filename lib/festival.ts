@@ -25,6 +25,11 @@ export const FESTIVAL = {
   // Breakdown: £250 cash donations + £100 vendor contributions.
   campaignOfflineRaisedPounds: 350,
   campaignGoalChildren: 500,
+  // Any donation that completes at or before this timestamp is auto-tagged to
+  // `campaignKey`, regardless of what the donor selected on the form. This
+  // covers the run-up to the Back to School Drive so nothing slips through
+  // as "general" during the appeal window. Set to null to disable.
+  donationCampaignOverrideUntil: "2026-08-22T23:59:59+01:00",
   applicationDeadline: "2026-07-18",
   applicationDeadlineLabel: "Saturday 18 July 2026",
   volunteerDeadline: "2026-07-22",
@@ -512,3 +517,16 @@ export const FESTIVAL_FAQ = [
     a: "The venue is wheelchair accessible. Tell us about any specific accessibility needs when you register and we'll do everything we can to make the day work for you.",
   },
 ];
+
+// While FESTIVAL.donationCampaignOverrideUntil is in the future, every
+// donation — regardless of the campaign the donor picked — should count
+// toward the Back to School Drive. Once that timestamp passes the raw
+// campaign value is used as-is.
+export function resolveDonationCampaign(rawCampaign?: string | null): string {
+  const cutoff = FESTIVAL.donationCampaignOverrideUntil;
+  if (cutoff && Date.now() <= new Date(cutoff).getTime()) {
+    return FESTIVAL.campaignKey;
+  }
+  const trimmed = typeof rawCampaign === "string" ? rawCampaign.trim() : "";
+  return trimmed || "general";
+}

@@ -214,6 +214,20 @@ export default async function BackToSchoolAdminPage() {
               </code>{" "}
               plus £{FESTIVAL.campaignOfflineRaisedPounds} offline offset.
             </p>
+            {FESTIVAL.donationCampaignOverrideUntil &&
+              Date.now() <=
+                new Date(FESTIVAL.donationCampaignOverrideUntil).getTime() && (
+                <p className="text-xs text-brand-blue font-heading font-bold uppercase tracking-widest mt-2">
+                  Auto-tag on · every donation counts to B2S until{" "}
+                  {new Date(
+                    FESTIVAL.donationCampaignOverrideUntil,
+                  ).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
           </div>
           <Link
             href="/admin/festival/donations"
