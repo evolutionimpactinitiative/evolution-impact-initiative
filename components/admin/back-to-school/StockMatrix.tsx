@@ -5,14 +5,21 @@ import { Plus, Minus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   STOCK_SIZES,
+  skuCellKey,
   type MatrixGroup,
 } from "@/lib/back-to-school-stock";
 
 interface Props {
   groups: MatrixGroup[];
+  // Subset of sizes to render as columns. Defaults to all sizes.
+  visibleSizes?: readonly string[];
+  // If set, only cells whose skuCellKey is in this set are shown "live" —
+  // the rest render as a dimmed dash so the matrix stays column-aligned.
+  cellMask?: Set<string> | null;
 }
 
-export function StockMatrix({ groups }: Props) {
+export function StockMatrix({ groups, visibleSizes, cellMask }: Props) {
+  const sizes = visibleSizes && visibleSizes.length > 0 ? visibleSizes : STOCK_SIZES;
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
       <div className="overflow-x-auto">
@@ -22,7 +29,7 @@ export function StockMatrix({ groups }: Props) {
               <th className="text-left px-4 py-3 sticky left-0 bg-gray-50 min-w-[220px] z-10">
                 Item
               </th>
-              {STOCK_SIZES.map((s) => (
+              {sizes.map((s) => (
                 <th
                   key={s}
                   className="text-center px-2 py-3 font-heading font-bold text-brand-dark w-16"
@@ -37,7 +44,12 @@ export function StockMatrix({ groups }: Props) {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {groups.map((g) => (
-              <GroupRow key={g.key} group={g} />
+              <GroupRow
+                key={g.key}
+                group={g}
+                sizes={sizes}
+                cellMask={cellMask ?? null}
+              />
             ))}
           </tbody>
         </table>
@@ -46,7 +58,15 @@ export function StockMatrix({ groups }: Props) {
   );
 }
 
-function GroupRow({ group }: { group: MatrixGroup }) {
+function GroupRow({
+  group,
+  sizes,
+  cellMask,
+}: {
+  group: MatrixGroup;
+  sizes: readonly string[];
+  cellMask: Set<string> | null;
+}) {
   const totalGap = group.totalStock - group.totalRequested;
   return (
     <tr className="hover:bg-brand-pale/20">
@@ -55,8 +75,16 @@ function GroupRow({ group }: { group: MatrixGroup }) {
           {group.label}
         </div>
       </td>
-      {STOCK_SIZES.map((size) => {
+      {sizes.map((size) => {
         const cell = group.cells.get(size);
+        const key = skuCellKey({
+          category: group.category,
+          colour: group.colour,
+          sleeve: group.sleeve,
+          fit: group.fit,
+          size,
+        });
+        const masked = cellMask ? !cellMask.has(key) : false;
         return (
           <td key={size} className="px-1 py-2 text-center">
             <StockCell
@@ -68,6 +96,7 @@ function GroupRow({ group }: { group: MatrixGroup }) {
               stock={cell?.stock ?? 0}
               requested={cell?.requested ?? 0}
               stockId={cell?.stockId ?? null}
+              masked={masked}
             />
           </td>
         );
@@ -105,6 +134,7 @@ interface CellProps {
   stock: number;
   requested: number;
   stockId: string | null;
+  masked?: boolean;
 }
 
 function StockCell(props: CellProps) {
@@ -116,7 +146,8 @@ function StockCell(props: CellProps) {
   const [notes, setNotes] = React.useState("");
 
   const gap = props.stock - props.requested;
-  const isEmpty = props.stock === 0 && props.requested === 0;
+  const isEmpty =
+    props.masked || (props.stock === 0 && props.requested === 0);
 
   async function submit(sign: 1 | -1) {
     if (!Number.isFinite(delta) || delta < 1) {

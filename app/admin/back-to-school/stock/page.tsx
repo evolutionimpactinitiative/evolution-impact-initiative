@@ -1,17 +1,32 @@
 import Link from "next/link";
-import { ArrowLeft, Package, TrendingDown, AlertTriangle, Clock } from "lucide-react";
+import {
+  ArrowLeft,
+  Package,
+  TrendingDown,
+  AlertTriangle,
+  Clock,
+} from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { B2S_SLUG } from "@/lib/back-to-school";
-import type { UniformChoices, ChildSex, UniformSize } from "@/lib/back-to-school";
+import { B2S_SLUG, UNIFORM_SIZES } from "@/lib/back-to-school";
+import type {
+  UniformChoices,
+  ChildSex,
+  UniformSize,
+} from "@/lib/back-to-school";
 import {
   aggregateDemand,
   buildMatrix,
+  skuCellKey,
+  skuGroupLabel,
   type ChildAsk,
   type StockRow,
   type StockCategory,
 } from "@/lib/back-to-school-stock";
 import { StockMatrix } from "@/components/admin/back-to-school/StockMatrix";
 import { AddStockButton } from "@/components/admin/back-to-school/AddStockButton";
+import { StockToolbar } from "@/components/admin/back-to-school/StockToolbar";
+import type { ShowMode } from "@/components/admin/back-to-school/StockFilters";
+import type { ShoppingLine } from "@/components/admin/back-to-school/ShoppingListPanel";
 
 const CATEGORY_TABS: Array<{ key: "all" | StockCategory; label: string }> = [
   { key: "all", label: "All" },
@@ -23,26 +38,63 @@ const CATEGORY_TABS: Array<{ key: "all" | StockCategory; label: string }> = [
   { key: "shorts", label: "Shorts" },
 ];
 
+const VALID_SHOW: readonly ShowMode[] = ["all", "shortfall", "surplus", "demand"];
+const VALID_FIT = ["boys", "girls", "unisex"];
+const VALID_COLOUR = ["white", "blue", "grey", "black"];
+const VALID_SLEEVE = ["short", "long"];
+const VALID_SIZES: readonly string[] = UNIFORM_SIZES;
+
 interface PageProps {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    show?: string;
+    fit?: string;
+    sizes?: string;
+    sleeve?: string;
+    colour?: string;
+    waitlist?: string;
+    hideZero?: string;
+    sort?: string;
+  }>;
+}
+
+function parseCsv(v: string | undefined, allowed: readonly string[]): string[] {
+  if (!v) return [];
+  return v
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s && allowed.includes(s));
 }
 
 export default async function B2SStockPage({ searchParams }: PageProps) {
   const params = await searchParams;
+
   const categoryFilter =
-    (params.category as "all" | StockCategory | undefined) ?? "all";
+    (params.category as "all" | StockCategory | undefined) &&
+    CATEGORY_TABS.some((t) => t.key === params.category)
+      ? (params.category as "all" | StockCategory)
+      : "all";
+  const show: ShowMode =
+    params.show && VALID_SHOW.includes(params.show as ShowMode)
+      ? (params.show as ShowMode)
+      : "all";
+  const fit = parseCsv(params.fit, VALID_FIT);
+  const sizes = parseCsv(params.sizes, VALID_SIZES);
+  const sleeve = parseCsv(params.sleeve, VALID_SLEEVE);
+  const colour = parseCsv(params.colour, VALID_COLOUR);
+  const waitlist = params.waitlist === "1";
+  const hideZero = params.hideZero === "1";
+  const sort: "group" | "gap" = params.sort === "gap" ? "gap" : "group";
 
   const supabase = createAdminClient();
 
-  // Stock rows
+  // ─── Load stock rows ──────────────────────────────────────────────
   const { data: stockRaw } = await supabase
     .from("back_to_school_stock")
     .select("id, category, colour, sleeve, fit, size, quantity, notes, updated_at");
   const stockRows = (stockRaw as StockRow[] | null) ?? [];
 
-  // Demand: pull uniform choices from every child on a pending/approved
-  // registration in this event. Waitlisted kids are counted separately so
-  // the admin can see what capacity opens up if they promote everyone.
+  // ─── Load demand (pending/approved vs waitlisted) ─────────────────
   const asks: ChildAsk[] = [];
   const waitlistAsks: ChildAsk[] = [];
   const { data: eventRow } = await supabase
@@ -60,8 +112,7 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
       .eq("event_id", eventId)
       .in("status", ["pending", "approved", "waitlisted"]);
 
-    const rows =
-      (activeRegs as { id: string; status: string }[] | null) ?? [];
+    const rows = (activeRegs as { id: string; status: string }[] | null) ?? [];
     const statusById = new Map(rows.map((r) => [r.id, r.status]));
     const regIds = rows.map((r) => r.id);
 
@@ -99,34 +150,169 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
     }
   }
 
-  const demand = aggregateDemand(asks);
+  // Merge waitlist demand into the active demand when the toggle is on.
+  const activeDemand = aggregateDemand(asks);
   const waitlistDemand = aggregateDemand(waitlistAsks);
-  const matrix = buildMatrix(stockRows, demand);
   const totalWaitlistRequested = Array.from(waitlistDemand.values()).reduce(
     (s, n) => s + n,
     0,
   );
 
-  const visibleMatrix =
-    categoryFilter === "all"
-      ? matrix
-      : matrix.filter((g) => g.category === categoryFilter);
+  const effectiveDemand = new Map(activeDemand);
+  if (waitlist) {
+    for (const [k, v] of waitlistDemand.entries()) {
+      effectiveDemand.set(k, (effectiveDemand.get(k) ?? 0) + v);
+    }
+  }
 
+  const matrix = buildMatrix(stockRows, effectiveDemand);
+
+  // Top-line stat tiles (always over the full unfiltered matrix so users can
+  // orient themselves before drilling in).
   const totalInStock = matrix.reduce((s, g) => s + g.totalStock, 0);
-  const totalRequested = matrix.reduce((s, g) => s + g.totalRequested, 0);
+  const totalRequested = Array.from(activeDemand.values()).reduce(
+    (s, n) => s + n,
+    0,
+  );
   const totalGap = matrix.reduce(
     (s, g) => s + Math.max(0, g.totalRequested - g.totalStock),
     0,
   );
 
+  // Category counts (unfiltered, so tabs always show accurate counts).
   const categoryCounts: Record<string, number> = { all: matrix.length };
   for (const g of matrix) {
     categoryCounts[g.category] = (categoryCounts[g.category] ?? 0) + 1;
   }
 
+  // ─── Apply filters to produce the visible matrix ─────────────────
+  const fitSet = new Set(fit);
+  const colourSet = new Set(colour);
+  const sleeveSet = new Set(sleeve);
+  const sizesSet = new Set(sizes);
+
+  let visibleMatrix = matrix.filter((g) => {
+    if (categoryFilter !== "all" && g.category !== categoryFilter) return false;
+    if (fitSet.size > 0 && !fitSet.has(g.fit)) return false;
+    if (colourSet.size > 0 && !colourSet.has(g.colour)) return false;
+    // Sleeve only applies to categories that have a sleeve dimension.
+    if (
+      sleeveSet.size > 0 &&
+      (g.category === "polo" || g.category === "shirt") &&
+      (!g.sleeve || !sleeveSet.has(g.sleeve))
+    ) {
+      return false;
+    }
+    if (hideZero && g.totalStock === 0 && g.totalRequested === 0) return false;
+    return true;
+  });
+
+  // ─── Cell mask for the "Show only" preset ────────────────────────
+  // A masked cell renders as a dash so the row still lines up with the
+  // filtered columns, but the data is out of scope.
+  let cellMask: Set<string> | null = null;
+  if (show !== "all") {
+    cellMask = new Set();
+    for (const g of visibleMatrix) {
+      for (const size of VALID_SIZES) {
+        const cell = g.cells.get(size);
+        const stock = cell?.stock ?? 0;
+        const req = cell?.requested ?? 0;
+        const passShow =
+          show === "shortfall"
+            ? req > stock
+            : show === "surplus"
+              ? stock > 0 && stock > req
+              : /* demand */ req > 0;
+        if (passShow) {
+          cellMask.add(
+            skuCellKey({
+              category: g.category,
+              colour: g.colour,
+              sleeve: g.sleeve,
+              fit: g.fit,
+              size,
+            }),
+          );
+        }
+      }
+    }
+    // Drop groups where no cell in the mask survives — keeps the matrix short.
+    visibleMatrix = visibleMatrix.filter((g) => {
+      for (const size of VALID_SIZES) {
+        const key = skuCellKey({
+          category: g.category,
+          colour: g.colour,
+          sleeve: g.sleeve,
+          fit: g.fit,
+          size,
+        });
+        if (cellMask!.has(key)) return true;
+      }
+      return false;
+    });
+  }
+
+  // ─── Size columns to render ───────────────────────────────────────
+  const visibleSizes = sizesSet.size > 0
+    ? VALID_SIZES.filter((s) => sizesSet.has(s))
+    : VALID_SIZES;
+
+  // ─── Sort ─────────────────────────────────────────────────────────
+  if (sort === "gap") {
+    visibleMatrix = [...visibleMatrix].sort((a, b) => {
+      const ga = Math.max(0, a.totalRequested - a.totalStock);
+      const gb = Math.max(0, b.totalRequested - b.totalStock);
+      return gb - ga; // biggest gap first
+    });
+  }
+
+  // ─── Shopping list (respects all current filters + visible sizes) ─
+  const shoppingLines: ShoppingLine[] = [];
+  for (const g of visibleMatrix) {
+    for (const size of visibleSizes) {
+      const cell = g.cells.get(size);
+      const stock = cell?.stock ?? 0;
+      const req = cell?.requested ?? 0;
+      const needed = req - stock;
+      if (needed > 0) {
+        shoppingLines.push({
+          label: skuGroupLabel({
+            category: g.category,
+            colour: g.colour,
+            sleeve: g.sleeve,
+            fit: g.fit,
+          }),
+          size,
+          needed,
+        });
+      }
+    }
+  }
+  shoppingLines.sort((a, b) => b.needed - a.needed);
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="space-y-6" id="stock-print-area">
+      {/* Print styles — hide the admin chrome, force landscape, keep only
+          the stock content on the printed page. */}
+      <style
+        // eslint-disable-next-line react/no-unknown-property
+        // Server-injected: fine to hard-code, doesn't need to be reactive.
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              @page { size: A4 landscape; margin: 10mm; }
+              body * { visibility: hidden !important; }
+              #stock-print-area, #stock-print-area * { visibility: visible !important; }
+              #stock-print-area {
+                position: absolute; left: 0; top: 0; width: 100%; padding: 0;
+              }
+              html, body { background: white !important; }
+            }
+          `,
+        }}
+      />
+      <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <Link
             href="/admin/back-to-school"
@@ -147,8 +333,18 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
         <AddStockButton />
       </div>
 
+      {/* Header shown only in print — cheap, prints the drive name */}
+      <div className="hidden print:block">
+        <h1 className="font-heading font-black text-2xl text-brand-dark">
+          Back to School Drive 2026 — Stock
+        </h1>
+        <p className="text-xs text-gray-600 mt-1">
+          Printed {new Date().toLocaleString("en-GB")}
+        </p>
+      </div>
+
       {/* STAT CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 print:grid-cols-5">
         <StatTile
           title="In stock"
           value={totalInStock}
@@ -184,19 +380,26 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
         />
       </div>
 
-      {/* TABS */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
+      {/* CATEGORY TABS */}
+      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3 print:hidden">
         {CATEGORY_TABS.map((tab) => {
           const isActive = tab.key === categoryFilter;
           const count = categoryCounts[tab.key] ?? 0;
+          const carryOver = new URLSearchParams();
+          if (show !== "all") carryOver.set("show", show);
+          if (fit.length) carryOver.set("fit", fit.join(","));
+          if (sizes.length) carryOver.set("sizes", sizes.join(","));
+          if (sleeve.length) carryOver.set("sleeve", sleeve.join(","));
+          if (colour.length) carryOver.set("colour", colour.join(","));
+          if (waitlist) carryOver.set("waitlist", "1");
+          if (hideZero) carryOver.set("hideZero", "1");
+          if (sort === "gap") carryOver.set("sort", "gap");
+          if (tab.key !== "all") carryOver.set("category", tab.key);
+          const qs = carryOver.toString();
           return (
             <Link
               key={tab.key}
-              href={
-                tab.key === "all"
-                  ? "/admin/back-to-school/stock"
-                  : `/admin/back-to-school/stock?category=${tab.key}`
-              }
+              href={qs ? `/admin/back-to-school/stock?${qs}` : "/admin/back-to-school/stock"}
               className={
                 isActive
                   ? "bg-brand-blue text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest"
@@ -214,17 +417,35 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
         })}
       </div>
 
+      {/* FILTER TOOLBAR + shopping list panel */}
+      <StockToolbar
+        category={categoryFilter}
+        show={show}
+        fit={fit}
+        sizes={sizes}
+        sleeve={sleeve}
+        colour={colour}
+        waitlist={waitlist}
+        hideZero={hideZero}
+        sort={sort}
+        shoppingLines={shoppingLines}
+      />
+
       {/* MATRIX */}
       {visibleMatrix.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center text-gray-500">
-          Nothing in stock and nothing requested in this category yet. Use
-          &ldquo;Add stock&rdquo; to record new inventory.
+          Nothing matches these filters. Reset or widen your selection to see
+          more.
         </div>
       ) : (
-        <StockMatrix groups={visibleMatrix} />
+        <StockMatrix
+          groups={visibleMatrix}
+          visibleSizes={visibleSizes}
+          cellMask={cellMask}
+        />
       )}
 
-      <div className="text-xs text-gray-500 space-y-1 pt-2">
+      <div className="text-xs text-gray-500 space-y-1 pt-2 print:hidden">
         <p>
           <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-1.5" />
           Red gap = shortfall (more requests than stock).
@@ -232,9 +453,10 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
           Green gap = we have surplus.
         </p>
         <p>
-          Requests are counted from pending &amp; approved registrations only.
-          Children with sex &ldquo;other&rdquo; or &ldquo;prefer not to say&rdquo;
-          count against the <em>Unisex</em> fit row.
+          Requests are counted from pending &amp; approved registrations only
+          unless you turn on <em>Include waitlist demand</em>. Children with sex
+          &ldquo;other&rdquo; or &ldquo;prefer not to say&rdquo; count against
+          the <em>Unisex</em> fit row.
         </p>
       </div>
     </div>
