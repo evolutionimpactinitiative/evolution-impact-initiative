@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Package, TrendingDown, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Package, TrendingDown, AlertTriangle, Clock } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S_SLUG } from "@/lib/back-to-school";
 import type { UniformChoices, ChildSex, UniformSize } from "@/lib/back-to-school";
@@ -41,8 +41,10 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
   const stockRows = (stockRaw as StockRow[] | null) ?? [];
 
   // Demand: pull uniform choices from every child on a pending/approved
-  // registration in this event.
+  // registration in this event. Waitlisted kids are counted separately so
+  // the admin can see what capacity opens up if they promote everyone.
   const asks: ChildAsk[] = [];
+  const waitlistAsks: ChildAsk[] = [];
   const { data: eventRow } = await supabase
     .from("events")
     .select("id")
@@ -54,23 +56,25 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
 
     const { data: activeRegs } = await supabase
       .from("registrations")
-      .select("id")
+      .select("id, status")
       .eq("event_id", eventId)
-      .in("status", ["pending", "approved"]);
+      .in("status", ["pending", "approved", "waitlisted"]);
 
-    const regIds = ((activeRegs as { id: string }[] | null) ?? []).map(
-      (r) => r.id,
-    );
+    const rows =
+      (activeRegs as { id: string; status: string }[] | null) ?? [];
+    const statusById = new Map(rows.map((r) => [r.id, r.status]));
+    const regIds = rows.map((r) => r.id);
 
     if (regIds.length > 0) {
       const { data: children } = await supabase
         .from("registration_children")
-        .select("id, sex, uniform_size, uniform_choices, needs")
+        .select("id, registration_id, sex, uniform_size, uniform_choices, needs")
         .in("registration_id", regIds);
 
       const list =
         (children as Array<{
           id: string;
+          registration_id: string;
           sex: ChildSex | null;
           uniform_size: string | null;
           uniform_choices: UniformChoices | null;
@@ -80,18 +84,28 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
       for (const c of list) {
         if (!c.uniform_size || !c.uniform_choices) continue;
         if (!(c.needs ?? []).includes("uniform")) continue;
-        asks.push({
+        const ask: ChildAsk = {
           child_id: c.id,
           sex: c.sex,
           uniform_size: c.uniform_size as UniformSize,
           uniform_choices: c.uniform_choices,
-        });
+        };
+        if (statusById.get(c.registration_id) === "waitlisted") {
+          waitlistAsks.push(ask);
+        } else {
+          asks.push(ask);
+        }
       }
     }
   }
 
   const demand = aggregateDemand(asks);
+  const waitlistDemand = aggregateDemand(waitlistAsks);
   const matrix = buildMatrix(stockRows, demand);
+  const totalWaitlistRequested = Array.from(waitlistDemand.values()).reduce(
+    (s, n) => s + n,
+    0,
+  );
 
   const visibleMatrix =
     categoryFilter === "all"
@@ -134,7 +148,7 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
       </div>
 
       {/* STAT CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         <StatTile
           title="In stock"
           value={totalInStock}
@@ -146,6 +160,14 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
           value={totalRequested}
           icon={<TrendingDown className="h-5 w-5" />}
           tone="green"
+          subtitle="pending + approved"
+        />
+        <StatTile
+          title="On waitlist"
+          value={totalWaitlistRequested}
+          icon={<Clock className="h-5 w-5" />}
+          tone="amber"
+          subtitle="items waitlisted kids want"
         />
         <StatTile
           title="Shortfall"
@@ -229,7 +251,7 @@ function StatTile({
   title: string;
   value: number;
   icon: React.ReactNode;
-  tone: "blue" | "green" | "red" | "gray";
+  tone: "blue" | "green" | "red" | "gray" | "amber";
   subtitle?: string;
 }) {
   const tones: Record<string, { bg: string; text: string }> = {
@@ -237,6 +259,7 @@ function StatTile({
     green: { bg: "bg-brand-green/10", text: "text-brand-green" },
     red: { bg: "bg-red-100", text: "text-red-700" },
     gray: { bg: "bg-gray-100", text: "text-gray-600" },
+    amber: { bg: "bg-amber-100", text: "text-amber-800" },
   };
   const t = tones[tone];
   return (
