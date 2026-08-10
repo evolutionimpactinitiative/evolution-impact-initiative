@@ -6,6 +6,7 @@ import { B2S, B2S_SLUG } from "@/lib/back-to-school";
 import { FESTIVAL } from "@/lib/festival";
 import { StatCard } from "@/components/admin/StatCard";
 import { QrShareCard } from "@/components/admin/QrShareCard";
+import { RegistrationModeToggle } from "@/components/admin/back-to-school/RegistrationModeToggle";
 
 export default async function BackToSchoolAdminPage() {
   const supabase = createAdminClient();
@@ -189,20 +190,20 @@ export default async function BackToSchoolAdminPage() {
         </p>
       </div>
 
-      {/* WAITLIST / FUNDING */}
-      {(registrationMode === "waitlist" || waitlisted > 0) && (
-        <div className="bg-white rounded-2xl p-6 border-2 border-brand-blue/20">
-          <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-            <div>
-              <h3 className="font-heading font-bold text-lg text-brand-dark">
-                Waitlist &amp; funded capacity
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                {registrationMode === "waitlist"
-                  ? "New sign-ups are landing as waitlisted. Promote from the Waitlist tab when funding opens more places."
-                  : "Registrations are open, but some are still on the waitlist from before."}
-              </p>
-            </div>
+      {/* REGISTRATION MODE + WAITLIST / FUNDING */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-brand-blue/20 space-y-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h3 className="font-heading font-bold text-lg text-brand-dark">
+              Registration mode
+            </h3>
+            <p className="text-xs text-gray-500 mt-1 mb-3">
+              Controls what happens when families sign up on the public form.
+              Existing registrations are never touched by a mode change.
+            </p>
+            <RegistrationModeToggle currentMode={registrationMode} />
+          </div>
+          {(registrationMode === "waitlist" || waitlisted > 0) && (
             <Link
               href="/admin/back-to-school/registrations?status=waitlisted"
               className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest hover:text-brand-dark"
@@ -210,8 +211,11 @@ export default async function BackToSchoolAdminPage() {
               Waitlist ({waitlisted})
               <ArrowRight className="h-4 w-4" />
             </Link>
-          </div>
-          {(() => {
+          )}
+        </div>
+
+        {(registrationMode === "waitlist" || waitlisted > 0) &&
+          (() => {
             const funded = Math.min(
               B2S.goalChildren,
               Math.floor(
@@ -221,7 +225,7 @@ export default async function BackToSchoolAdminPage() {
             );
             const room = Math.max(0, funded - childrenOnTheList);
             return (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 pt-4 border-t border-gray-100">
                 <MoneyTile
                   label="Funded for"
                   value={`${funded} kids`}
@@ -249,8 +253,7 @@ export default async function BackToSchoolAdminPage() {
               </div>
             );
           })()}
-        </div>
-      )}
+      </div>
 
       {/* STATS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
