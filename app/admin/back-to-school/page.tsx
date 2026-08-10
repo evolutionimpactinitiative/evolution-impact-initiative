@@ -12,7 +12,7 @@ export default async function BackToSchoolAdminPage() {
 
   const { data: eventRow } = await supabase
     .from("events")
-    .select("id, total_slots")
+    .select("id, total_slots, registration_mode")
     .eq("slug", B2S_SLUG)
     .maybeSingle();
 
@@ -20,8 +20,10 @@ export default async function BackToSchoolAdminPage() {
   let pending = 0;
   let approved = 0;
   let declined = 0;
+  let waitlisted = 0;
   let familiesRegistered = 0;
   let childrenOnTheList = 0;
+  let childrenOnWaitlist = 0;
   let approvalEmailsSent = 0;
   let collected = 0;
 
@@ -45,6 +47,7 @@ export default async function BackToSchoolAdminPage() {
     pending = rows.filter((r) => r.status === "pending").length;
     approved = rows.filter((r) => r.status === "approved").length;
     declined = rows.filter((r) => r.status === "declined").length;
+    waitlisted = rows.filter((r) => r.status === "waitlisted").length;
     familiesRegistered = rows.filter((r) =>
       ["pending", "approved"].includes(r.status),
     ).length;
@@ -65,7 +68,20 @@ export default async function BackToSchoolAdminPage() {
         .in("registration_id", activeIds);
       childrenOnTheList = count ?? 0;
     }
+    const waitlistIds = rows
+      .filter((r) => r.status === "waitlisted")
+      .map((r) => r.id);
+    if (waitlistIds.length > 0) {
+      const { count } = await supabase
+        .from("registration_children")
+        .select("id", { count: "exact", head: true })
+        .in("registration_id", waitlistIds);
+      childrenOnWaitlist = count ?? 0;
+    }
   }
+  const registrationMode =
+    (eventRow as { registration_mode?: "open" | "waitlist" | "closed" } | null)
+      ?.registration_mode ?? "open";
 
   const { count: pledgesPending } = await supabase
     .from("back_to_school_supply_pledges")
@@ -172,6 +188,69 @@ export default async function BackToSchoolAdminPage() {
           Registration closes {B2S.registrationDeadlineLabel}
         </p>
       </div>
+
+      {/* WAITLIST / FUNDING */}
+      {(registrationMode === "waitlist" || waitlisted > 0) && (
+        <div className="bg-white rounded-2xl p-6 border-2 border-brand-blue/20">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+            <div>
+              <h3 className="font-heading font-bold text-lg text-brand-dark">
+                Waitlist &amp; funded capacity
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {registrationMode === "waitlist"
+                  ? "New sign-ups are landing as waitlisted. Promote from the Waitlist tab when funding opens more places."
+                  : "Registrations are open, but some are still on the waitlist from before."}
+              </p>
+            </div>
+            <Link
+              href="/admin/back-to-school/registrations?status=waitlisted"
+              className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest hover:text-brand-dark"
+            >
+              Waitlist ({waitlisted})
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          {(() => {
+            const funded = Math.min(
+              B2S.goalChildren,
+              Math.floor(
+                (donationStripePounds + FESTIVAL.campaignOfflineRaisedPounds) /
+                  20,
+              ),
+            );
+            const room = Math.max(0, funded - childrenOnTheList);
+            return (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                <MoneyTile
+                  label="Funded for"
+                  value={`${funded} kids`}
+                  sub={`£${(donationStripePounds + FESTIVAL.campaignOfflineRaisedPounds).toLocaleString("en-GB")} raised ÷ £20`}
+                />
+                <MoneyTile
+                  label="Committed"
+                  value={`${childrenOnTheList} kids`}
+                  sub="pending + approved"
+                />
+                <MoneyTile
+                  label="On waitlist"
+                  value={`${childrenOnWaitlist} kids`}
+                  sub={`${waitlisted} famil${waitlisted === 1 ? "y" : "ies"}`}
+                />
+                <MoneyTile
+                  label="Room to promote"
+                  value={room > 0 ? `${room} kids` : "None yet"}
+                  sub={
+                    room > 0
+                      ? "you can safely offer places"
+                      : "raise more or wait for supplies"
+                  }
+                />
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* STATS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">

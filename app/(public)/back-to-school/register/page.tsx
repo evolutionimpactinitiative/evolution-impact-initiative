@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Calendar, MapPin, Clock, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, Clock, AlertTriangle, ArrowLeft, Heart } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
 import { backToSchoolMetadata } from "@/lib/back-to-school/meta";
@@ -20,9 +20,15 @@ export default async function BackToSchoolRegisterPage() {
 
   const { data: event } = await supabase
     .from("events")
-    .select("id, total_slots")
+    .select("id, total_slots, registration_mode")
     .eq("slug", B2S_SLUG)
     .maybeSingle();
+
+  const registrationMode =
+    (event as { registration_mode?: "open" | "waitlist" | "closed" } | null)
+      ?.registration_mode ?? "open";
+  const isWaitlist = registrationMode === "waitlist";
+  const isExplicitlyClosed = registrationMode === "closed";
 
   let childrenCount = 0;
   if (event) {
@@ -43,10 +49,12 @@ export default async function BackToSchoolRegisterPage() {
 
   const totalSlots =
     (event as { total_slots?: number } | null)?.total_slots ?? B2S.totalSlots;
-  const isFull = event ? childrenCount >= totalSlots : false;
+  // Capacity full only matters in `open` mode — waitlist mode ignores the cap.
+  const isFull = event && !isWaitlist ? childrenCount >= totalSlots : false;
   const deadline = new Date(B2S.registrationDeadline);
   const isPastDeadline = new Date() > deadline;
-  const isClosed = !event || isFull || isPastDeadline;
+  const isClosed =
+    !event || isExplicitlyClosed || isFull || isPastDeadline;
 
   return (
     <>
@@ -105,19 +113,25 @@ export default async function BackToSchoolRegisterPage() {
                 reason={
                   !event
                     ? "not-configured"
-                    : isPastDeadline
-                      ? "past-deadline"
-                      : "full"
+                    : isExplicitlyClosed
+                      ? "closed"
+                      : isPastDeadline
+                        ? "past-deadline"
+                        : "full"
                 }
                 childrenCount={childrenCount}
                 totalSlots={totalSlots}
               />
             ) : (
               <>
-                <CapacityStrip
-                  childrenCount={childrenCount}
-                  totalSlots={totalSlots}
-                />
+                {isWaitlist ? (
+                  <WaitlistBanner />
+                ) : (
+                  <CapacityStrip
+                    childrenCount={childrenCount}
+                    totalSlots={totalSlots}
+                  />
+                )}
                 <RegisterForm />
               </>
             )}
@@ -157,12 +171,33 @@ function CapacityStrip({
   );
 }
 
+function WaitlistBanner() {
+  return (
+    <div className="bg-brand-pale border-2 border-brand-blue/30 rounded-2xl p-5 md:p-6 mb-6">
+      <div className="flex items-start gap-3">
+        <Heart className="h-6 w-6 text-brand-green shrink-0 mt-0.5" />
+        <div>
+          <p className="font-heading font-bold text-brand-dark text-lg mb-1.5">
+            We&rsquo;re now taking waitlist sign-ups
+          </p>
+          <p className="text-sm text-brand-dark/80 leading-relaxed">
+            The response this year has been incredible. We&rsquo;ve reached the
+            number of places we can offer right now &mdash; but please still
+            register below, and we&rsquo;ll be in touch the moment a place
+            opens up for your family.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ClosedState({
   reason,
   childrenCount,
   totalSlots,
 }: {
-  reason: "not-configured" | "past-deadline" | "full";
+  reason: "not-configured" | "past-deadline" | "full" | "closed";
   childrenCount: number;
   totalSlots: number;
 }) {
@@ -178,6 +213,10 @@ function ClosedState({
     full: {
       title: "We're at capacity",
       body: `All ${totalSlots} kid spots are taken (${childrenCount} kids registered). If you'd still like to help, please come and see us on ${B2S.dateLabel}. If there are supplies left after everyone approved has collected, you're welcome.`,
+    },
+    closed: {
+      title: "Registration is paused",
+      body: `We're not taking new sign-ups right now. Please come and see us on ${B2S.dateLabel} at ${B2S.venueName}, ${B2S.venueArea} — we'll do our best to help.`,
     },
   }[reason];
 

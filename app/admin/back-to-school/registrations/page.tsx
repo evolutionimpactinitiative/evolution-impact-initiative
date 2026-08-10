@@ -7,6 +7,7 @@ import { B2SBulkActions } from "@/components/admin/back-to-school/BulkActions";
 
 type StatusFilter =
   | "all"
+  | "waitlisted"
   | "pending"
   | "approved"
   | "declined"
@@ -47,6 +48,7 @@ export type B2SRegistration = {
 
 const STATUS_TABS: Array<{ key: StatusFilter; label: string }> = [
   { key: "all", label: "All" },
+  { key: "waitlisted", label: "Waitlist" },
   { key: "pending", label: "Pending" },
   { key: "approved", label: "Approved" },
   { key: "declined", label: "Declined" },
@@ -112,6 +114,7 @@ export default async function B2SRegistrationsAdminPage({
 
   const counts: Record<StatusFilter, number> = {
     all: list.length,
+    waitlisted: countBy("waitlisted"),
     pending: countBy("pending"),
     approved: countBy("approved"),
     declined: countBy("declined"),
@@ -130,6 +133,14 @@ export default async function B2SRegistrationsAdminPage({
     }
     return r.status === statusFilter;
   });
+
+  // Waitlist should be first-come, first-served — older sign-ups at the top.
+  if (statusFilter === "waitlisted") {
+    filtered.sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+  }
 
   return (
     <div className="space-y-6">

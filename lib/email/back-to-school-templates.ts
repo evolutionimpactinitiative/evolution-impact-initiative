@@ -168,6 +168,126 @@ export function registrationReceivedEmail({
 }
 
 // ============================================
+// 1b. Waitlist received — sent immediately when registrations are in
+//     waitlist mode. Warm, hopeful tone; no scary "closed" language.
+// ============================================
+
+interface WaitlistReceivedArgs {
+  parentName: string;
+  childrenCount: number;
+}
+
+export function waitlistReceivedEmail({
+  parentName,
+  childrenCount,
+}: WaitlistReceivedArgs): { subject: string; html: string } {
+  const kidsLabel =
+    childrenCount === 1 ? "your child" : `your ${childrenCount} children`;
+  const content = `
+    <h1 style="margin: 0 0 16px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      You&rsquo;re <span style="color: ${BRAND.green};">on the list.</span>
+    </h1>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Hi <strong>${parentName}</strong>,
+    </p>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Thank you for signing up &mdash; we&rsquo;ve added ${kidsLabel} to the waitlist for our ${B2S.title} on <strong>${B2S.dateLabel}</strong>.
+    </p>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      This year, more Medway families have joined the drive than ever before. We&rsquo;re working hard between now and the day to open up more places, and we&rsquo;ll email you the moment we can confirm a spot for your family.
+    </p>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 12px; margin-bottom: 18px;">
+      <tr>
+        <td style="padding: 20px 22px; text-align: left;">
+          <p style="margin: 0 0 8px; font-family: 'Montserrat', sans-serif; font-size: 12px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Help us reach more children
+          </p>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: ${BRAND.dark};">
+            If you know a business, church, or friend who might want to support the drive, please share it with them &mdash; every bit of help means one more child ready for the classroom.
+          </p>
+          <p style="margin: 12px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: ${BRAND.dark};">
+            <a href="${BASE_URL}/back-to-school" style="color: ${BRAND.blue}; text-decoration: underline; font-weight: 600;">${BASE_URL.replace(/^https?:\/\//, "")}/back-to-school</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${eventDetailsBlock()}
+
+    <p style="margin: 25px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6;">
+      With thanks,<br>
+      <strong>The Evolution Impact Initiative team</strong>
+    </p>
+  `;
+
+  return {
+    subject: `You're on the ${B2S.title} waitlist`,
+    html: emailWrapper(content),
+  };
+}
+
+// ============================================
+// 1c. Waitlist promoted — a place has opened up. Sent when admin
+//     manually moves a waitlisted registration into pending. The
+//     usual approval email (with QR code) still goes out on 21 Aug.
+// ============================================
+
+interface WaitlistPromotedArgs {
+  parentName: string;
+  childrenCount: number;
+}
+
+export function waitlistPromotedEmail({
+  parentName,
+  childrenCount,
+}: WaitlistPromotedArgs): { subject: string; html: string } {
+  const kidsLabel =
+    childrenCount === 1 ? "your child" : `your ${childrenCount} children`;
+  const content = `
+    <h1 style="margin: 0 0 16px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      Great news &mdash; <span style="color: ${BRAND.green};">a place has opened up.</span>
+    </h1>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Hi <strong>${parentName}</strong>,
+    </p>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      We&rsquo;re delighted to let you know we&rsquo;ve been able to offer ${kidsLabel} a place at our ${B2S.title} on <strong>${B2S.dateLabel}</strong>.
+    </p>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 12px; margin-bottom: 18px;">
+      <tr>
+        <td style="padding: 20px 22px; text-align: left;">
+          <p style="margin: 0 0 8px; font-family: 'Montserrat', sans-serif; font-size: 12px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            What happens next
+          </p>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: ${BRAND.dark};">
+            On <strong>${B2S.approvalEmailLabel}</strong> we&rsquo;ll send you a final approval email with a QR code. Please bring it (printed or on your phone) so we can scan you in on arrival.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${eventDetailsBlock()}
+
+    <p style="margin: 25px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6;">
+      See you on the ${B2S.dateLabel.split(" ")[1]}th,<br>
+      <strong>The Evolution Impact Initiative team</strong>
+    </p>
+  `;
+
+  return {
+    subject: `A place has opened up for you at the ${B2S.title}`,
+    html: emailWrapper(content),
+  };
+}
+
+// ============================================
 // 2. Registration approved: sent 21 Aug 6PM with QR code
 // ============================================
 

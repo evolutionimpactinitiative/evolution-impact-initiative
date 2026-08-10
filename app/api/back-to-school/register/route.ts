@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
-import { registrationReceivedEmail } from "@/lib/email/back-to-school-templates";
+import {
+  registrationReceivedEmail,
+  waitlistReceivedEmail,
+} from "@/lib/email/back-to-school-templates";
 import { B2S, B2S_SLUG, UNIFORM_SIZES } from "@/lib/back-to-school";
 
 interface UniformChoicesPayload {
@@ -216,7 +219,7 @@ export async function POST(request: NextRequest) {
     // Look up the drive event
     const { data: eventRow } = await supabase
       .from("events")
-      .select("id, total_slots")
+      .select("id, total_slots, registration_mode")
       .eq("slug", B2S_SLUG)
       .maybeSingle();
 
@@ -229,25 +232,46 @@ export async function POST(request: NextRequest) {
         { status: 503 },
       );
     }
-    const eventId = (eventRow as { id: string; total_slots: number }).id;
-    const totalSlots =
-      (eventRow as { total_slots: number }).total_slots ?? B2S.totalSlots;
+    const event = eventRow as {
+      id: string;
+      total_slots: number;
+      registration_mode: "open" | "waitlist" | "closed" | null;
+    };
+    const eventId = event.id;
+    const totalSlots = event.total_slots ?? B2S.totalSlots;
+    const registrationMode = event.registration_mode ?? "open";
 
-    // Capacity check — pending + approved + confirmed all count against the cap
-    const { count: registeredCount } = await supabase
-      .from("registrations")
-      .select("id", { count: "exact", head: true })
-      .eq("event_id", eventId)
-      .in("status", ["pending", "approved", "confirmed"]);
-
-    if ((registeredCount ?? 0) >= totalSlots) {
+    if (registrationMode === "closed") {
       return NextResponse.json(
         {
-          error: `We're at capacity — all ${totalSlots} spots have been taken. Please come and see us on the day if you can — we'll do our best to help.`,
+          error:
+            "Registration is closed. Please come and see us on the day if you can — we'll do our best to help.",
         },
-        { status: 409 },
+        { status: 410 },
       );
     }
+
+    // In waitlist mode we skip the capacity gate entirely — every new sign-up
+    // lands as waitlisted regardless of how many places are already booked,
+    // and the admin promotes as we get more supplies/funds.
+    if (registrationMode !== "waitlist") {
+      const { count: registeredCount } = await supabase
+        .from("registrations")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", eventId)
+        .in("status", ["pending", "approved", "confirmed"]);
+
+      if ((registeredCount ?? 0) >= totalSlots) {
+        return NextResponse.json(
+          {
+            error: `We're at capacity — all ${totalSlots} spots have been taken. Please come and see us on the day if you can — we'll do our best to help.`,
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    const initialStatus = registrationMode === "waitlist" ? "waitlisted" : "pending";
 
     // Insert registration row
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -258,7 +282,7 @@ export async function POST(request: NextRequest) {
         parent_name: body.parentName.trim(),
         parent_email: body.parentEmail.trim().toLowerCase(),
         parent_phone: body.parentPhone.trim(),
-        status: "pending",
+        status: initialStatus,
         photo_video_consent: false,
         terms_accepted_at: new Date().toISOString(),
         accessibility_requirements: null,
@@ -326,14 +350,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fire confirmation email — non-fatal if it fails
+    // Fire confirmation email — non-fatal if it fails.
+    // Different template depending on whether we landed as pending or waitlisted.
     try {
       const resend = getResendClient();
       if (resend) {
-        const { subject, html } = registrationReceivedEmail({
-          parentName: body.parentName.trim(),
-          childrenCount: body.children.length,
-        });
+        const { subject, html } =
+          initialStatus === "waitlisted"
+            ? waitlistReceivedEmail({
+                parentName: body.parentName.trim(),
+                childrenCount: body.children.length,
+              })
+            : registrationReceivedEmail({
+                parentName: body.parentName.trim(),
+                childrenCount: body.children.length,
+              });
         await resend.emails.send({
           from: FROM_EMAIL,
           to: body.parentEmail.trim().toLowerCase(),
@@ -344,7 +375,10 @@ export async function POST(request: NextRequest) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from("email_logs").insert({
           registration_id: registrationId,
-          email_type: "back_to_school_registration_received",
+          email_type:
+            initialStatus === "waitlisted"
+              ? "back_to_school_waitlist_received"
+              : "back_to_school_registration_received",
           recipient_email: body.parentEmail.trim().toLowerCase(),
           subject,
           sent_at: new Date().toISOString(),

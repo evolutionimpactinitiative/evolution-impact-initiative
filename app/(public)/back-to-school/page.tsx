@@ -65,9 +65,14 @@ export default async function BackToSchoolPage() {
 
   const { data: eventRow } = await supabase
     .from("events")
-    .select("id")
+    .select("id, registration_mode")
     .eq("slug", B2S_SLUG)
     .maybeSingle();
+  const registrationMode =
+    (eventRow as { registration_mode?: "open" | "waitlist" | "closed" } | null)
+      ?.registration_mode ?? "open";
+  const isWaitlist = registrationMode === "waitlist";
+  const registerCtaLabel = isWaitlist ? "Join the waitlist" : "Register a family";
 
   if (eventRow) {
     const eventId = (eventRow as { id: string }).id;
@@ -158,7 +163,7 @@ export default async function BackToSchoolPage() {
                   className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
                 >
                   <Link href="/back-to-school/register">
-                    Register a family
+                    {registerCtaLabel}
                     <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                   </Link>
                 </Button>
@@ -307,16 +312,22 @@ export default async function BackToSchoolPage() {
               accent="blue"
               badge="For families"
               badgeIcon={Users}
-              title="Register your children"
-              tagline={`Up to ${B2S.maxChildrenPerRegistration} kids per family, ages ${B2S.minChildAge}–${B2S.maxChildAge}.`}
+              title={isWaitlist ? "Join the waitlist" : "Register your children"}
+              tagline={
+                isWaitlist
+                  ? `We've reached the number of places we can offer today. Add your family to the waitlist and we'll be in touch as soon as a place opens up.`
+                  : `Up to ${B2S.maxChildrenPerRegistration} kids per family, ages ${B2S.minChildAge}–${B2S.maxChildAge}.`
+              }
               bullets={[
                 { icon: ClipboardList, text: "Add your children + uniform sizes" },
-                { icon: QrCode, text: "Get an approval email with a QR code" },
+                isWaitlist
+                  ? { icon: QrCode, text: "We'll email you the moment a place opens up" }
+                  : { icon: QrCode, text: "Get an approval email with a QR code" },
                 { icon: Backpack, text: `Collect at ${B2S.venueName} on ${B2S.dateLabel.split(" ").slice(1).join(" ")}` },
               ]}
               cta={{
                 href: "/back-to-school/register",
-                label: "Register now",
+                label: isWaitlist ? "Join the waitlist" : "Register now",
                 variant: "primary",
               }}
               footer={`Closes ${B2S.registrationDeadlineLabel}`}

@@ -13,6 +13,7 @@ import {
   MapPin,
   Clock,
   Send,
+  ArrowUpCircle,
 } from "lucide-react";
 import { uniformChoicesSummary } from "@/lib/back-to-school";
 import type { B2SRegistration } from "@/app/admin/back-to-school/registrations/page";
@@ -91,7 +92,7 @@ export function B2SRegistrationRow({ registration }: Props) {
   const router = useRouter();
   const [expanded, setExpanded] = React.useState(false);
   const [busy, setBusy] = React.useState<
-    "approve" | "decline" | "email" | null
+    "approve" | "decline" | "email" | "promote" | null
   >(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -123,6 +124,24 @@ export function B2SRegistrationRow({ registration }: Props) {
     try {
       const res = await fetch(
         `/api/back-to-school/registrations/${registration.id}/send-approval`,
+        { method: "POST" },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function promoteFromWaitlist() {
+    setError(null);
+    setBusy("promote");
+    try {
+      const res = await fetch(
+        `/api/back-to-school/registrations/${registration.id}/promote`,
         { method: "POST" },
       );
       const data = await res.json();
@@ -299,6 +318,21 @@ export function B2SRegistrationRow({ registration }: Props) {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+            {registration.status === "waitlisted" && (
+              <button
+                type="button"
+                onClick={promoteFromWaitlist}
+                disabled={!!busy}
+                className="inline-flex items-center gap-1.5 bg-brand-blue text-white px-3 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:bg-brand-dark disabled:opacity-50"
+              >
+                {busy === "promote" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ArrowUpCircle className="h-3.5 w-3.5" />
+                )}
+                Promote (offer a place)
+              </button>
+            )}
             {registration.status === "pending" && (
               <>
                 <button
