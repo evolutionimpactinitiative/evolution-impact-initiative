@@ -81,14 +81,14 @@ export default async function BackToSchoolPage() {
       .from("registrations")
       .select("id", { count: "exact", head: true })
       .eq("event_id", eventId)
-      .in("status", ["pending", "approved", "confirmed"]);
+      .in("status", ["pending", "approved", "confirmed", "waitlisted"]);
     familiesRegistered = famCount ?? 0;
 
     const { data: regs } = await supabase
       .from("registrations")
       .select("id")
       .eq("event_id", eventId)
-      .in("status", ["pending", "approved", "confirmed"]);
+      .in("status", ["pending", "approved", "confirmed", "waitlisted"]);
     if (regs && regs.length > 0) {
       const ids = (regs as { id: string }[]).map((r) => r.id);
       const { count: childCount } = await supabase

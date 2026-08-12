@@ -36,7 +36,7 @@ export default async function BackToSchoolRegisterPage() {
       .from("registrations")
       .select("id")
       .eq("event_id", (event as { id: string }).id)
-      .in("status", ["pending", "approved", "confirmed"]);
+      .in("status", ["pending", "approved", "confirmed", "waitlisted"]);
     const activeIds = (activeRegs as Array<{ id: string }> | null)?.map((r) => r.id) ?? [];
     if (activeIds.length > 0) {
       const { count } = await supabase
