@@ -9,11 +9,17 @@ interface Props {
   groups: MatrixGroup[];
   visibleSizes?: readonly string[];
   cellMask?: Set<string> | null;
+  reservedMap?: Map<string, number>;
 }
 
 // Mobile-friendly alternative to the item×size matrix. Renders each SKU
 // group as a card with headline totals and an expandable per-size list.
-export function StockCardList({ groups, visibleSizes, cellMask }: Props) {
+export function StockCardList({
+  groups,
+  visibleSizes,
+  cellMask,
+  reservedMap,
+}: Props) {
   return (
     <div className="space-y-3">
       {groups.map((g) => (
@@ -22,6 +28,7 @@ export function StockCardList({ groups, visibleSizes, cellMask }: Props) {
           group={g}
           visibleSizes={visibleSizes}
           cellMask={cellMask ?? null}
+          reservedMap={reservedMap ?? null}
         />
       ))}
     </div>
@@ -32,10 +39,12 @@ function StockCard({
   group,
   visibleSizes,
   cellMask,
+  reservedMap,
 }: {
   group: MatrixGroup;
   visibleSizes?: readonly string[];
   cellMask: Set<string> | null;
+  reservedMap: Map<string, number> | null;
 }) {
   const [expanded, setExpanded] = React.useState(false);
   const totalGap = group.totalStock - group.totalRequested;
@@ -48,7 +57,9 @@ function StockCard({
     requested: number;
     stockId: string | null;
     masked: boolean;
+    reserved: number;
   }> = [];
+  let groupReserved = 0;
   const sizes = visibleSizes ?? [];
   for (const size of sizes) {
     const cell = group.cells.get(size);
@@ -62,9 +73,18 @@ function StockCard({
       size,
     });
     const masked = cellMask ? !cellMask.has(key) : false;
+    const reserved = reservedMap?.get(key) ?? 0;
+    groupReserved += reserved;
     if (masked) continue;
-    if (stock === 0 && requested === 0) continue;
-    cells.push({ size, stock, requested, stockId: cell?.stockId ?? null, masked });
+    if (stock === 0 && requested === 0 && reserved === 0) continue;
+    cells.push({
+      size,
+      stock,
+      requested,
+      stockId: cell?.stockId ?? null,
+      masked,
+      reserved,
+    });
   }
 
   return (
@@ -95,6 +115,14 @@ function StockCard({
                 {group.totalRequested}
               </span>
             </span>
+            {groupReserved > 0 && (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest bg-amber-100 text-amber-800"
+                title="Reservations from the shopping list — not yet in stock"
+              >
+                +{groupReserved} reserved
+              </span>
+            )}
             <span
               className={
                 (totalGap < 0
@@ -137,6 +165,7 @@ function StockCard({
                   size={c.size}
                   stock={c.stock}
                   requested={c.requested}
+                  reserved={c.reserved}
                 />
               ))}
             </ul>
@@ -155,6 +184,7 @@ interface SizeRowProps {
   size: string;
   stock: number;
   requested: number;
+  reserved: number;
 }
 
 function SizeRow(props: SizeRowProps) {
@@ -229,6 +259,14 @@ function SizeRow(props: SizeRowProps) {
               {props.requested}
             </span>
           </span>
+          {props.reserved > 0 && (
+            <span
+              className="text-[10px] font-heading font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-full"
+              title="Reserved via shopping list"
+            >
+              +{props.reserved}
+            </span>
+          )}
           <span className={`ml-auto text-xs font-heading font-bold ${tone}`}>
             {gap > 0 ? "+" : ""}
             {gap}

@@ -24,6 +24,7 @@ import {
   Sparkles,
   ClipboardList,
   UserPlus,
+  ShoppingBag,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -53,6 +54,7 @@ const moreSections: MoreSection[] = [
     label: "Back to School",
     items: [
       { name: "Registrations", href: "/admin/back-to-school/registrations", icon: Users },
+      { name: "Shopping list", href: "/admin/back-to-school/shopping-list", icon: ShoppingBag },
       { name: "Pick tickets", href: "/admin/back-to-school/tickets", icon: Printer },
       { name: "Stewards", href: "/admin/back-to-school/stewards", icon: ScanLine },
       { name: "Supplies", href: "/admin/back-to-school/supplies", icon: Backpack },

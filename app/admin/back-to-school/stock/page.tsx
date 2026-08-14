@@ -24,6 +24,7 @@ import {
 } from "@/lib/back-to-school-stock";
 import { StockMatrix } from "@/components/admin/back-to-school/StockMatrix";
 import { StockCardList } from "@/components/admin/back-to-school/StockCardList";
+import { aggregateReservations } from "@/lib/back-to-school/shopping-list";
 import { AddStockButton } from "@/components/admin/back-to-school/AddStockButton";
 import { StockToolbar } from "@/components/admin/back-to-school/StockToolbar";
 import type { ShowMode } from "@/components/admin/back-to-school/StockFilters";
@@ -167,6 +168,25 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
   }
 
   const matrix = buildMatrix(stockRows, effectiveDemand);
+
+  // Active reservations from the shopping list — aggregated per SKU cell
+  // so the matrix + cards can render an amber "N reserved" pill on cells
+  // where donors have committed to bringing items.
+  const { data: reservationsRaw } = await supabase
+    .from("back_to_school_shopping_reservations")
+    .select("category, colour, sleeve, fit, size, qty, status")
+    .eq("status", "reserved");
+  const reservedMap = aggregateReservations(
+    (reservationsRaw as Array<{
+      category: string;
+      colour: string;
+      sleeve: string | null;
+      fit: string;
+      size: string;
+      qty: number;
+      status: "reserved" | "received" | "cancelled";
+    }> | null) ?? [],
+  );
 
   // Top-line stat tiles (always over the full unfiltered matrix so users can
   // orient themselves before drilling in).
@@ -449,6 +469,7 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
               groups={visibleMatrix}
               visibleSizes={visibleSizes}
               cellMask={cellMask}
+              reservedMap={reservedMap}
             />
           </div>
           {/* Mobile: expandable cards, one per SKU group */}
@@ -457,6 +478,7 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
               groups={visibleMatrix}
               visibleSizes={visibleSizes}
               cellMask={cellMask}
+              reservedMap={reservedMap}
             />
           </div>
         </>

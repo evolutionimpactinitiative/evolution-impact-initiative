@@ -10,6 +10,7 @@ import {
   Printer,
   Radio,
   ScanLine,
+  ShoppingBag,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
@@ -473,6 +474,24 @@ export default async function BackToSchoolAdminPage() {
             them a QR to scan from your screen. Revoke instantly.
           </p>
           <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/back-to-school/shopping-list"
+          className="group bg-white rounded-2xl p-6 border-2 border-amber-200 hover:border-amber-500 transition-colors"
+        >
+          <ShoppingBag className="h-6 w-6 text-amber-700 mb-3" />
+          <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
+            Shopping list
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Share one link with donors — they tick items to buy for the drive.
+            Mark received when you collect + stock updates automatically.
+          </p>
+          <span className="inline-flex items-center gap-1 text-amber-700 font-heading font-bold text-sm uppercase tracking-widest">
             Open
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </span>

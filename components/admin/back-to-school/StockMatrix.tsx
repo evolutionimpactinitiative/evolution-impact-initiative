@@ -16,9 +16,11 @@ interface Props {
   // If set, only cells whose skuCellKey is in this set are shown "live" —
   // the rest render as a dimmed dash so the matrix stays column-aligned.
   cellMask?: Set<string> | null;
+  // Amber pill count of shopping-list reservations per cell key.
+  reservedMap?: Map<string, number>;
 }
 
-export function StockMatrix({ groups, visibleSizes, cellMask }: Props) {
+export function StockMatrix({ groups, visibleSizes, cellMask, reservedMap }: Props) {
   const sizes = visibleSizes && visibleSizes.length > 0 ? visibleSizes : STOCK_SIZES;
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
@@ -49,6 +51,7 @@ export function StockMatrix({ groups, visibleSizes, cellMask }: Props) {
                 group={g}
                 sizes={sizes}
                 cellMask={cellMask ?? null}
+                reservedMap={reservedMap ?? null}
               />
             ))}
           </tbody>
@@ -62,10 +65,12 @@ function GroupRow({
   group,
   sizes,
   cellMask,
+  reservedMap,
 }: {
   group: MatrixGroup;
   sizes: readonly string[];
   cellMask: Set<string> | null;
+  reservedMap: Map<string, number> | null;
 }) {
   const totalGap = group.totalStock - group.totalRequested;
   return (
@@ -85,6 +90,7 @@ function GroupRow({
           size,
         });
         const masked = cellMask ? !cellMask.has(key) : false;
+        const reserved = reservedMap?.get(key) ?? 0;
         return (
           <td key={size} className="px-1 py-2 text-center">
             <StockCell
@@ -97,6 +103,7 @@ function GroupRow({
               requested={cell?.requested ?? 0}
               stockId={cell?.stockId ?? null}
               masked={masked}
+              reserved={reserved}
             />
           </td>
         );
@@ -135,6 +142,7 @@ interface CellProps {
   requested: number;
   stockId: string | null;
   masked?: boolean;
+  reserved?: number;
 }
 
 function StockCell(props: CellProps) {
@@ -208,6 +216,11 @@ function StockCell(props: CellProps) {
               {props.stock}
             </div>
             <div className="text-[10px] opacity-75">req {props.requested}</div>
+            {props.reserved && props.reserved > 0 ? (
+              <div className="text-[10px] mt-0.5 font-heading font-bold text-amber-700 bg-amber-100 rounded-full px-1.5 leading-tight">
+                +{props.reserved}
+              </div>
+            ) : null}
           </>
         )}
       </button>
