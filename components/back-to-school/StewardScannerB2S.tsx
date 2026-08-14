@@ -87,12 +87,17 @@ export function StewardScannerB2S({
           </div>
           <div className="text-right">
             <p className="text-xs uppercase tracking-widest text-gray-500 font-heading font-bold">
-              Registrations
+              Ready to scan
             </p>
             <p className="font-heading font-bold text-brand-dark inline-flex items-center gap-1">
               <Users className="h-4 w-4 text-brand-blue" />
               {totalRegistrations}
             </p>
+            {totalRegistrations === 0 && (
+              <p className="text-[10px] text-gray-400 mt-0.5 max-w-[9rem]">
+                No approvals yet. Send the Friday 6pm blast to open the drive.
+              </p>
+            )}
           </div>
         </div>
 
