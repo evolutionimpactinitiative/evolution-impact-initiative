@@ -158,6 +158,21 @@ export default async function BackToSchoolAdminPage() {
     color: { dark: "#1E1E1E", light: "#FFFFFF" },
   });
 
+  // Walk-in QR: only rendered if B2S_WALK_IN_KEY is set. Used at Station 1
+  // on the day so walk-in families can self-register on their phones.
+  const walkInKey = (process.env.B2S_WALK_IN_KEY ?? "").trim();
+  const walkInLink = walkInKey
+    ? `${BASE_URL}/back-to-school/walk-in?k=${encodeURIComponent(walkInKey)}`
+    : null;
+  const walkInQrSrc = walkInLink
+    ? await QRCode.toDataURL(walkInLink, {
+        width: 480,
+        margin: 1,
+        errorCorrectionLevel: "M",
+        color: { dark: "#1E1E1E", light: "#FFFFFF" },
+      })
+    : null;
+
   return (
     <div className="space-y-8">
       <div>
@@ -453,6 +468,41 @@ export default async function BackToSchoolAdminPage() {
           posterSubtitle="Scan to donate or pledge supplies"
           description="Print or display this QR on flyers, posters, or at events."
         />
+      </div>
+
+      {/* WALK-IN QR — for Station 1 on the day */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-4">
+        <div>
+          <h3 className="font-heading font-bold text-lg text-brand-dark">
+            Walk-in QR (venue only)
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Print this and put it at Station 1 on the day. Families without a
+            pre-registration scan it on their own phone, register, and come
+            back at 3pm for the walk-in slot.
+          </p>
+        </div>
+        {walkInLink && walkInQrSrc ? (
+          <QrShareCard
+            link={walkInLink}
+            qrSrc={walkInQrSrc}
+            title={`${B2S.title} — Walk-in`}
+            linkLabel="Walk-in URL:"
+            posterSubtitle="Walk-in registration · 3pm – 4pm"
+            description="Keep this away from the public site — the URL contains a venue key so only families at Station 1 can register."
+          />
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+            <p className="font-heading font-bold uppercase tracking-widest text-xs mb-1">
+              Walk-in QR not configured
+            </p>
+            <p>
+              Set the <code className="bg-amber-100 px-1 py-0.5 rounded">B2S_WALK_IN_KEY</code> environment variable
+              in Vercel (any secret string) and redeploy. The walk-in form will
+              refuse any URL that doesn&rsquo;t include the matching key.
+            </p>
+          </div>
+        )}
       </div>
 
       {!eventRow && (

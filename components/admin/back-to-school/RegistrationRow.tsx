@@ -47,6 +47,11 @@ function statusPill(status: string) {
       text: "text-blue-800",
       label: "Waitlisted",
     },
+    walk_in: {
+      bg: "bg-purple-100",
+      text: "text-purple-800",
+      label: "Walk-in",
+    },
     cancelled: { bg: "bg-gray-100", text: "text-gray-700", label: "Cancelled" },
   };
   const s = map[status] || { bg: "bg-gray-100", text: "text-gray-700", label: status };

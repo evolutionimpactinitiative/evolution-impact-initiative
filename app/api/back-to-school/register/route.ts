@@ -6,6 +6,7 @@ import {
   waitlistReceivedEmail,
 } from "@/lib/email/back-to-school-templates";
 import { B2S, B2S_SLUG, UNIFORM_SIZES } from "@/lib/back-to-school";
+import { generateQrToken } from "@/lib/back-to-school/qr";
 
 interface UniformChoicesPayload {
   bottom?: { type?: string; colour?: string };
@@ -31,6 +32,12 @@ interface RegisterPayload {
   postcode?: string;
   children?: ChildPayload[];
   disclaimersAccepted?: boolean;
+  // Walk-in mode — set from the venue-only /back-to-school/walk-in page.
+  // Requires walkInKey to match B2S_WALK_IN_KEY env var. Skips deadline +
+  // registration_mode checks, sets status='walk_in', skips the confirmation
+  // email (the family is standing at Station 1 — they get a printed ticket).
+  walkIn?: boolean;
+  walkInKey?: string;
 }
 
 const VALID_SEX = ["male", "female", "other", "prefer_not_to_say"] as const;
@@ -47,19 +54,30 @@ function isNonEmptyString(v: unknown): v is string {
 
 export async function POST(request: NextRequest) {
   try {
-    // Deadline check — server-side enforcement
-    const now = new Date();
-    const deadline = new Date(B2S.registrationDeadline);
-    if (now > deadline) {
-      return NextResponse.json(
-        {
-          error: `Registration closed on ${B2S.registrationDeadlineLabel}.`,
-        },
-        { status: 410 },
-      );
-    }
-
     const body = (await request.json()) as RegisterPayload;
+
+    // Walk-in mode: verified against the shared secret (env var). Anything
+    // that doesn't match falls through to the standard registration path.
+    const walkInSecret = process.env.B2S_WALK_IN_KEY?.trim() || "";
+    const isWalkIn =
+      body.walkIn === true &&
+      isNonEmptyString(body.walkInKey) &&
+      walkInSecret !== "" &&
+      body.walkInKey === walkInSecret;
+
+    // Deadline only applies to standard sign-ups — walk-ins happen after it.
+    if (!isWalkIn) {
+      const now = new Date();
+      const deadline = new Date(B2S.registrationDeadline);
+      if (now > deadline) {
+        return NextResponse.json(
+          {
+            error: `Registration closed on ${B2S.registrationDeadlineLabel}.`,
+          },
+          { status: 410 },
+        );
+      }
+    }
 
     // Parent field validation
     if (
@@ -241,7 +259,10 @@ export async function POST(request: NextRequest) {
     const totalSlots = event.total_slots ?? B2S.totalSlots;
     const registrationMode = event.registration_mode ?? "open";
 
-    if (registrationMode === "closed") {
+    // Walk-ins bypass the mode gate — they always work, even if the public
+    // form is closed or on waitlist. That's the whole point of the venue-only
+    // walk-in flow.
+    if (!isWalkIn && registrationMode === "closed") {
       return NextResponse.json(
         {
           error:
@@ -254,7 +275,7 @@ export async function POST(request: NextRequest) {
     // In waitlist mode we skip the capacity gate entirely — every new sign-up
     // lands as waitlisted regardless of how many places are already booked,
     // and the admin promotes as we get more supplies/funds.
-    if (registrationMode !== "waitlist") {
+    if (!isWalkIn && registrationMode !== "waitlist") {
       const { count: registeredCount } = await supabase
         .from("registrations")
         .select("id", { count: "exact", head: true })
@@ -271,7 +292,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const initialStatus = registrationMode === "waitlist" ? "waitlisted" : "pending";
+    const initialStatus = isWalkIn
+      ? "walk_in"
+      : registrationMode === "waitlist"
+        ? "waitlisted"
+        : "pending";
+
+    // Walk-ins skip the Friday approval email flow, so we generate their
+    // qr_token now so the confirmation screen can display a scannable ticket.
+    const walkInQrToken = isWalkIn ? generateQrToken() : null;
 
     // Insert registration row
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -287,6 +316,7 @@ export async function POST(request: NextRequest) {
         terms_accepted_at: new Date().toISOString(),
         accessibility_requirements: null,
         parent_postcode: body.postcode.trim().toUpperCase(),
+        qr_token: walkInQrToken,
       })
       .select("id")
       .single();
@@ -350,9 +380,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Skip email for walk-ins — the family is standing at Station 1 and
+    // gets a printed ticket instead. Sending them an email 30 minutes later
+    // is noise.
     // Fire confirmation email — non-fatal if it fails.
     // Different template depending on whether we landed as pending or waitlisted.
-    try {
+    if (!isWalkIn) try {
       const resend = getResendClient();
       if (resend) {
         const { subject, html } =
@@ -389,7 +422,20 @@ export async function POST(request: NextRequest) {
       console.error("[b2s-register] email error (non-fatal):", err);
     }
 
-    return NextResponse.json({ success: true, registrationId });
+    return NextResponse.json({
+      success: true,
+      registrationId,
+      status: initialStatus,
+      // Walk-in tickets need this data to render the "come back at 3pm" screen.
+      walkIn: isWalkIn
+        ? {
+            parentName: body.parentName.trim(),
+            childrenCount: body.children.length,
+            registeredAt: new Date().toISOString(),
+            qrToken: walkInQrToken,
+          }
+        : null,
+    });
   } catch (err) {
     console.error("[b2s-register] handler error:", err);
     return NextResponse.json(

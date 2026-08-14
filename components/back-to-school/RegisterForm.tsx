@@ -82,12 +82,31 @@ const initial: FormState = {
   disclaimersAccepted: false,
 };
 
-export function RegisterForm() {
+interface WalkInResult {
+  qrToken: string | null;
+  registrationId: string;
+  parentName: string;
+  registeredAt: string;
+}
+
+interface RegisterFormProps {
+  // Enables walk-in mode. When set:
+  //  - form POSTs walkIn+walkInKey to /api/back-to-school/register
+  //  - intro copy changes (no "we'll email you Friday" language)
+  //  - success screen shows a walk-in ticket with QR
+  walkInKey?: string;
+}
+
+export function RegisterForm({ walkInKey }: RegisterFormProps = {}) {
   const router = useRouter();
+  const isWalkIn = Boolean(walkInKey);
   const [form, setForm] = React.useState<FormState>(initial);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
+  const [walkInResult, setWalkInResult] = React.useState<WalkInResult | null>(
+    null,
+  );
 
   function updateParent<K extends "parentName" | "parentEmail" | "parentPhone" | "postcode">(
     key: K,
@@ -209,6 +228,8 @@ export function RegisterForm() {
           parentPhone: form.parentPhone.trim(),
           postcode: form.postcode.trim().toUpperCase(),
           disclaimersAccepted: form.disclaimersAccepted,
+          walkIn: isWalkIn,
+          walkInKey: walkInKey ?? undefined,
           children: form.children.map((c) => ({
             name: c.name.trim(),
             age: Number.parseInt(c.age, 10),
@@ -239,6 +260,14 @@ export function RegisterForm() {
         setSubmitting(false);
         return;
       }
+      if (isWalkIn && data?.walkIn) {
+        setWalkInResult({
+          qrToken: data.walkIn.qrToken ?? null,
+          registrationId: data.registrationId,
+          parentName: data.walkIn.parentName ?? form.parentName.trim(),
+          registeredAt: data.walkIn.registeredAt ?? new Date().toISOString(),
+        });
+      }
       setSuccess(true);
       router.refresh();
     } catch (err) {
@@ -248,6 +277,7 @@ export function RegisterForm() {
     }
   }
 
+  if (success && isWalkIn) return <WalkInTicket result={walkInResult} />;
   if (success) return <ReceivedState />;
 
   return (
@@ -255,8 +285,18 @@ export function RegisterForm() {
       {/* PARENT */}
       <Section title="1. About you">
         <p className="text-sm text-brand-dark/70 mb-3">
-          We&rsquo;ll use these details to send your approval email on{" "}
-          <strong>{B2S.approvalEmailLabel}</strong>.
+          {isWalkIn ? (
+            <>
+              We&rsquo;ll use these details to register you for today&rsquo;s
+              walk-in queue. Come back to see us between{" "}
+              <strong>3pm and 4pm</strong>.
+            </>
+          ) : (
+            <>
+              We&rsquo;ll use these details to send your approval email on{" "}
+              <strong>{B2S.approvalEmailLabel}</strong>.
+            </>
+          )}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Your full name" required>
@@ -795,6 +835,97 @@ function ReceivedState() {
         Come see us at {B2S.venueName}, {B2S.venueArea} on {B2S.dateLabel},{" "}
         {B2S.timeLabel}.
       </p>
+    </div>
+  );
+}
+
+function WalkInTicket({ result }: { result: WalkInResult | null }) {
+  const [qrSrc, setQrSrc] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!result?.qrToken) return;
+    let cancelled = false;
+    // Dynamically import so the qrcode dependency doesn't ship with the
+    // form until the walk-in success screen is actually shown.
+    import("qrcode").then((QRCode) => {
+      const url = `${window.location.origin}/b2s/verify/${result.qrToken}`;
+      QRCode.toDataURL(url, {
+        width: 480,
+        margin: 1,
+        errorCorrectionLevel: "M",
+        color: { dark: "#1E1E1E", light: "#FFFFFF" },
+      }).then((src: string) => {
+        if (!cancelled) setQrSrc(src);
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [result?.qrToken]);
+
+  const shortCode = (result?.registrationId ?? "").slice(0, 8).toUpperCase();
+  const registeredAt = result
+    ? new Date(result.registeredAt).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  return (
+    <div className="bg-white rounded-2xl p-8 md:p-10 border-2 border-brand-blue text-center">
+      <CheckCircle2 className="h-10 w-10 text-brand-green mx-auto mb-3" />
+      <p className="text-xs font-heading font-bold text-brand-blue uppercase tracking-widest">
+        Walk-in ticket
+      </p>
+      <h2 className="font-heading font-black text-2xl md:text-3xl text-brand-dark mt-2 mb-1">
+        You&rsquo;re on the list, {result?.parentName ?? "friend"}
+      </h2>
+      <p className="text-sm text-brand-dark/70 max-w-md mx-auto mb-6">
+        Come back to {B2S.venueName}, {B2S.venueArea} between{" "}
+        <strong>3pm and 4pm</strong> today. Show this screen (or tell us your
+        name and email) at the door.
+      </p>
+
+      {qrSrc && (
+        <div className="inline-block bg-white p-3 rounded-xl border border-gray-200 mb-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qrSrc}
+            alt="Walk-in QR code"
+            className="w-56 h-56 mx-auto"
+          />
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto mb-6">
+        <div className="bg-brand-pale/40 rounded-xl p-3">
+          <p className="text-[10px] uppercase tracking-widest text-brand-blue font-heading font-bold">
+            Reference
+          </p>
+          <p className="font-heading font-bold text-brand-dark text-sm mt-1 break-all">
+            {shortCode}
+          </p>
+        </div>
+        <div className="bg-brand-pale/40 rounded-xl p-3">
+          <p className="text-[10px] uppercase tracking-widest text-brand-blue font-heading font-bold">
+            Registered
+          </p>
+          <p className="font-heading font-bold text-brand-dark text-sm mt-1">
+            {registeredAt}
+          </p>
+        </div>
+      </div>
+
+      <div className="text-xs text-brand-dark/60 space-y-1 max-w-md mx-auto">
+        <p>
+          Walk-ins are served <strong>first-come, first-served</strong> from
+          whatever stock we have left after 3pm. Nothing is guaranteed.
+        </p>
+        <p>
+          Please keep this screen open (or take a screenshot) so we can find
+          you quickly at the door.
+        </p>
+      </div>
     </div>
   );
 }
