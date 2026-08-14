@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Plus, Calendar, Users, Bell } from "lucide-react";
+import { Plus, Calendar, Users, Bell, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Event } from "@/lib/supabase/types";
 import { slotsForRegistration } from "@/lib/events";
@@ -110,12 +110,20 @@ export default async function EventsPage() {
           <h1 className="font-heading font-black text-xl lg:text-2xl text-gray-900">Events</h1>
           <p className="text-gray-600 text-sm lg:text-base mt-1">Manage your events and registrations</p>
         </div>
-        <Button asChild className="w-full sm:w-auto">
-          <Link href="/admin/events/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Event
-          </Link>
-        </Button>
+        <div className="flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href="/admin/events/proposals">
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Proposals
+            </Link>
+          </Button>
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/admin/events/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Event
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Events list */}

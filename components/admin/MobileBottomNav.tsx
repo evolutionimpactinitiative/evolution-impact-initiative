@@ -21,6 +21,7 @@ import {
   ScanLine,
   Activity,
   Calendar,
+  CalendarPlus,
   Sparkles,
   ClipboardList,
   UserPlus,
@@ -66,6 +67,7 @@ const moreSections: MoreSection[] = [
     label: "Charity ops",
     items: [
       { name: "Events", href: "/admin/events", icon: Calendar },
+      { name: "Event proposals", href: "/admin/events/proposals", icon: CalendarPlus },
       { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
       { name: "Gallery comments", href: "/admin/gallery/comments", icon: Mail },
       { name: "Festival 2026", href: "/admin/festival/vendors", icon: Sparkles },
