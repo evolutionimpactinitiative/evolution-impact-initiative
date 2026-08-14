@@ -242,16 +242,21 @@ export function BulkEmailForm({ subscriberCount }: BulkEmailFormProps) {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        {/* Actions — stack full-width on mobile, right-aligned row on md+ */}
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200">
           <Button
             variant="outline"
             onClick={() => router.push("/admin/subscribers")}
             disabled={isSending}
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
-          <Button onClick={handlePreSend} disabled={isSending || subscriberCount === 0}>
+          <Button
+            onClick={handlePreSend}
+            disabled={isSending || subscriberCount === 0}
+            className="w-full sm:w-auto"
+          >
             {isSending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

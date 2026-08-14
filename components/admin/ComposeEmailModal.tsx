@@ -229,12 +229,21 @@ export function ComposeEmailModal({ recipient, onClose }: ComposeEmailModalProps
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose} disabled={isSending}>
+        {/* Footer — stack full-width on mobile, right-aligned row on md+ */}
+        <div className="px-6 py-4 border-t border-gray-200 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isSending}
+            className="w-full sm:w-auto"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSend} disabled={isSending}>
+          <Button
+            onClick={handleSend}
+            disabled={isSending}
+            className="w-full sm:w-auto"
+          >
             {isSending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -748,9 +748,15 @@ export function EventForm({ event }: EventFormProps) {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-4">
-        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
+      {/* Actions — stack full-width on mobile, right-aligned row on md+ */}
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+          disabled={isLoading}
+          className="w-full sm:w-auto"
+        >
           Cancel
         </Button>
         <Button
@@ -758,11 +764,17 @@ export function EventForm({ event }: EventFormProps) {
           variant="outline"
           onClick={(e) => handleSubmit(e, "draft")}
           disabled={isLoading}
+          className="w-full sm:w-auto"
         >
           {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           Save as Draft
         </Button>
-        <Button type="button" onClick={(e) => handleSubmit(e, "published")} disabled={isLoading}>
+        <Button
+          type="button"
+          onClick={(e) => handleSubmit(e, "published")}
+          disabled={isLoading}
+          className="w-full sm:w-auto"
+        >
           {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           {isEditing ? "Update & Publish" : "Create & Publish"}
         </Button>

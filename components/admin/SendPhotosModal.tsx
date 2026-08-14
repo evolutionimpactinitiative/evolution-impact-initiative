@@ -156,13 +156,19 @@ export function SendPhotosModal({
               )}
             </div>
 
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+                className="w-full sm:w-auto"
+              >
                 Cancel
               </Button>
               <Button
                 onClick={handleSend}
                 disabled={isLoading || !event.photo_album_url || attendeeCount === 0}
+                className="w-full sm:w-auto"
               >
                 {isLoading ? (
                   <>

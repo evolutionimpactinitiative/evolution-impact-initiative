@@ -384,8 +384,21 @@ export function TransactionForm({ funds, fundCategories, accounts }: Transaction
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={submitting} size="lg">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-2 sm:gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/admin/accounting/transactions")}
+          className="w-full sm:w-auto"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={submitting}
+          size="lg"
+          className="w-full sm:w-auto"
+        >
           {submitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -394,13 +407,6 @@ export function TransactionForm({ funds, fundCategories, accounts }: Transaction
           ) : (
             <>Post {entryType === "payment_out" ? "payment" : "receipt"}</>
           )}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/admin/accounting/transactions")}
-        >
-          Cancel
         </Button>
       </div>
     </form>
