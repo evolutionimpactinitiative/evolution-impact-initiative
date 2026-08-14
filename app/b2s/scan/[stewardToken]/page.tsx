@@ -72,6 +72,13 @@ export default async function B2SScanStewardPage({ params }: Props) {
     .in("status", ["approved", "walk_in"])
     .is("distribution_status", null);
 
+  // Build the assisted walk-in URL for this steward. Null when the venue
+  // key isn't configured — the scanner shows a small setup notice instead.
+  const walkInKey = (process.env.B2S_WALK_IN_KEY ?? "").trim();
+  const assistedWalkInUrl = walkInKey
+    ? `/back-to-school/walk-in?k=${encodeURIComponent(walkInKey)}&s=${encodeURIComponent(stewardToken)}`
+    : null;
+
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-6 md:py-10">
       <div className="max-w-lg mx-auto mb-4 text-center">
@@ -87,6 +94,7 @@ export default async function B2SScanStewardPage({ params }: Props) {
         stewardToken={stewardToken}
         label={token.label}
         totalRegistrations={totalRegistrations ?? 0}
+        assistedWalkInUrl={assistedWalkInUrl}
       />
     </div>
   );

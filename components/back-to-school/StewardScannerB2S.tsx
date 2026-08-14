@@ -14,13 +14,18 @@ import {
   ClipboardCheck,
   Package,
   Printer,
+  UserPlus,
 } from "lucide-react";
 import { extractB2SQrToken } from "@/lib/back-to-school/scan";
+import Link from "next/link";
 
 interface Props {
   stewardToken: string;
   label: string;
   totalRegistrations: number;
+  // Deep link to /back-to-school/walk-in?k=…&s=<this token>. Null if the
+  // venue key isn't configured — in that case we render a small notice.
+  assistedWalkInUrl: string | null;
 }
 
 type ScanMode = "checkin" | "pick" | "collect";
@@ -34,6 +39,7 @@ export function StewardScannerB2S({
   stewardToken,
   label,
   totalRegistrations,
+  assistedWalkInUrl,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -261,6 +267,44 @@ export function StewardScannerB2S({
           </form>
         )}
       </div>
+
+      {/* Assisted walk-in — Station 1 registers a family without a phone */}
+      {assistedWalkInUrl ? (
+        <Link
+          href={assistedWalkInUrl}
+          className="block bg-brand-dark hover:bg-brand-blue text-white rounded-2xl p-4 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-11 h-11 rounded-full bg-white/15 flex items-center justify-center">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-heading font-bold uppercase tracking-widest text-xs text-brand-accent mb-0.5">
+                Family without a phone?
+              </p>
+              <p className="font-heading font-bold text-sm">
+                Register a phoneless family
+              </p>
+              <p className="text-[11px] text-white/70 mt-0.5">
+                Fill in the walk-in form on this device, print their ticket,
+                then loop back for the next family.
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0" />
+          </div>
+        </Link>
+      ) : (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900">
+          <p className="font-heading font-bold uppercase tracking-widest text-xs mb-1">
+            Assisted registration unavailable
+          </p>
+          <p>
+            Walk-in venue key not configured — ask admin to set{" "}
+            <code className="bg-amber-100 px-1 py-0.5 rounded">B2S_WALK_IN_KEY</code>{" "}
+            in Vercel.
+          </p>
+        </div>
+      )}
 
       {/* Family lookup — bounce/no-email recovery */}
       <FamilyLookup

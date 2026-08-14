@@ -559,26 +559,15 @@ export default async function BackToSchoolAdminPage() {
             />
             <div className="bg-brand-pale/40 border border-brand-blue/20 rounded-xl p-4 text-sm text-brand-dark">
               <p className="font-heading font-bold uppercase tracking-widest text-xs mb-2 text-brand-blue">
-                Station 1 assisted registration (phoneless families)
+                Station 1 · Assisted registration (phoneless families)
               </p>
-              <p className="mb-2">
-                If a family arrives without a phone, the Station 1 volunteer
-                opens the walk-in URL on their own device with{" "}
-                <code className="bg-white px-1 py-0.5 rounded text-xs">?k=…&amp;s=&lt;their-scanner-token&gt;</code>{" "}
-                appended. That unlocks <strong>Print ticket</strong> and{" "}
-                <strong>Register another family</strong> buttons on the
-                success screen so they can bang through several without a
-                page reload.
-              </p>
-              <p className="text-xs text-gray-600">
-                Their scanner token comes from{" "}
-                <a
-                  href="/admin/back-to-school/stewards"
-                  className="text-brand-blue hover:text-brand-dark underline"
-                >
-                  the Stewards page
-                </a>
-                — the token is the last URL segment of their scan link.
+              <p>
+                Station 1 volunteers already have a big{" "}
+                <strong>&ldquo;Register a phoneless family&rdquo;</strong>{" "}
+                button on their scanner page. When a family arrives without
+                a phone, the volunteer taps that, fills the form on their
+                own device, prints the ticket, then loops back for the next
+                family — no page reload, no URL wrangling.
               </p>
             </div>
           </>
