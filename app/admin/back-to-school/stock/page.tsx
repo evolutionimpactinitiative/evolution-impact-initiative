@@ -23,6 +23,7 @@ import {
   type StockCategory,
 } from "@/lib/back-to-school-stock";
 import { StockMatrix } from "@/components/admin/back-to-school/StockMatrix";
+import { StockCardList } from "@/components/admin/back-to-school/StockCardList";
 import { AddStockButton } from "@/components/admin/back-to-school/AddStockButton";
 import { StockToolbar } from "@/components/admin/back-to-school/StockToolbar";
 import type { ShowMode } from "@/components/admin/back-to-school/StockFilters";
@@ -381,7 +382,8 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
       </div>
 
       {/* CATEGORY TABS */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3 print:hidden">
+      <div className="-mx-4 md:mx-0 px-4 md:px-0 border-b border-gray-200 pb-3 print:hidden">
+        <div className="flex md:flex-wrap gap-2 overflow-x-auto md:overflow-visible no-scrollbar">
         {CATEGORY_TABS.map((tab) => {
           const isActive = tab.key === categoryFilter;
           const count = categoryCounts[tab.key] ?? 0;
@@ -401,9 +403,10 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
               key={tab.key}
               href={qs ? `/admin/back-to-school/stock?${qs}` : "/admin/back-to-school/stock"}
               className={
-                isActive
-                  ? "bg-brand-blue text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest"
-                  : "bg-white text-brand-dark border border-gray-200 hover:border-brand-blue px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest"
+                (isActive
+                  ? "bg-brand-blue text-white "
+                  : "bg-white text-brand-dark border border-gray-200 hover:border-brand-blue ") +
+                "shrink-0 px-3.5 md:px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest"
               }
             >
               {tab.label}
@@ -415,6 +418,7 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
             </Link>
           );
         })}
+        </div>
       </div>
 
       {/* FILTER TOOLBAR + shopping list panel */}
@@ -438,11 +442,24 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
           more.
         </div>
       ) : (
-        <StockMatrix
-          groups={visibleMatrix}
-          visibleSizes={visibleSizes}
-          cellMask={cellMask}
-        />
+        <>
+          {/* Desktop: the item×size matrix */}
+          <div className="hidden md:block">
+            <StockMatrix
+              groups={visibleMatrix}
+              visibleSizes={visibleSizes}
+              cellMask={cellMask}
+            />
+          </div>
+          {/* Mobile: expandable cards, one per SKU group */}
+          <div className="md:hidden">
+            <StockCardList
+              groups={visibleMatrix}
+              visibleSizes={visibleSizes}
+              cellMask={cellMask}
+            />
+          </div>
+        </>
       )}
 
       <div className="text-xs text-gray-500 space-y-1 pt-2 print:hidden">

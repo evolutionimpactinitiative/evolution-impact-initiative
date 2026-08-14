@@ -34,7 +34,7 @@ export function DayViewAutoRefresh({ intervalMs = 20_000 }: Props) {
   void tick;
 
   return (
-    <div className="inline-flex items-center gap-3 text-xs text-gray-500">
+    <div className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
       <span className="inline-flex items-center gap-1">
         <RefreshCw
           className={`h-3 w-3 ${paused ? "" : "animate-spin-slow"}`}

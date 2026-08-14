@@ -171,8 +171,9 @@ export default async function B2SRegistrationsAdminPage({
         approvedNotEmailedCount={approvedNotEmailed}
       />
 
-      {/* TABS */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
+      {/* TABS — horizontal scroll on mobile so 8 tabs don't wrap into 3 rows */}
+      <div className="-mx-4 md:mx-0 px-4 md:px-0 border-b border-gray-200 pb-3">
+        <div className="flex md:flex-wrap gap-2 overflow-x-auto md:overflow-visible no-scrollbar">
         {STATUS_TABS.map((tab) => {
           const isActive = tab.key === statusFilter;
           return (
@@ -184,9 +185,10 @@ export default async function B2SRegistrationsAdminPage({
                   : `/admin/back-to-school/registrations?status=${tab.key}`
               }
               className={
-                isActive
-                  ? "bg-brand-blue text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest"
-                  : "bg-white text-brand-dark border border-gray-200 hover:border-brand-blue px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest"
+                (isActive
+                  ? "bg-brand-blue text-white "
+                  : "bg-white text-brand-dark border border-gray-200 hover:border-brand-blue ") +
+                "shrink-0 px-3.5 md:px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest"
               }
             >
               {tab.label}
@@ -198,6 +200,7 @@ export default async function B2SRegistrationsAdminPage({
             </Link>
           );
         })}
+        </div>
       </div>
 
       {/* LIST */}

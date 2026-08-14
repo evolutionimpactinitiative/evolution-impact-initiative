@@ -55,6 +55,21 @@
   }
 }
 
+@layer utilities {
+  /* Hide native scrollbars on horizontal-scroll rows (tab strips, chip
+     rows) — the scroll interaction is fine, but a visible scrollbar
+     hint on a nav-style row looks awkward on mobile. */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+
+  /* Slow-spin variant used for auto-refresh indicators — the default
+     Tailwind spin is 1s which is way too fast for an ambient status
+     light. */
+  .animate-spin-slow {
+    animation: spin 4s linear infinite;
+  }
+}
+
 @layer components {
   /* Prose Typography - ensure paragraph spacing */
   .prose p {

@@ -1,0 +1,280 @@
+"use client";
+
+import * as React from "react";
+import { ChevronDown, ChevronUp, Plus, Minus, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { skuCellKey, type MatrixGroup } from "@/lib/back-to-school-stock";
+
+interface Props {
+  groups: MatrixGroup[];
+  visibleSizes?: readonly string[];
+  cellMask?: Set<string> | null;
+}
+
+// Mobile-friendly alternative to the item×size matrix. Renders each SKU
+// group as a card with headline totals and an expandable per-size list.
+export function StockCardList({ groups, visibleSizes, cellMask }: Props) {
+  return (
+    <div className="space-y-3">
+      {groups.map((g) => (
+        <StockCard
+          key={g.key}
+          group={g}
+          visibleSizes={visibleSizes}
+          cellMask={cellMask ?? null}
+        />
+      ))}
+    </div>
+  );
+}
+
+function StockCard({
+  group,
+  visibleSizes,
+  cellMask,
+}: {
+  group: MatrixGroup;
+  visibleSizes?: readonly string[];
+  cellMask: Set<string> | null;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+  const totalGap = group.totalStock - group.totalRequested;
+
+  // Only show cells whose mask allows them and (either have stock or demand
+  // or the mask includes them). Prevents rendering rows of dashes.
+  const cells: Array<{
+    size: string;
+    stock: number;
+    requested: number;
+    stockId: string | null;
+    masked: boolean;
+  }> = [];
+  const sizes = visibleSizes ?? [];
+  for (const size of sizes) {
+    const cell = group.cells.get(size);
+    const stock = cell?.stock ?? 0;
+    const requested = cell?.requested ?? 0;
+    const key = skuCellKey({
+      category: group.category,
+      colour: group.colour,
+      sleeve: group.sleeve,
+      fit: group.fit,
+      size,
+    });
+    const masked = cellMask ? !cellMask.has(key) : false;
+    if (masked) continue;
+    if (stock === 0 && requested === 0) continue;
+    cells.push({ size, stock, requested, stockId: cell?.stockId ?? null, masked });
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-start gap-3 p-4 text-left active:bg-gray-50"
+      >
+        <div className="flex-1 min-w-0">
+          <p className="font-heading font-bold text-brand-dark text-sm truncate">
+            {group.label}
+          </p>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mt-1.5">
+            <span className="inline-flex items-baseline gap-1">
+              <span className="text-xs text-gray-500 uppercase tracking-widest font-heading font-bold">
+                In
+              </span>
+              <span className="text-brand-dark font-heading font-black text-base">
+                {group.totalStock}
+              </span>
+            </span>
+            <span className="inline-flex items-baseline gap-1">
+              <span className="text-xs text-gray-500 uppercase tracking-widest font-heading font-bold">
+                Req
+              </span>
+              <span className="text-brand-dark font-heading font-black text-base">
+                {group.totalRequested}
+              </span>
+            </span>
+            <span
+              className={
+                (totalGap < 0
+                  ? "bg-red-100 text-red-800"
+                  : totalGap > 0
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-gray-100 text-gray-700") +
+                " inline-flex items-center px-2 py-0.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest"
+              }
+            >
+              {totalGap > 0 ? "+" : ""}
+              {totalGap}
+            </span>
+          </div>
+        </div>
+        <div className="w-10 h-10 shrink-0 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
+          {expanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-gray-100 p-4 bg-brand-pale/20">
+          {cells.length === 0 ? (
+            <p className="text-xs text-gray-500 text-center py-4">
+              No sizes with stock or demand match the current filters.
+            </p>
+          ) : (
+            <ul className="divide-y divide-gray-100 bg-white rounded-xl overflow-hidden">
+              {cells.map((c) => (
+                <SizeRow
+                  key={c.size}
+                  category={group.category}
+                  colour={group.colour}
+                  sleeve={group.sleeve}
+                  fit={group.fit}
+                  size={c.size}
+                  stock={c.stock}
+                  requested={c.requested}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface SizeRowProps {
+  category: MatrixGroup["category"];
+  colour: MatrixGroup["colour"];
+  sleeve: MatrixGroup["sleeve"];
+  fit: MatrixGroup["fit"];
+  size: string;
+  stock: number;
+  requested: number;
+}
+
+function SizeRow(props: SizeRowProps) {
+  const router = useRouter();
+  const [open, setOpen] = React.useState(false);
+  const [busy, setBusy] = React.useState<"add" | "remove" | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [delta, setDelta] = React.useState<number>(1);
+
+  const gap = props.stock - props.requested;
+  const tone =
+    gap < 0
+      ? "text-red-700"
+      : gap > 0
+        ? "text-emerald-700"
+        : "text-gray-500";
+
+  async function submit(sign: 1 | -1) {
+    if (!Number.isFinite(delta) || delta < 1) return;
+    setError(null);
+    setBusy(sign > 0 ? "add" : "remove");
+    try {
+      const res = await fetch("/api/back-to-school/stock/adjust", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: props.category,
+          colour: props.colour,
+          sleeve: props.sleeve,
+          fit: props.fit,
+          size: props.size,
+          delta: sign * Math.round(delta),
+          reason: "adjustment",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed");
+      setOpen(false);
+      setDelta(1);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-gray-50"
+      >
+        <div className="w-14 text-xs font-heading font-bold text-brand-dark bg-brand-pale/60 text-center py-1 rounded">
+          {props.size}
+        </div>
+        <div className="flex-1 flex items-center gap-3 text-sm">
+          <span>
+            <span className="text-gray-500 text-xs uppercase tracking-widest font-heading font-bold mr-1">
+              In
+            </span>
+            <span className="font-heading font-black text-brand-dark">
+              {props.stock}
+            </span>
+          </span>
+          <span>
+            <span className="text-gray-500 text-xs uppercase tracking-widest font-heading font-bold mr-1">
+              Req
+            </span>
+            <span className="font-heading font-black text-brand-dark">
+              {props.requested}
+            </span>
+          </span>
+          <span className={`ml-auto text-xs font-heading font-bold ${tone}`}>
+            {gap > 0 ? "+" : ""}
+            {gap}
+          </span>
+        </div>
+      </button>
+      {open && (
+        <div className="px-3 pb-3 pt-1 space-y-2 border-t border-gray-100 bg-gray-50/50">
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              value={delta}
+              onChange={(e) => setDelta(Number(e.target.value))}
+              className="w-20 border border-gray-200 rounded-md px-2 py-1.5 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => submit(1)}
+              disabled={!!busy}
+              className="flex-1 inline-flex items-center justify-center gap-1 bg-brand-green text-white px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest disabled:opacity-50"
+            >
+              {busy === "add" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => submit(-1)}
+              disabled={!!busy || props.stock <= 0}
+              className="flex-1 inline-flex items-center justify-center gap-1 bg-white text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest disabled:opacity-50"
+            >
+              {busy === "remove" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Minus className="h-3.5 w-3.5" />
+              )}
+              Remove
+            </button>
+          </div>
+          {error && <p className="text-xs text-red-700">{error}</p>}
+        </div>
+      )}
+    </li>
+  );
+}
