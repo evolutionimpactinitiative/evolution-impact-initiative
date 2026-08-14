@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Send, Loader2, AlertTriangle, CheckCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,9 +78,20 @@ The Evolution Impact Initiative Team`,
 
 export function BulkEmailForm({ subscriberCount }: BulkEmailFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedTemplate, setSelectedTemplate] = useState("custom");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+
+  // Prefill from ?subject=&body= so the event playbook (or any deep link)
+  // can hand the sender a ready-to-tweak draft.
+  useEffect(() => {
+    const sp = searchParams.get("subject");
+    const bp = searchParams.get("body");
+    if (sp) setSubject(sp);
+    if (bp) setBody(bp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [isSending, setIsSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [result, setResult] = useState<{

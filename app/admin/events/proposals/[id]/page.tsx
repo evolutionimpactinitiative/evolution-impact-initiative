@@ -270,8 +270,15 @@ export default async function ProposalReviewPage({ params }: Props) {
             </div>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <Link
-                href={`/admin/events/${spawnedEvent.id}`}
+                href={`/admin/events/${spawnedEvent.id}/playbook`}
                 className="inline-flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:bg-emerald-700"
+              >
+                <Rocket className="h-4 w-4" />
+                Launch playbook
+              </Link>
+              <Link
+                href={`/admin/events/${spawnedEvent.id}`}
+                className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:border-emerald-500"
               >
                 <Pencil className="h-4 w-4" />
                 Open draft event

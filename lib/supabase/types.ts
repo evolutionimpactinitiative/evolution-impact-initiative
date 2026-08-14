@@ -58,6 +58,22 @@ export const DBS_LEVELS: { value: DbsLevel; label: string }[] = [
   },
 ];
 
+// Event launch playbook state — mutated inline per-event; keys optional
+// because a fresh event starts with an empty {} default.
+export interface PlaybookState {
+  designer_pinged_at?: string;
+  published_at?: string;
+  announcement_sent_at?: string;
+  socials_posted?: {
+    instagram?: string;
+    linkedin?: string;
+    facebook?: string;
+    tiktok?: string;
+  };
+  survey_sent_at?: string;
+  debrief_at?: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -123,6 +139,8 @@ export interface Database {
           photo_album_url: string | null;
           publish_at: string | null;
           final_release: boolean;
+          social_image_url: string | null;
+          playbook_state: PlaybookState;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -159,6 +177,8 @@ export interface Database {
           photo_album_url?: string | null;
           publish_at?: string | null;
           final_release?: boolean;
+          social_image_url?: string | null;
+          playbook_state?: PlaybookState;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -195,6 +215,8 @@ export interface Database {
           photo_album_url?: string | null;
           publish_at?: string | null;
           final_release?: boolean;
+          social_image_url?: string | null;
+          playbook_state?: PlaybookState;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
