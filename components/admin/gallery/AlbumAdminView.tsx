@@ -35,27 +35,46 @@ export function AlbumAdminView({ album, images }: Props) {
     setUploadTotal(files.length);
     setUploading(0);
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+      const original = files[i];
       try {
-        // Read dimensions client-side so we can store them for layout.
-        const { width, height } = await readImageDimensions(file);
+        // Client-side resize/compress — screenshots off a retina Mac are
+        // usually 5-10 MB PNG which blows through the request body limit
+        // AND is way bigger than the gallery ever needs.
+        const prepared = await prepareForUpload(original);
         const form = new FormData();
-        form.append("file", file);
+        form.append("file", prepared.file);
         form.append("albumId", album.id);
         form.append("status", "published");
-        if (width) form.append("width", String(width));
-        if (height) form.append("height", String(height));
+        if (prepared.width) form.append("width", String(prepared.width));
+        if (prepared.height) form.append("height", String(prepared.height));
         const res = await fetch("/api/gallery/images", {
           method: "POST",
           body: form,
         });
-        const data = await res.json();
+        // Server may reject before our JSON handler runs (e.g. 413 Request
+        // Entity Too Large from the platform) — parse defensively.
+        const raw = await res.text();
+        let data: { error?: string } = {};
+        try {
+          data = raw ? (JSON.parse(raw) as { error?: string }) : {};
+        } catch {
+          if (res.status === 413) {
+            throw new Error(
+              "Still too big after compression — try a smaller file.",
+            );
+          }
+          throw new Error(
+            res.ok
+              ? "Server sent an unexpected response — image might still have uploaded, refresh to check."
+              : `Upload failed (HTTP ${res.status}).`,
+          );
+        }
         if (!res.ok) throw new Error(data?.error || "Upload failed");
       } catch (e) {
         setUploadError(
           e instanceof Error
-            ? `${file.name}: ${e.message}`
-            : `${file.name}: upload failed`,
+            ? `${original.name}: ${e.message}`
+            : `${original.name}: upload failed`,
         );
         break;
       }
@@ -106,7 +125,7 @@ export function AlbumAdminView({ album, images }: Props) {
           Album settings
         </button>
         <p className="text-xs text-gray-500 ml-auto">
-          JPG · PNG · WebP · HEIC · max 10 MB each
+          JPG · PNG · WebP · HEIC · big files auto-compressed
         </p>
       </div>
 
@@ -591,22 +610,104 @@ function AlbumSettingsSheet({
   );
 }
 
-// Read pixel dimensions from a client-side File without uploading it.
-// Used so we can store width/height and lay out the grid without CLS.
-function readImageDimensions(
-  file: File,
-): Promise<{ width: number; height: number }> {
+// Max dimension on the long edge — a gallery image never needs to be
+// bigger than this, and it drops file size dramatically vs the raw file.
+const GALLERY_MAX_DIMENSION = 2400;
+// Anything under this stays as-is (no point re-encoding a small JPEG).
+const GALLERY_COMPRESS_THRESHOLD_BYTES = 1_500_000;
+
+// Reads dimensions AND downscales/recompresses the file if needed. Retina
+// screenshots off macOS are commonly 5–10 MB PNG which trips the platform
+// body-size limit; we output JPEG @ 0.9 which keeps the visual quality
+// high but usually lands well under 500 KB.
+//
+// HEIC/HEIF can't be decoded by canvas in most browsers — we pass them
+// through unchanged and let the server-side accept/reject.
+async function prepareForUpload(file: File): Promise<{
+  file: File;
+  width: number;
+  height: number;
+}> {
+  const isHeic =
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    /\.(heic|heif)$/i.test(file.name);
+  if (isHeic) {
+    return { file, width: 0, height: 0 };
+  }
+
+  const bitmap = await loadBitmap(file);
+  if (!bitmap) {
+    return { file, width: 0, height: 0 };
+  }
+  const nativeW = bitmap.width;
+  const nativeH = bitmap.height;
+
+  const long = Math.max(nativeW, nativeH);
+  const needsResize = long > GALLERY_MAX_DIMENSION;
+  const needsCompress =
+    needsResize || file.size > GALLERY_COMPRESS_THRESHOLD_BYTES;
+
+  if (!needsCompress) {
+    return { file, width: nativeW, height: nativeH };
+  }
+
+  const scale = needsResize ? GALLERY_MAX_DIMENSION / long : 1;
+  const targetW = Math.round(nativeW * scale);
+  const targetH = Math.round(nativeH * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return { file, width: nativeW, height: nativeH };
+  }
+  ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+  bitmap.close?.();
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", 0.9),
+  );
+  if (!blob) {
+    return { file, width: nativeW, height: nativeH };
+  }
+
+  // Preserve the stem but force .jpg since we re-encoded as JPEG.
+  const stem = file.name.replace(/\.[^./\\]+$/, "");
+  const compressed = new File([blob], `${stem}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+  return { file: compressed, width: targetW, height: targetH };
+}
+
+async function loadBitmap(file: File): Promise<ImageBitmap | null> {
+  // Prefer createImageBitmap when available (faster + off main thread).
+  if (typeof createImageBitmap === "function") {
+    try {
+      return await createImageBitmap(file);
+    } catch {
+      // fall through
+    }
+  }
+  // Fallback: draw via <img> then re-wrap.
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
-    img.onload = () => {
-      const dims = { width: img.naturalWidth, height: img.naturalHeight };
-      URL.revokeObjectURL(url);
-      resolve(dims);
+    img.onload = async () => {
+      try {
+        const bmp = await createImageBitmap(img);
+        URL.revokeObjectURL(url);
+        resolve(bmp);
+      } catch {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      }
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      resolve({ width: 0, height: 0 });
+      resolve(null);
     };
     img.src = url;
   });
