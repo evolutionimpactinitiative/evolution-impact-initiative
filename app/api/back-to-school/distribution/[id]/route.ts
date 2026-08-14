@@ -165,6 +165,17 @@ async function decrementStockForChild(
   const wantsShirt = given.uniform_shirt === true;
   if (!wantsBottom && !wantsPolo && !wantsShirt) return;
 
+  // Idempotency guard — if we've already recorded 'distributed' movements
+  // for this child (from a previous save or a retry), don't double-decrement.
+  // The pick/handoff split means Station 3 saves items_given and Station 4
+  // finalises — if Station 4's request is retried we mustn't decrement again.
+  const { count: existingDecrements } = await supabase
+    .from("back_to_school_stock_movements")
+    .select("id", { count: "exact", head: true })
+    .eq("child_id", childId)
+    .eq("reason", "distributed");
+  if ((existingDecrements ?? 0) > 0) return;
+
   const substitutions =
     (given.substitutions as Record<string, { size?: string }> | undefined) ??
     {};

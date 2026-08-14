@@ -50,6 +50,9 @@ interface Props {
   registration: CollectionSheetRegistration;
   stewardTokenIdForRecording: string | null;
   stewardTokenParam: string | null;
+  // "collect" = Station 4 (default) — outcome buttons and stock decrement.
+  // "pick"    = Station 3 — save picks only, no outcome, no stock decrement.
+  mode?: "collect" | "pick";
 }
 
 const NEED_LABEL: Record<string, string> = {
@@ -108,12 +111,14 @@ export function CollectionSheet({
   registration,
   stewardTokenIdForRecording,
   stewardTokenParam,
+  mode = "collect",
 }: Props) {
   const router = useRouter();
   const [busy, setBusy] = React.useState<
-    "collected" | "partial" | "no_show" | null
+    "collected" | "partial" | "no_show" | "pick" | null
   >(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [picksSaved, setPicksSaved] = React.useState(false);
 
   // items_given seeds — for uniform items, we split into uniform_bottom /
   // uniform_polo / uniform_shirt based on what the family actually requested.
@@ -224,12 +229,65 @@ export function CollectionSheet({
     }
   }
 
+  async function savePicks() {
+    if (!stewardTokenParam) {
+      setError("Not authenticated as a steward.");
+      return;
+    }
+    setError(null);
+    setBusy("pick");
+    try {
+      // Same merge trick as recordStatus so substitutions ride along.
+      const payload: Record<string, Record<string, unknown>> = {};
+      for (const [cid, given] of Object.entries(itemsGiven)) {
+        const subs = substitutions[cid] || {};
+        payload[cid] = { ...given };
+        if (Object.keys(subs).length > 0) {
+          payload[cid].substitutions = subs;
+        }
+      }
+      const res = await fetch(
+        `/api/back-to-school/pick/${registration.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stewardToken: stewardTokenParam,
+            itemsGiven: payload,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed");
+      setPicksSaved(true);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const children = [...registration.registration_children].sort(
     (a, b) => a.display_order - b.display_order,
   );
 
   const readOnly = !stewardTokenIdForRecording;
   const alreadyRecorded = !!registration.distribution_status;
+
+  // Detect if Station 3 (or a prior save) has already ticked items — used
+  // in collect mode to show a "Pre-picked" banner so Station 4 knows to
+  // just verify the bag.
+  const prePicked = React.useMemo(() => {
+    if (mode !== "collect") return false;
+    for (const c of registration.registration_children) {
+      const g = c.items_given ?? {};
+      for (const v of Object.values(g)) {
+        if (v === true) return true;
+      }
+    }
+    return false;
+  }, [mode, registration]);
 
   return (
     <div className="space-y-4">
@@ -288,10 +346,38 @@ export function CollectionSheet({
           </div>
         )}
 
-        {!readOnly && !alreadyRecorded && (
+        {!readOnly && !alreadyRecorded && mode === "collect" && (
           <p className="text-xs text-gray-500 mt-3">
             Tick items as you hand them over, then choose an outcome.
           </p>
+        )}
+        {!readOnly && !alreadyRecorded && mode === "pick" && (
+          <p className="text-xs text-gray-500 mt-3">
+            Tick each item as you pull it off the shelf. If the size differs,
+            use &ldquo;Size differed?&rdquo; to record what you actually
+            grabbed. Hit <strong>Picks done</strong> when the bag is ready.
+          </p>
+        )}
+
+        {mode === "collect" && prePicked && !alreadyRecorded && !readOnly && (
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-900 text-sm flex items-center gap-2">
+            <ClipboardCheck className="h-4 w-4 shrink-0" />
+            <span>
+              <strong className="font-heading font-bold">Pre-picked by Station 3.</strong>{" "}
+              Verify the bag matches the ticks below, adjust anything wrong,
+              then record the outcome.
+            </span>
+          </div>
+        )}
+
+        {mode === "pick" && picksSaved && (
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-900 text-sm flex items-center gap-2">
+            <ClipboardCheck className="h-4 w-4 shrink-0" />
+            <span>
+              <strong className="font-heading font-bold">Picks saved.</strong>{" "}
+              Hand the bag + ticket to Station 4.
+            </span>
+          </div>
         )}
 
         {readOnly && (
@@ -470,8 +556,34 @@ export function CollectionSheet({
         </div>
       )}
 
-      {/* Outcome buttons */}
-      {!readOnly && !alreadyRecorded && (
+      {/* Picker mode — Station 3 save button */}
+      {!readOnly && !alreadyRecorded && mode === "pick" && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 md:p-5">
+          <p className="text-xs uppercase tracking-widest text-gray-500 font-heading font-bold mb-3">
+            Save picks
+          </p>
+          <button
+            type="button"
+            onClick={savePicks}
+            disabled={!!busy}
+            className="w-full inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-4 py-3 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:bg-brand-dark disabled:opacity-50 transition-colors"
+          >
+            {busy === "pick" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4" />
+            )}
+            Picks done — send bag to Station 4
+          </button>
+          <p className="text-[11px] text-gray-500 mt-2 text-center">
+            Saves what you&rsquo;ve ticked. Stock stays put until Station 4
+            hands the bag over.
+          </p>
+        </div>
+      )}
+
+      {/* Collect mode — Station 4 outcome buttons */}
+      {!readOnly && !alreadyRecorded && mode === "collect" && (
         <div className="bg-white rounded-2xl border border-gray-200 p-4 md:p-5">
           <p className="text-xs uppercase tracking-widest text-gray-500 font-heading font-bold mb-3">
             Record outcome

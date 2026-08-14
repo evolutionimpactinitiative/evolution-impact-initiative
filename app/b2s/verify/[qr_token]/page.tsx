@@ -7,14 +7,15 @@ import type { CollectionSheetRegistration } from "@/components/back-to-school/Co
 
 interface Props {
   params: Promise<{ qr_token: string }>;
-  searchParams: Promise<{ s?: string }>;
+  searchParams: Promise<{ s?: string; pick?: string }>;
 }
 
 export const dynamic = "force-dynamic";
 
 export default async function B2SVerifyPage({ params, searchParams }: Props) {
   const { qr_token } = await params;
-  const { s: stewardToken } = await searchParams;
+  const { s: stewardToken, pick } = await searchParams;
+  const mode: "collect" | "pick" = pick === "1" ? "pick" : "collect";
 
   const supabase = createAdminClient();
 
@@ -108,6 +109,9 @@ export default async function B2SVerifyPage({ params, searchParams }: Props) {
             <strong className="font-heading font-bold">
               {stewardAuth.label}
             </strong>
+            <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-heading font-bold uppercase tracking-widest bg-white/60">
+              {mode === "pick" ? "Picker mode · Station 3" : "Collect mode · Station 4"}
+            </span>
           </div>
         )}
 
@@ -115,6 +119,7 @@ export default async function B2SVerifyPage({ params, searchParams }: Props) {
           registration={registration}
           stewardTokenIdForRecording={stewardAuth?.tokenId ?? null}
           stewardTokenParam={stewardToken ?? null}
+          mode={mode}
         />
       </div>
     </div>

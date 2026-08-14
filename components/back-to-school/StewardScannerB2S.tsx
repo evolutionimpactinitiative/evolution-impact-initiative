@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
 import {
   AlertTriangle,
@@ -11,6 +11,8 @@ import {
   Users,
   Search,
   ArrowRight,
+  ClipboardCheck,
+  Package,
 } from "lucide-react";
 import { extractB2SQrToken } from "@/lib/back-to-school/scan";
 
@@ -19,6 +21,8 @@ interface Props {
   label: string;
   totalRegistrations: number;
 }
+
+type ScanMode = "collect" | "pick";
 
 type State =
   | { kind: "idle" }
@@ -31,14 +35,26 @@ export function StewardScannerB2S({
   totalRegistrations,
 }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
+  const currentParams = useSearchParams();
+  const mode: ScanMode = currentParams.get("mode") === "pick" ? "pick" : "collect";
   const [state, setState] = React.useState<State>({ kind: "idle" });
   const [manualOpen, setManualOpen] = React.useState(false);
   const [manualCode, setManualCode] = React.useState("");
   const lastScanRef = React.useRef<string | null>(null);
 
+  function setMode(next: ScanMode) {
+    const params = new URLSearchParams(currentParams.toString());
+    if (next === "pick") params.set("mode", "pick");
+    else params.delete("mode");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  }
+
   function goToVerify(token: string) {
+    const pickSuffix = mode === "pick" ? "&pick=1" : "";
     router.push(
-      `/b2s/verify/${encodeURIComponent(token)}?s=${encodeURIComponent(stewardToken)}`,
+      `/b2s/verify/${encodeURIComponent(token)}?s=${encodeURIComponent(stewardToken)}${pickSuffix}`,
     );
   }
 
@@ -72,6 +88,7 @@ export function StewardScannerB2S({
       return;
     }
     setState({ kind: "resolving", token });
+    // goToVerify already respects the current mode via the URL param.
     goToVerify(token);
   }
 
@@ -98,6 +115,41 @@ export function StewardScannerB2S({
                 No approvals yet. Send the Friday 6pm blast to open the drive.
               </p>
             )}
+          </div>
+        </div>
+
+        {/* Mode toggle — which station am I on? */}
+        <div className="mb-3">
+          <p className="text-[10px] uppercase tracking-widest text-gray-500 font-heading font-bold mb-1.5">
+            Scan mode
+          </p>
+          <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 gap-1 w-full">
+            <button
+              type="button"
+              onClick={() => setMode("pick")}
+              className={
+                (mode === "pick"
+                  ? "bg-brand-blue text-white shadow-sm"
+                  : "bg-transparent text-brand-dark hover:bg-white") +
+                " flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest transition-colors"
+              }
+            >
+              <Package className="h-3.5 w-3.5" />
+              Pick · Station 3
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("collect")}
+              className={
+                (mode === "collect"
+                  ? "bg-brand-green text-white shadow-sm"
+                  : "bg-transparent text-brand-dark hover:bg-white") +
+                " flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest transition-colors"
+              }
+            >
+              <ClipboardCheck className="h-3.5 w-3.5" />
+              Collect · Station 4
+            </button>
           </div>
         </div>
 
