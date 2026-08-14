@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, ImageIcon, ArrowRight } from "lucide-react";
+import { ImageIcon, ArrowRight, MessageSquare } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { galleryPublicUrl } from "@/lib/gallery/storage";
 import type { GalleryAlbum, GalleryImage } from "@/lib/gallery/types";
@@ -54,6 +54,11 @@ export default async function GalleryAdminPage() {
     .select("id", { count: "exact", head: true })
     .is("album_id", null);
 
+  const { count: pendingComments } = await supabase
+    .from("gallery_comments")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -66,7 +71,21 @@ export default async function GalleryAdminPage() {
             own url on the public gallery.
           </p>
         </div>
-        <CreateAlbumButton />
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/gallery/comments"
+            className="inline-flex items-center gap-1.5 bg-white text-brand-dark border border-gray-200 hover:border-brand-blue px-3 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Comments
+            {(pendingComments ?? 0) > 0 && (
+              <span className="ml-1 bg-amber-100 text-amber-800 rounded-full px-1.5 py-0.5 text-[10px]">
+                {pendingComments}
+              </span>
+            )}
+          </Link>
+          <CreateAlbumButton />
+        </div>
       </div>
 
       {albums.length === 0 ? (

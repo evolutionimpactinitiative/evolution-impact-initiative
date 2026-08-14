@@ -4,7 +4,13 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Camera } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { galleryPublicUrl } from "@/lib/gallery/storage";
-import type { GalleryAlbum, GalleryImage } from "@/lib/gallery/types";
+import {
+  buildCommentTree,
+  type GalleryAlbum,
+  type GalleryComment,
+  type GalleryImage,
+} from "@/lib/gallery/types";
+import { GalleryComments } from "@/components/gallery/GalleryComments";
 
 export const revalidate = 60;
 
@@ -75,6 +81,20 @@ export default async function ImageDetailPage({ params }: Props) {
   const idx = siblings.findIndex((s) => s.id === image.id);
   const prev = idx > 0 ? siblings[idx - 1] : null;
   const next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
+
+  // Approved comments only — RLS enforces this too, but being explicit
+  // helps future me remember why the tree looks empty during moderation.
+  const { data: commentsRaw } = await supabase
+    .from("gallery_comments")
+    .select(
+      "id, image_id, parent_comment_id, author_name, author_email, body, status, created_at",
+    )
+    .eq("image_id", image.id)
+    .eq("status", "approved")
+    .order("created_at", { ascending: true });
+  const commentTree = buildCommentTree(
+    (commentsRaw as GalleryComment[] | null) ?? [],
+  );
 
   return (
     <main className="bg-white">
@@ -153,12 +173,7 @@ export default async function ImageDetailPage({ params }: Props) {
         )}
 
         <div className="border-t border-gray-200 pt-8">
-          <h2 className="font-heading font-black text-xl text-brand-dark mb-4">
-            Comments
-          </h2>
-          <p className="text-sm text-gray-500">
-            Comments arrive in the next update — this page is ready for them.
-          </p>
+          <GalleryComments imageId={image.id} tree={commentTree} />
         </div>
       </section>
     </main>
