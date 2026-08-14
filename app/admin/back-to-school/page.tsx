@@ -9,6 +9,7 @@ import {
   Heart,
   Printer,
   Radio,
+  ScanLine,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
@@ -454,6 +455,24 @@ export default async function BackToSchoolAdminPage() {
             every 20s.
           </p>
           <span className="inline-flex items-center gap-1 text-brand-green font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/back-to-school/stewards"
+          className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
+        >
+          <ScanLine className="h-6 w-6 text-brand-blue mb-3" />
+          <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
+            Steward scanners
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            One private scanner URL per volunteer. WhatsApp the link or show
+            them a QR to scan from your screen. Revoke instantly.
+          </p>
+          <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
             Open
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </span>
