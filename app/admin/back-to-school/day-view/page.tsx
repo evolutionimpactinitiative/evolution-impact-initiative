@@ -11,6 +11,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
 import { DayViewAutoRefresh } from "@/components/admin/back-to-school/DayViewAutoRefresh";
+import { PullToRefresh } from "@/components/admin/back-to-school/PullToRefresh";
 
 // Live view for Station 4 (and the chair). Refreshes every 20s in the
 // browser via the client wrapper; this server component runs fresh on
@@ -144,6 +145,7 @@ export default async function B2SDayViewPage() {
 
   return (
     <div className="space-y-6">
+      <PullToRefresh />
       {/* HEADER */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

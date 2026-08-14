@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Loader2, X } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {
   STOCK_SIZES,
   CATEGORY_LABELS,
@@ -96,29 +97,13 @@ export function AddStockButton() {
         Add stock
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
-          onClick={() => !busy && setOpen(false)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-heading font-black text-brand-dark">
-                Add stock
-              </h2>
-              <button
-                type="button"
-                onClick={() => !busy && setOpen(false)}
-                className="text-gray-400 hover:text-brand-dark"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={submit} className="space-y-3">
+      <BottomSheet
+        open={open}
+        onClose={() => !busy && setOpen(false)}
+        title="Add stock"
+        labelledBy="add-stock-sheet-title"
+      >
+        <form onSubmit={submit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Category">
                   <select
@@ -250,9 +235,7 @@ export function AddStockButton() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </BottomSheet>
     </>
   );
 }

@@ -68,6 +68,17 @@
   .animate-spin-slow {
     animation: spin 4s linear infinite;
   }
+
+  /* Page fade — applied by app/admin/template.tsx so each admin route
+     fades in on navigation. Duration kept short so it doesn't feel
+     laggy on repeated navigation. */
+  @keyframes page-fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-page-fade {
+    animation: page-fade 180ms ease-out both;
+  }
 }
 
 @layer components {
