@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CalendarPlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarPlus, Rocket } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   STATUS_LABELS,
@@ -184,6 +184,12 @@ export default async function ProposalsIndex({ searchParams }: PageProps) {
                         {p.preferred_date && ` · ${new Date(p.preferred_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`}
                         {p.primary_venue_name && ` · ${p.primary_venue_name}`}
                       </p>
+                      {p.spawned_event_id && (
+                        <p className="inline-flex items-center gap-1 text-xs text-emerald-700 mt-1">
+                          <Rocket className="h-3 w-3" />
+                          Draft event created
+                        </p>
+                      )}
                       {p.summary && (
                         <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                           {p.summary}

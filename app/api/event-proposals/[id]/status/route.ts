@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { spawnEventFromProposal } from "@/lib/event-proposals/spawn";
+import type { EventProposal } from "@/lib/event-proposals/types";
 
 async function requireTeam() {
   const supabase = await createClient();
@@ -70,14 +72,10 @@ export async function POST(
   const admin = createAdminClient();
   const { data: current } = await admin
     .from("event_proposals")
-    .select("id, title, status")
+    .select("*")
     .eq("id", id)
     .maybeSingle();
-  const proposal = current as {
-    id: string;
-    title: string;
-    status: string;
-  } | null;
+  const proposal = current as EventProposal | null;
   if (!proposal) {
     return NextResponse.json({ error: "Proposal not found" }, { status: 404 });
   }
@@ -95,6 +93,33 @@ export async function POST(
     }
   }
 
+  // On approval, spawn a linked draft event unless one already exists
+  // (idempotent — approving twice must not create two events).
+  let spawned: { id: string; slug: string } | null = null;
+  if (nextStatus === "approved") {
+    if (proposal.spawned_event_id) {
+      // Already spawned — fetch it so we can echo the slug back to the UI.
+      const { data: existing } = await admin
+        .from("events")
+        .select("id, slug")
+        .eq("id", proposal.spawned_event_id)
+        .maybeSingle();
+      const row = existing as { id: string; slug: string } | null;
+      if (row) spawned = row;
+    } else {
+      try {
+        spawned = await spawnEventFromProposal(admin, proposal);
+        update.spawned_event_id = spawned.id;
+      } catch (err) {
+        console.error("[proposal-status] spawn err:", err);
+        return NextResponse.json(
+          { error: "Approval failed — could not create draft event." },
+          { status: 500 },
+        );
+      }
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: updateErr } = await (admin as any)
     .from("event_proposals")
@@ -106,6 +131,9 @@ export async function POST(
   }
 
   // Write a system comment for audit + timeline.
+  const approvedSuffix = spawned
+    ? ` Draft event created — edit at /admin/events/${spawned.id}.`
+    : "";
   const systemBody =
     nextStatus === "submitted"
       ? "Submitted for board review."
@@ -114,7 +142,7 @@ export async function POST(
         : nextStatus === "needs_info"
           ? `Requested more info${body.note ? `: ${body.note}` : "."}`
           : nextStatus === "approved"
-            ? `Approved${body.note ? `: ${body.note}` : "."}`
+            ? `Approved${body.note ? `: ${body.note}.` : "."}${approvedSuffix}`
             : `Rejected${body.note ? `: ${body.note}` : "."}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (admin as any)
@@ -126,5 +154,9 @@ export async function POST(
       is_system: true,
     });
 
-  return NextResponse.json({ success: true, status: nextStatus });
+  return NextResponse.json({
+    success: true,
+    status: nextStatus,
+    spawned_event: spawned,
+  });
 }

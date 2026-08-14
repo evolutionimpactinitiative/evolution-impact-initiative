@@ -17,6 +17,7 @@ import {
   Sparkles,
   Pencil,
   MessageSquare,
+  Rocket,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -153,6 +154,18 @@ export default async function ProposalReviewPage({ params }: Props) {
     for (const m of ((extra ?? []) as Member[])) memberById.set(m.id, m);
   }
 
+  // Spawned event (present once the chair approves)
+  let spawnedEvent: { id: string; slug: string; title: string; status: string } | null = null;
+  if (proposal.spawned_event_id) {
+    const { data: evRow } = await supabase
+      .from("events")
+      .select("id, slug, title, status")
+      .eq("id", proposal.spawned_event_id)
+      .maybeSingle();
+    spawnedEvent =
+      (evRow as { id: string; slug: string; title: string; status: string } | null) ?? null;
+  }
+
   const tone = STATUS_TONES[proposal.status];
   const totalBudgetPence = proposal.cost_lines.reduce(
     (sum, l) => sum + (Number(l.amount_pence) || 0),
@@ -232,6 +245,51 @@ export default async function ProposalReviewPage({ params }: Props) {
           </div>
         )}
       </div>
+
+      {/* Spawned event banner — appears the moment the chair approves */}
+      {spawnedEvent && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 md:p-5">
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <Rocket className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-heading font-bold text-emerald-900">
+                Approved — draft event created
+              </p>
+              <p className="text-sm text-emerald-800 mt-0.5">
+                A draft event has been spawned in the events table. Finalise the
+                details there, then publish when ready.
+              </p>
+              <p className="text-xs text-emerald-700 mt-2">
+                Current status:{" "}
+                <span className="font-bold uppercase tracking-widest">
+                  {spawnedEvent.status}
+                </span>
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <Link
+                href={`/admin/events/${spawnedEvent.id}`}
+                className="inline-flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:bg-emerald-700"
+              >
+                <Pencil className="h-4 w-4" />
+                Open draft event
+              </Link>
+              {spawnedEvent.status === "published" && (
+                <Link
+                  href={`/events/${spawnedEvent.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-white border border-emerald-300 text-emerald-800 px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:border-emerald-500"
+                >
+                  View public page
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Two-column: proposal on the left, discussion on the right on md+ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
