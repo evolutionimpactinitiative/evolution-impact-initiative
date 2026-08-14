@@ -146,19 +146,28 @@ export async function POST(
 // Records negative stock movements for each uniform item marked given for this
 // child. Reads the child's stored uniform_choices, uniform_size and sex, and
 // resolves the SKU for each item flag that's true (uniform_bottom, uniform_polo,
-// uniform_shirt). Silently skips items where the SKU can't be resolved — the
-// steward record on the child is still the source of truth.
+// uniform_shirt).
+//
+// When items_given.substitutions[<key>] = { size } is present, we decrement
+// that substituted size instead of the child's original requested size —
+// keeping stock counts honest when the steward hands over a different size
+// on the day. Silently skips items where the SKU can't be resolved.
 async function decrementStockForChild(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   registrationId: string,
   childId: string,
-  given: Record<string, boolean>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  given: Record<string, any>,
 ) {
   const wantsBottom = given.uniform_bottom === true || given.uniform === true;
   const wantsPolo = given.uniform_polo === true;
   const wantsShirt = given.uniform_shirt === true;
   if (!wantsBottom && !wantsPolo && !wantsShirt) return;
+
+  const substitutions =
+    (given.substitutions as Record<string, { size?: string }> | undefined) ??
+    {};
 
   const { data: childRow } = await supabase
     .from("registration_children")
@@ -173,9 +182,10 @@ async function decrementStockForChild(
   if (!child || !child.uniform_size || !child.uniform_choices) return;
 
   const fit = fitFromSex(child.sex);
-  const size = child.uniform_size;
+  const defaultSize = child.uniform_size;
 
   interface Ask {
+    key: "uniform_bottom" | "uniform_polo" | "uniform_shirt";
     category: StockCategory;
     colour: StockColour;
     sleeve: "short" | "long" | null;
@@ -184,6 +194,7 @@ async function decrementStockForChild(
 
   if (wantsBottom && child.uniform_choices.bottom) {
     asks.push({
+      key: "uniform_bottom",
       category: child.uniform_choices.bottom.type as StockCategory,
       colour: child.uniform_choices.bottom.colour as StockColour,
       sleeve: null,
@@ -191,6 +202,7 @@ async function decrementStockForChild(
   }
   if (wantsPolo && child.uniform_choices.polo) {
     asks.push({
+      key: "uniform_polo",
       category: "polo",
       colour: child.uniform_choices.polo.colour as StockColour,
       sleeve: child.uniform_choices.polo.sleeve,
@@ -198,6 +210,7 @@ async function decrementStockForChild(
   }
   if (wantsShirt && child.uniform_choices.shirt) {
     asks.push({
+      key: "uniform_shirt",
       category: "shirt",
       colour: "white",
       sleeve: child.uniform_choices.shirt.sleeve,
@@ -205,6 +218,10 @@ async function decrementStockForChild(
   }
 
   for (const ask of asks) {
+    const size = substitutions[ask.key]?.size ?? defaultSize;
+    const substituted = substitutions[ask.key]?.size &&
+      substitutions[ask.key]?.size !== defaultSize;
+
     const query = supabase
       .from("back_to_school_stock")
       .select("id, quantity")
@@ -228,7 +245,9 @@ async function decrementStockForChild(
         reason: "distributed",
         registration_id: registrationId,
         child_id: childId,
-        notes: null,
+        notes: substituted
+          ? `Substituted from requested size ${defaultSize} to ${size}`
+          : null,
       });
   }
 }

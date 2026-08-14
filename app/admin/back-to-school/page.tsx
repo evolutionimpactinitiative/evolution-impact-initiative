@@ -1,6 +1,14 @@
 import Link from "next/link";
 import QRCode from "qrcode";
-import { ClipboardList, Package, ArrowRight, Building2, Boxes, Heart } from "lucide-react";
+import {
+  ClipboardList,
+  Package,
+  ArrowRight,
+  Building2,
+  Boxes,
+  Heart,
+  Printer,
+} from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
 import { FESTIVAL } from "@/lib/festival";
@@ -406,6 +414,24 @@ export default async function BackToSchoolAdminPage() {
           <p className="text-sm text-gray-600 mb-3">
             {stockTotal} items across {stockSkuCount} SKUs. See what&rsquo;s in
             the store vs. what&rsquo;s been requested and add new stock.
+          </p>
+          <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/back-to-school/tickets"
+          className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
+        >
+          <Printer className="h-6 w-6 text-brand-blue mb-3" />
+          <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
+            Pick tickets
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            One printable A5 ticket per family, for the runners on the day.
+            Bulk-print Friday night after the approval blast.
           </p>
           <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
             Open
