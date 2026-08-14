@@ -13,6 +13,7 @@ import {
   ArrowRight,
   ClipboardCheck,
   Package,
+  Printer,
 } from "lucide-react";
 import { extractB2SQrToken } from "@/lib/back-to-school/scan";
 
@@ -22,7 +23,7 @@ interface Props {
   totalRegistrations: number;
 }
 
-type ScanMode = "collect" | "pick";
+type ScanMode = "checkin" | "pick" | "collect";
 
 type State =
   | { kind: "idle" }
@@ -37,7 +38,13 @@ export function StewardScannerB2S({
   const router = useRouter();
   const pathname = usePathname();
   const currentParams = useSearchParams();
-  const mode: ScanMode = currentParams.get("mode") === "pick" ? "pick" : "collect";
+  const modeParam = currentParams.get("mode");
+  const mode: ScanMode =
+    modeParam === "pick"
+      ? "pick"
+      : modeParam === "checkin"
+        ? "checkin"
+        : "collect";
   const [state, setState] = React.useState<State>({ kind: "idle" });
   const [manualOpen, setManualOpen] = React.useState(false);
   const [manualCode, setManualCode] = React.useState("");
@@ -45,13 +52,21 @@ export function StewardScannerB2S({
 
   function setMode(next: ScanMode) {
     const params = new URLSearchParams(currentParams.toString());
-    if (next === "pick") params.set("mode", "pick");
-    else params.delete("mode");
+    if (next === "collect") params.delete("mode");
+    else params.set("mode", next);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
   }
 
   function goToVerify(token: string) {
+    // Check-in mode goes to the print route (Station 2 flow); pick + collect
+    // go to the verify page with the appropriate mode.
+    if (mode === "checkin") {
+      router.push(
+        `/b2s/print/${encodeURIComponent(token)}?s=${encodeURIComponent(stewardToken)}`,
+      );
+      return;
+    }
     const pickSuffix = mode === "pick" ? "&pick=1" : "";
     router.push(
       `/b2s/verify/${encodeURIComponent(token)}?s=${encodeURIComponent(stewardToken)}${pickSuffix}`,
@@ -121,9 +136,23 @@ export function StewardScannerB2S({
         {/* Mode toggle — which station am I on? */}
         <div className="mb-3">
           <p className="text-[10px] uppercase tracking-widest text-gray-500 font-heading font-bold mb-1.5">
-            Scan mode
+            Scan mode — pick your station
           </p>
-          <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 gap-1 w-full">
+          <div className="inline-flex items-stretch rounded-lg bg-gray-100 p-1 gap-1 w-full">
+            <button
+              type="button"
+              onClick={() => setMode("checkin")}
+              className={
+                (mode === "checkin"
+                  ? "bg-brand-dark text-white shadow-sm"
+                  : "bg-transparent text-brand-dark hover:bg-white") +
+                " flex-1 inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-md text-[10px] font-heading font-bold uppercase tracking-widest transition-colors"
+              }
+            >
+              <Printer className="h-3.5 w-3.5" />
+              <span>Check-in</span>
+              <span className="opacity-70 text-[9px]">Station 2</span>
+            </button>
             <button
               type="button"
               onClick={() => setMode("pick")}
@@ -131,11 +160,12 @@ export function StewardScannerB2S({
                 (mode === "pick"
                   ? "bg-brand-blue text-white shadow-sm"
                   : "bg-transparent text-brand-dark hover:bg-white") +
-                " flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest transition-colors"
+                " flex-1 inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-md text-[10px] font-heading font-bold uppercase tracking-widest transition-colors"
               }
             >
               <Package className="h-3.5 w-3.5" />
-              Pick · Station 3
+              <span>Pick</span>
+              <span className="opacity-70 text-[9px]">Station 3</span>
             </button>
             <button
               type="button"
@@ -144,11 +174,12 @@ export function StewardScannerB2S({
                 (mode === "collect"
                   ? "bg-brand-green text-white shadow-sm"
                   : "bg-transparent text-brand-dark hover:bg-white") +
-                " flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest transition-colors"
+                " flex-1 inline-flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-md text-[10px] font-heading font-bold uppercase tracking-widest transition-colors"
               }
             >
               <ClipboardCheck className="h-3.5 w-3.5" />
-              Collect · Station 4
+              <span>Collect</span>
+              <span className="opacity-70 text-[9px]">Station 4</span>
             </button>
           </div>
         </div>
