@@ -63,12 +63,14 @@ export default async function B2SScanStewardPage({ params }: Props) {
 
   // Families the steward can expect to see through the door today:
   // approved (already through the Friday blast) + walk_ins (registered on
-  // the day at Station 1). Excludes pending/waitlisted/declined.
+  // the day at Station 1). Excludes those already served — collected,
+  // partial and no-show are all "done" for scan purposes.
   const { count: totalRegistrations } = await supabase
     .from("registrations")
     .select("id", { count: "exact", head: true })
     .eq("event_id", eventId)
-    .in("status", ["approved", "walk_in"]);
+    .in("status", ["approved", "walk_in"])
+    .is("distribution_status", null);
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-6 md:py-10">
