@@ -26,6 +26,8 @@ const TITLE_MAP: Array<{ prefix: string; title: string; exact?: boolean }> = [
   { prefix: "/admin/back-to-school/supplies", title: "Supplies" },
   { prefix: "/admin/back-to-school/sponsors", title: "Sponsors" },
   { prefix: "/admin/back-to-school", title: "Back to School" },
+  { prefix: "/admin/gallery/albums", title: "Album" },
+  { prefix: "/admin/gallery", title: "Gallery" },
   { prefix: "/admin/festival", title: "Festival 2026" },
   { prefix: "/admin/accounting", title: "Accounting" },
   { prefix: "/admin/outcomes", title: "Outcomes" },

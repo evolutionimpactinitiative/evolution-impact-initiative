@@ -23,6 +23,7 @@ import {
   Calculator,
   Activity,
   Backpack,
+  Image as ImageIcon,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -35,6 +36,7 @@ const navigation = [
   { name: "Events", href: "/admin/events", icon: Calendar },
   { name: "Festival 2026", href: "/admin/festival/vendors", icon: Sparkles },
   { name: "Back to School", href: "/admin/back-to-school", icon: Backpack },
+  { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
   { name: "Accounting", href: "/admin/accounting", icon: Calculator },
   { name: "Outcomes", href: "/admin/outcomes", icon: Activity },
   { name: "Registrations", href: "/admin/registrations", icon: Users },

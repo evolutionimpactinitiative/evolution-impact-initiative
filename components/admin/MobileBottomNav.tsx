@@ -25,6 +25,7 @@ import {
   ClipboardList,
   UserPlus,
   ShoppingBag,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -65,6 +66,7 @@ const moreSections: MoreSection[] = [
     label: "Charity ops",
     items: [
       { name: "Events", href: "/admin/events", icon: Calendar },
+      { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
       { name: "Festival 2026", href: "/admin/festival/vendors", icon: Sparkles },
       { name: "Accounting", href: "/admin/accounting", icon: Calculator },
       { name: "Donations", href: "/admin/donations", icon: Heart },
