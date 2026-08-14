@@ -17,14 +17,41 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Prevent iOS input auto-zoom on focus while keeping desktop unchanged */
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     @apply font-sans text-brand-dark antialiased;
+    /* Better rubber-band scrolling on iOS, tap highlights off (we style
+       our own) */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
+  }
+
+  /* Enforce 16px on form inputs to stop iOS auto-zoom on focus. Applies
+     to admin forms + steward flows where inputs live in small cards. */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* When installed as a PWA, make sure the standalone shell fills the
+     viewport including safe areas. */
+  @media (display-mode: standalone) {
+    html, body {
+      overscroll-behavior: none;
+    }
   }
 }
 

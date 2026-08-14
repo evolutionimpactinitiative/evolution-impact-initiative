@@ -1,7 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Montserrat, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
+
+// Viewport is a separate export from Next 14+. viewport-fit=cover unlocks
+// env(safe-area-inset-*) so we can paint under the notch/home-indicator
+// on iOS. themeColor tints the mobile browser chrome and the standalone
+// PWA status bar.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#17559D",
+};
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -41,6 +52,11 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.jpg",
     apple: "/favicon.jpg",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "EII Admin",
   },
   openGraph: {
     title: "Evolution Impact Initiative CIC | Small Acts, Big Impact",

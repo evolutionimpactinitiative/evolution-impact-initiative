@@ -15,11 +15,20 @@ export function AdminLayoutContent({ children, header }: AdminLayoutContentProps
     <div
       className={cn(
         "transition-all duration-300",
-        isCollapsed ? "lg:pl-20" : "lg:pl-64"
+        isCollapsed ? "lg:pl-20" : "lg:pl-64",
       )}
     >
       {header}
-      <main className="p-4 lg:p-6 pb-24 lg:pb-6">{children}</main>
+      <main
+        className="px-4 pt-4 lg:p-6"
+        style={{
+          // Bottom nav is 4rem (h-16) plus a bit of clearance so scroll
+          // targets never sit under it. Safe-area handled by nav itself.
+          paddingBottom: `calc(6rem + env(safe-area-inset-bottom))`,
+        }}
+      >
+        {children}
+      </main>
     </div>
   );
 }
