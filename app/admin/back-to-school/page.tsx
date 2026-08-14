@@ -548,14 +548,40 @@ export default async function BackToSchoolAdminPage() {
           </p>
         </div>
         {walkInLink && walkInQrSrc ? (
-          <QrShareCard
-            link={walkInLink}
-            qrSrc={walkInQrSrc}
-            title={`${B2S.title} — Walk-in`}
-            linkLabel="Walk-in URL:"
-            posterSubtitle="Walk-in registration · 3pm – 4pm"
-            description="Keep this away from the public site — the URL contains a venue key so only families at Station 1 can register."
-          />
+          <>
+            <QrShareCard
+              link={walkInLink}
+              qrSrc={walkInQrSrc}
+              title={`${B2S.title} — Walk-in`}
+              linkLabel="Walk-in URL:"
+              posterSubtitle="Walk-in registration · 3pm – 4pm"
+              description="Keep this away from the public site — the URL contains a venue key so only families at Station 1 can register."
+            />
+            <div className="bg-brand-pale/40 border border-brand-blue/20 rounded-xl p-4 text-sm text-brand-dark">
+              <p className="font-heading font-bold uppercase tracking-widest text-xs mb-2 text-brand-blue">
+                Station 1 assisted registration (phoneless families)
+              </p>
+              <p className="mb-2">
+                If a family arrives without a phone, the Station 1 volunteer
+                opens the walk-in URL on their own device with{" "}
+                <code className="bg-white px-1 py-0.5 rounded text-xs">?k=…&amp;s=&lt;their-scanner-token&gt;</code>{" "}
+                appended. That unlocks <strong>Print ticket</strong> and{" "}
+                <strong>Register another family</strong> buttons on the
+                success screen so they can bang through several without a
+                page reload.
+              </p>
+              <p className="text-xs text-gray-600">
+                Their scanner token comes from{" "}
+                <a
+                  href="/admin/back-to-school/stewards"
+                  className="text-brand-blue hover:text-brand-dark underline"
+                >
+                  the Stewards page
+                </a>
+                — the token is the last URL segment of their scan link.
+              </p>
+            </div>
+          </>
         ) : (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
             <p className="font-heading font-bold uppercase tracking-widest text-xs mb-1">

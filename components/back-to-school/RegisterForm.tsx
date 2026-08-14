@@ -95,9 +95,13 @@ interface RegisterFormProps {
   //  - intro copy changes (no "we'll email you Friday" language)
   //  - success screen shows a walk-in ticket with QR
   walkInKey?: string;
+  // Optional steward token — present when Station 1 volunteer opens the
+  // walk-in URL with ?s=<token> to register a family for someone without
+  // a phone. Unlocks the Print ticket button on the success screen.
+  stewardToken?: string;
 }
 
-export function RegisterForm({ walkInKey }: RegisterFormProps = {}) {
+export function RegisterForm({ walkInKey, stewardToken }: RegisterFormProps = {}) {
   const router = useRouter();
   const isWalkIn = Boolean(walkInKey);
   const [form, setForm] = React.useState<FormState>(initial);
@@ -107,6 +111,25 @@ export function RegisterForm({ walkInKey }: RegisterFormProps = {}) {
   const [walkInResult, setWalkInResult] = React.useState<WalkInResult | null>(
     null,
   );
+
+  // Whenever we flip into the success state, jump to the top so the ticket
+  // is immediately visible — the form is tall and the button that flips
+  // this is at the very bottom.
+  React.useEffect(() => {
+    if (success) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [success]);
+
+  // Resets the form back to blank so a Station 1 volunteer can enter the
+  // next family without a page reload. Also clears the success flag so the
+  // form re-renders.
+  function registerAnother() {
+    setForm(initial);
+    setError(null);
+    setWalkInResult(null);
+    setSuccess(false);
+  }
 
   function updateParent<K extends "parentName" | "parentEmail" | "parentPhone" | "postcode">(
     key: K,
@@ -277,7 +300,14 @@ export function RegisterForm({ walkInKey }: RegisterFormProps = {}) {
     }
   }
 
-  if (success && isWalkIn) return <WalkInTicket result={walkInResult} />;
+  if (success && isWalkIn)
+    return (
+      <WalkInTicket
+        result={walkInResult}
+        stewardToken={stewardToken ?? null}
+        onRegisterAnother={registerAnother}
+      />
+    );
   if (success) return <ReceivedState />;
 
   return (
@@ -839,8 +869,17 @@ function ReceivedState() {
   );
 }
 
-function WalkInTicket({ result }: { result: WalkInResult | null }) {
+function WalkInTicket({
+  result,
+  stewardToken,
+  onRegisterAnother,
+}: {
+  result: WalkInResult | null;
+  stewardToken: string | null;
+  onRegisterAnother: () => void;
+}) {
   const [qrSrc, setQrSrc] = React.useState<string | null>(null);
+  const assistedMode = Boolean(stewardToken);
 
   React.useEffect(() => {
     if (!result?.qrToken) return;
@@ -921,11 +960,37 @@ function WalkInTicket({ result }: { result: WalkInResult | null }) {
           Walk-ins are served <strong>first-come, first-served</strong> from
           whatever stock we have left after 3pm. Nothing is guaranteed.
         </p>
-        <p>
-          Please keep this screen open (or take a screenshot) so we can find
-          you quickly at the door.
-        </p>
+        {!assistedMode && (
+          <p>
+            Please keep this screen open (or take a screenshot) so we can find
+            you quickly at the door.
+          </p>
+        )}
       </div>
+
+      {/* Station 1 assisted-mode controls — only when a steward token was
+          in the URL, i.e. a volunteer is filling this in for the family. */}
+      {assistedMode && (
+        <div className="mt-6 flex flex-wrap justify-center gap-2 border-t border-brand-blue/20 pt-4">
+          {result?.qrToken && stewardToken && (
+            <a
+              href={`/b2s/print/${encodeURIComponent(result.qrToken)}?s=${encodeURIComponent(stewardToken)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-brand-blue text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:bg-brand-dark"
+            >
+              Print ticket
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={onRegisterAnother}
+            className="inline-flex items-center gap-1.5 bg-brand-green text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:bg-brand-dark"
+          >
+            Register another family
+          </button>
+        </div>
+      )}
     </div>
   );
 }

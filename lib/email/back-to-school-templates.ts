@@ -320,6 +320,111 @@ export function verifyUrl(qrToken: string): string {
   return `${BASE_URL.replace(/\/$/, "")}/b2s/verify/${qrToken}`;
 }
 
+// ============================================
+// 1d. Walk-in received — sent immediately when a family registers at
+//     the venue via the walk-in QR (Station 1). Includes their QR + a
+//     reminder to come back at 3-4pm. Skipped only if we can't send.
+// ============================================
+
+interface WalkInReceivedArgs {
+  parentName: string;
+  qrToken: string;
+  reference: string; // short id shown on the ticket
+  childrenCount: number;
+}
+
+export async function walkInReceivedEmail({
+  parentName,
+  qrToken,
+  reference,
+  childrenCount,
+}: WalkInReceivedArgs): Promise<{
+  subject: string;
+  html: string;
+  attachments: Array<{ filename: string; content: string; contentId: string }>;
+}> {
+  const url = verifyUrl(qrToken);
+  const dataUrl = await QRCode.toDataURL(url, {
+    width: 480,
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: { dark: BRAND.dark, light: "#ffffff" },
+  });
+  const base64 = dataUrl.split(",")[1] ?? "";
+  const contentId = `b2s-walkin-qr-${qrToken}`;
+
+  const kidsLabel =
+    childrenCount === 1 ? "your child" : `your ${childrenCount} children`;
+
+  const content = `
+    <h1 style="margin: 0 0 16px; font-family: 'Montserrat', sans-serif; font-size: 26px; color: ${BRAND.dark}; font-weight: 900; text-transform: uppercase; letter-spacing: -0.5px;">
+      You&rsquo;re <span style="color: ${BRAND.green};">on the list.</span>
+    </h1>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Hi <strong>${parentName}</strong>,
+    </p>
+
+    <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 16px; line-height: 26px; color: #555555;">
+      Thanks for registering ${kidsLabel} at the venue. Come back to us
+      between <strong>3pm and 4pm today</strong> and we&rsquo;ll get you sorted
+      from whatever stock we have left.
+    </p>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border-radius: 12px; margin: 22px 0;">
+      <tr>
+        <td style="padding: 22px 24px; text-align: center;">
+          <p style="margin: 0 0 6px; font-family: 'Montserrat', sans-serif; font-size: 11px; color: ${BRAND.blue}; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">
+            Your walk-in QR
+          </p>
+          <img src="cid:${contentId}" alt="Walk-in QR" width="200" height="200" style="display: block; margin: 8px auto; background: #fff; padding: 8px; border-radius: 8px;" />
+          <p style="margin: 6px 0 0; font-family: 'Courier New', monospace; font-size: 14px; color: ${BRAND.dark}; font-weight: 700; letter-spacing: 1px;">
+            Ref: ${reference}
+          </p>
+          <p style="margin: 6px 0 0; font-family: 'Inter', sans-serif; font-size: 12px; color: #666;">
+            Show this at the door — either the QR above or tell us your name.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.amberBg}; border-radius: 12px; margin-bottom: 6px;">
+      <tr>
+        <td style="padding: 18px 22px; text-align: left;">
+          <p style="margin: 0 0 6px; font-family: 'Montserrat', sans-serif; font-size: 11px; color: ${BRAND.amber}; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Nothing is guaranteed
+          </p>
+          <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: ${BRAND.dark};">
+            Walk-ins are served <strong>first-come, first-served</strong> from
+            whatever stock is left after the registered families have collected.
+            Please come back at 3pm.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    ${eventDetailsBlock()}
+
+    <p style="margin: 25px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6;">
+      See you soon,<br>
+      <strong>The Evolution Impact Initiative team</strong>
+    </p>
+  `;
+
+  return {
+    subject: `You're on the ${B2S.title} walk-in list — come back at 3pm`,
+    html: emailWrapper(content),
+    attachments: [
+      {
+        filename: `b2s-walkin-${reference}.png`,
+        content: base64,
+        contentId,
+      },
+    ],
+  };
+}
+
+
 export async function registrationApprovedEmail({
   parentName,
   qrToken,

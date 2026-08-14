@@ -4,6 +4,7 @@ import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend"
 import {
   registrationReceivedEmail,
   waitlistReceivedEmail,
+  walkInReceivedEmail,
 } from "@/lib/email/back-to-school-templates";
 import { B2S, B2S_SLUG, UNIFORM_SIZES } from "@/lib/back-to-school";
 import { generateQrToken } from "@/lib/back-to-school/qr";
@@ -380,43 +381,70 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Skip email for walk-ins — the family is standing at Station 1 and
-    // gets a printed ticket instead. Sending them an email 30 minutes later
-    // is noise.
-    // Fire confirmation email — non-fatal if it fails.
-    // Different template depending on whether we landed as pending or waitlisted.
-    if (!isWalkIn) try {
+    // Confirmation email — one per registration path, always non-fatal.
+    // Walk-ins get a "you're on the walk-in list, come back 3pm" email with
+    // their QR embedded, so they have a backup if their phone dies.
+    try {
       const resend = getResendClient();
       if (resend) {
-        const { subject, html } =
-          initialStatus === "waitlisted"
-            ? waitlistReceivedEmail({
-                parentName: body.parentName.trim(),
-                childrenCount: body.children.length,
-              })
-            : registrationReceivedEmail({
-                parentName: body.parentName.trim(),
-                childrenCount: body.children.length,
-              });
-        await resend.emails.send({
-          from: FROM_EMAIL,
-          to: body.parentEmail.trim().toLowerCase(),
-          replyTo: REPLY_TO_EMAIL,
-          subject,
-          html,
-        });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase as any).from("email_logs").insert({
-          registration_id: registrationId,
-          email_type:
-            initialStatus === "waitlisted"
-              ? "back_to_school_waitlist_received"
-              : "back_to_school_registration_received",
-          recipient_email: body.parentEmail.trim().toLowerCase(),
-          subject,
-          sent_at: new Date().toISOString(),
-          status: "sent",
-        });
+        const parentEmail = body.parentEmail.trim().toLowerCase();
+        const parentName = body.parentName.trim();
+        const childrenCount = body.children.length;
+
+        let payload:
+          | {
+              subject: string;
+              html: string;
+              attachments?: Array<{
+                filename: string;
+                content: string;
+                contentId: string;
+              }>;
+            }
+          | null = null;
+        let emailType = "";
+
+        if (isWalkIn && walkInQrToken) {
+          const reference = registrationId.slice(0, 8).toUpperCase();
+          const built = await walkInReceivedEmail({
+            parentName,
+            qrToken: walkInQrToken,
+            reference,
+            childrenCount,
+          });
+          payload = built;
+          emailType = "back_to_school_walkin_received";
+        } else if (initialStatus === "waitlisted") {
+          payload = waitlistReceivedEmail({ parentName, childrenCount });
+          emailType = "back_to_school_waitlist_received";
+        } else {
+          payload = registrationReceivedEmail({ parentName, childrenCount });
+          emailType = "back_to_school_registration_received";
+        }
+
+        if (payload) {
+          await resend.emails.send({
+            from: FROM_EMAIL,
+            to: parentEmail,
+            replyTo: REPLY_TO_EMAIL,
+            subject: payload.subject,
+            html: payload.html,
+            attachments: payload.attachments?.map((a) => ({
+              filename: a.filename,
+              content: a.content,
+              contentId: a.contentId,
+            })),
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).from("email_logs").insert({
+            registration_id: registrationId,
+            email_type: emailType,
+            recipient_email: parentEmail,
+            subject: payload.subject,
+            sent_at: new Date().toISOString(),
+            status: "sent",
+          });
+        }
       }
     } catch (err) {
       console.error("[b2s-register] email error (non-fatal):", err);

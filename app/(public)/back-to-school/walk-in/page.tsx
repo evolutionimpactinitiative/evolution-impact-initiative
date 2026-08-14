@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const revalidate = 0;
 
 interface PageProps {
-  searchParams: Promise<{ k?: string }>;
+  searchParams: Promise<{ k?: string; s?: string }>;
 }
 
 export default async function BackToSchoolWalkInPage({
@@ -26,6 +26,10 @@ export default async function BackToSchoolWalkInPage({
   const expectedKey = (process.env.B2S_WALK_IN_KEY ?? "").trim();
   const keyValid =
     expectedKey.length > 0 && providedKey === expectedKey;
+  // Station 1 assisted mode: a volunteer passes their steward token so
+  // the success screen can offer Print + Register-another. We don't
+  // verify the token here — the print route rejects an invalid one.
+  const stewardToken = (params.s ?? "").trim() || undefined;
 
   return (
     <>
@@ -76,8 +80,12 @@ export default async function BackToSchoolWalkInPage({
           <div className="max-w-3xl mx-auto">
             {keyValid ? (
               <>
+                {stewardToken && <AssistedModeBanner />}
                 <FirstComeFirstServedBanner />
-                <RegisterForm walkInKey={expectedKey} />
+                <RegisterForm
+                  walkInKey={expectedKey}
+                  stewardToken={stewardToken}
+                />
               </>
             ) : (
               <InvalidLink />
@@ -86,6 +94,21 @@ export default async function BackToSchoolWalkInPage({
         </div>
       </section>
     </>
+  );
+}
+
+function AssistedModeBanner() {
+  return (
+    <div className="bg-brand-dark text-white rounded-2xl p-4 mb-4">
+      <p className="text-xs font-heading font-bold uppercase tracking-widest text-brand-accent mb-1">
+        Station 1 · Assisted registration
+      </p>
+      <p className="text-sm text-white/90">
+        You&rsquo;re registering on behalf of a family. When you submit, you
+        can <strong>Print</strong> their ticket and <strong>Register another</strong> —
+        no page reload.
+      </p>
+    </div>
   );
 }
 
