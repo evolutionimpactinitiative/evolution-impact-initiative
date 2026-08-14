@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ImageIcon, ArrowRight, MessageSquare } from "lucide-react";
+import { ImageIcon, MessageSquare } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { galleryPublicUrl } from "@/lib/gallery/storage";
 import type { GalleryAlbum, GalleryImage } from "@/lib/gallery/types";
 import { CreateAlbumButton } from "@/components/admin/gallery/CreateAlbumButton";
+import { SortableAlbumGrid } from "@/components/admin/gallery/SortableAlbumGrid";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -100,67 +100,15 @@ export default async function GalleryAdminPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {albums.map((a) => {
-            const coverPath = a.cover_image_id
-              ? coverById.get(a.cover_image_id)
-              : null;
-            const count = countByAlbum.get(a.id) ?? 0;
-            return (
-              <Link
-                key={a.id}
-                href={`/admin/gallery/albums/${a.slug}`}
-                className="group bg-white rounded-2xl border border-gray-200 hover:border-brand-blue overflow-hidden transition-colors"
-              >
-                <div className="aspect-[4/3] bg-brand-pale/40 relative">
-                  {coverPath ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={galleryPublicUrl(coverPath)}
-                      alt={a.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <ImageIcon className="h-10 w-10" />
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2">
-                    <span
-                      className={
-                        (a.status === "published"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : a.status === "draft"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-gray-100 text-gray-700") +
-                        " inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-heading font-bold uppercase tracking-widest"
-                      }
-                    >
-                      {a.status}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <p className="font-heading font-bold text-brand-dark truncate">
-                    {a.name}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {count} image{count === 1 ? "" : "s"} · /gallery/{a.slug}
-                  </p>
-                  {a.description && (
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                      {a.description}
-                    </p>
-                  )}
-                  <span className="inline-flex items-center gap-1 text-brand-blue text-xs font-heading font-bold uppercase tracking-widest mt-3 group-hover:translate-x-0.5 transition-transform">
-                    Manage
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <SortableAlbumGrid
+          albums={albums.map((a) => ({
+            album: a,
+            count: countByAlbum.get(a.id) ?? 0,
+            coverPath: a.cover_image_id
+              ? coverById.get(a.cover_image_id) ?? null
+              : null,
+          }))}
+        />
       )}
 
       {(uncategorised ?? 0) > 0 && (

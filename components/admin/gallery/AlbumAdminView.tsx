@@ -14,6 +14,7 @@ import {
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { galleryPublicUrl } from "@/lib/gallery/storage";
 import type { GalleryAlbum, GalleryImage } from "@/lib/gallery/types";
+import { SortableImageGrid } from "@/components/admin/gallery/SortableImageGrid";
 
 interface Props {
   album: GalleryAlbum;
@@ -135,19 +136,15 @@ export function AlbumAdminView({ album, images }: Props) {
         </div>
       )}
 
-      {/* Image grid */}
+      {/* Sortable image grid */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {images.map((img) => (
-            <ImageCard
-              key={img.id}
-              image={img}
-              isCover={album.cover_image_id === img.id}
-              onEdit={() => setEditing(img)}
-              onCoverToggle={() => setAsCover(img.id)}
-            />
-          ))}
-        </div>
+        <SortableImageGrid
+          albumId={album.id}
+          images={images}
+          coverImageId={album.cover_image_id}
+          onEdit={(img) => setEditing(img)}
+          onCoverToggle={(id) => setAsCover(id)}
+        />
       )}
 
       {/* Edit sheet */}
@@ -186,67 +183,6 @@ export function AlbumAdminView({ album, images }: Props) {
       // silent — the user can retry
     }
   }
-}
-
-function ImageCard({
-  image,
-  isCover,
-  onEdit,
-  onCoverToggle,
-}: {
-  image: GalleryImage;
-  isCover: boolean;
-  onEdit: () => void;
-  onCoverToggle: () => void;
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden group">
-      <div className="aspect-[4/3] bg-brand-pale/40 relative">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={galleryPublicUrl(image.storage_path)}
-          alt={image.alt_text ?? image.title ?? ""}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-        {isCover && (
-          <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-brand-accent text-brand-dark text-[10px] font-heading font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
-            <Star className="h-3 w-3" />
-            Cover
-          </span>
-        )}
-        {image.status !== "published" && (
-          <span className="absolute top-2 right-2 inline-flex items-center bg-amber-100 text-amber-800 text-[10px] font-heading font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">
-            {image.status}
-          </span>
-        )}
-      </div>
-      <div className="p-2 flex items-center gap-1.5">
-        <p className="flex-1 text-xs text-brand-dark truncate">
-          {image.title || "Untitled"}
-        </p>
-        <button
-          type="button"
-          onClick={onCoverToggle}
-          title="Set as album cover"
-          className={
-            (isCover ? "text-brand-accent " : "text-gray-400 ") +
-            "hover:text-brand-blue p-1"
-          }
-        >
-          <Star className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="text-gray-500 hover:text-brand-blue p-1"
-          title="Edit"
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  );
 }
 
 function EditImageSheet({
