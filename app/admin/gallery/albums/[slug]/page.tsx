@@ -4,6 +4,7 @@ import { ArrowLeft, ImageIcon } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { GalleryAlbum, GalleryImage } from "@/lib/gallery/types";
 import { AlbumAdminView } from "@/components/admin/gallery/AlbumAdminView";
+import { AlbumCoverPicker } from "@/components/admin/gallery/AlbumCoverPicker";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -49,6 +50,8 @@ export default async function AlbumAdminPage({ params }: Props) {
           {images.length === 1 ? "" : "s"} · status {album.status}
         </p>
       </div>
+
+      <AlbumCoverPicker album={album} images={images} />
 
       <AlbumAdminView album={album} images={images} />
 

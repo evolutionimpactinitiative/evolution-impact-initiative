@@ -63,16 +63,17 @@ export default async function AlbumPage({ params }: Props) {
         <div className="container mx-auto max-w-4xl">
           <Link
             href="/gallery"
-            className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-brand-accent mb-4"
+            className="flex w-fit items-center gap-1.5 text-sm text-white/70 hover:text-brand-accent mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             All albums
           </Link>
-          <SectionLabel
-            text={`${images.length} photo${images.length === 1 ? "" : "s"}`}
-            color="brand-accent"
-            className="mb-3"
-          />
+          <div className="mb-3">
+            <SectionLabel
+              text={`${images.length} photo${images.length === 1 ? "" : "s"}`}
+              color="brand-accent"
+            />
+          </div>
           <h1 className="font-heading font-black text-3xl md:text-5xl leading-none mb-3">
             {album.name}
           </h1>
