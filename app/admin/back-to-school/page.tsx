@@ -8,6 +8,7 @@ import {
   Boxes,
   Heart,
   Printer,
+  Radio,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
@@ -434,6 +435,25 @@ export default async function BackToSchoolAdminPage() {
             Bulk-print Friday night after the approval blast.
           </p>
           <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/back-to-school/day-view"
+          className="group bg-white rounded-2xl p-6 border-2 border-brand-green/25 hover:border-brand-green transition-colors"
+        >
+          <Radio className="h-6 w-6 text-brand-green mb-3" />
+          <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
+            Day view (live)
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Big-screen counters for Station 4 on the day — served, still
+            expected, no-shows, low stock, recent activity. Auto-refreshes
+            every 20s.
+          </p>
+          <span className="inline-flex items-center gap-1 text-brand-green font-heading font-bold text-sm uppercase tracking-widest">
             Open
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </span>
