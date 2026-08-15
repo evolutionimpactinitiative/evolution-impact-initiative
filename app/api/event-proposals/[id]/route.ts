@@ -10,11 +10,16 @@ async function requireTeam() {
   if (!user) return { ok: false as const, status: 401 };
   const { data: teamMember } = await supabase
     .from("team_members")
-    .select("id")
+    .select("id, role")
     .eq("email", user.email || "")
     .maybeSingle();
   if (!teamMember) return { ok: false as const, status: 403 };
-  return { ok: true as const, teamMemberId: (teamMember as { id: string }).id };
+  const tm = teamMember as { id: string; role: string | null };
+  return {
+    ok: true as const,
+    teamMemberId: tm.id,
+    role: tm.role,
+  };
 }
 
 // Every column the wizard is allowed to touch. Everything else (status,
@@ -119,8 +124,11 @@ export async function PATCH(
   return NextResponse.json({ success: true });
 }
 
-// DELETE /api/event-proposals/[id] — permanent. Only drafts/rejected can
-// be hard-deleted; anything past submission is preserved as a record.
+// DELETE /api/event-proposals/[id] — permanent. Any team member can bin a
+// draft or rejected proposal; the chair (admin) can bin anything (needed
+// to clean up test data + genuine mistakes). Discussion comments cascade.
+// Note: this does NOT touch the spawned draft event — delete that
+// separately via /admin/events if you want it gone too.
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -138,10 +146,12 @@ export async function DELETE(
     .maybeSingle();
   const status = (current as { status: string } | null)?.status;
   if (!status) return NextResponse.json({ success: true });
-  if (status !== "draft" && status !== "rejected") {
+
+  const isDraftOrRejected = status === "draft" || status === "rejected";
+  if (!isDraftOrRejected && auth.role !== "admin") {
     return NextResponse.json(
-      { error: `Can't delete a ${status} proposal — cancel it instead.` },
-      { status: 409 },
+      { error: `Only the chair can delete a ${status} proposal.` },
+      { status: 403 },
     );
   }
 

@@ -8,6 +8,7 @@ import {
   type ProposalStatus,
 } from "@/lib/event-proposals/types";
 import { NewProposalButton } from "@/components/admin/events/NewProposalButton";
+import { DeleteRowButton } from "@/components/admin/DeleteRowButton";
 
 type Tab = ProposalStatus | "all";
 
@@ -162,11 +163,11 @@ export default async function ProposalsIndex({ searchParams }: PageProps) {
                 ? `/admin/events/proposals/${p.id}/edit`
                 : `/admin/events/proposals/${p.id}`;
             return (
-              <li key={p.id}>
-                <Link
-                  href={editHref}
-                  className="block bg-white rounded-2xl border border-gray-200 hover:border-brand-blue transition-colors p-4"
-                >
+              <li
+                key={p.id}
+                className="relative bg-white rounded-2xl border border-gray-200 hover:border-brand-blue transition-colors"
+              >
+                <Link href={editHref} className="block p-4 pr-14">
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-baseline gap-2 mb-1">
@@ -199,6 +200,18 @@ export default async function ProposalsIndex({ searchParams }: PageProps) {
                     <ArrowRight className="h-4 w-4 text-gray-400 shrink-0 mt-1" />
                   </div>
                 </Link>
+                <div className="absolute top-3 right-3">
+                  <DeleteRowButton
+                    href={`/api/event-proposals/${p.id}`}
+                    entityLabel="proposal"
+                    itemName={p.title}
+                    warning={
+                      p.spawned_event_id
+                        ? "The draft event this proposal spawned will stay. Delete it separately from Events if you want it gone."
+                        : undefined
+                    }
+                  />
+                </div>
               </li>
             );
           })}

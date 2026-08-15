@@ -4,6 +4,7 @@ import { Plus, Calendar, Users, Bell, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Event } from "@/lib/supabase/types";
 import { slotsForRegistration } from "@/lib/events";
+import { DeleteRowButton } from "@/components/admin/DeleteRowButton";
 
 export default async function EventsPage() {
   const supabase = await createClient();
@@ -198,6 +199,16 @@ export default async function EventsPage() {
                     <Button variant="outline" size="sm" asChild className="flex-1">
                       <Link href={`/admin/events/${event.id}`}>Edit</Link>
                     </Button>
+                    <DeleteRowButton
+                      href={`/api/events/${event.id}`}
+                      entityLabel="event"
+                      itemName={event.title}
+                      warning={
+                        counts.confirmed + counts.waitlisted > 0
+                          ? `This will also remove ${counts.confirmed + counts.waitlisted} registration${counts.confirmed + counts.waitlisted === 1 ? "" : "s"}.`
+                          : undefined
+                      }
+                    />
                   </div>
                 </div>
 
@@ -259,6 +270,16 @@ export default async function EventsPage() {
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/admin/events/${event.id}`}>Edit</Link>
                       </Button>
+                      <DeleteRowButton
+                        href={`/api/events/${event.id}`}
+                        entityLabel="event"
+                        itemName={event.title}
+                        warning={
+                          counts.confirmed + counts.waitlisted > 0
+                            ? `This will also remove ${counts.confirmed + counts.waitlisted} registration${counts.confirmed + counts.waitlisted === 1 ? "" : "s"}.`
+                            : undefined
+                        }
+                      />
                     </div>
                   </div>
                 </div>
