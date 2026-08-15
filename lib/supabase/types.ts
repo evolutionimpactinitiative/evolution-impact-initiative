@@ -72,6 +72,7 @@ export interface PlaybookState {
   };
   survey_sent_at?: string;
   debrief_at?: string;
+  debrief_notes?: string;
 }
 
 export interface Database {

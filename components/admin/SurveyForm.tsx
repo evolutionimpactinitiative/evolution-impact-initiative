@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ type SurveyType = "event_feedback" | "activity_interest" | "general";
 
 export function SurveyForm({ survey, events }: SurveyFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const isEditing = !!survey;
 
@@ -31,6 +32,22 @@ export function SurveyForm({ survey, events }: SurveyFormProps) {
     event_id: survey?.event_id || "",
     is_active: survey?.is_active ?? true,
   });
+
+  // Prefill from ?eventId=&title= so the event playbook can deep-link
+  // straight into a pre-configured post-event feedback survey.
+  useEffect(() => {
+    if (isEditing) return;
+    const eid = searchParams.get("eventId");
+    const t = searchParams.get("title");
+    if (eid || t) {
+      setFormData((prev) => ({
+        ...prev,
+        event_id: eid || prev.event_id,
+        title: t || prev.title,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [questions, setQuestions] = useState<SurveyQuestion[]>(
     (survey?.questions as SurveyQuestion[]) || []

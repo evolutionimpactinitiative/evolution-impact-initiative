@@ -122,6 +122,13 @@ export function derivePlaybookSteps(event: Event): StepStatus[] {
     ? SOCIAL_PLATFORMS.filter((p) => state.socials_posted?.[p.key]).length
     : 0;
 
+  // Post-event steps unlock the day of the event (end of day, local UK
+  // time — good enough for a checklist). Compare dates only so we don't
+  // sweat timezone edge cases.
+  const today = new Date();
+  const eventDate = new Date(event.date + "T00:00:00");
+  const eventPast = eventDate.getTime() <= today.getTime();
+
   return [
     {
       key: "designer",
@@ -170,7 +177,39 @@ export function derivePlaybookSteps(event: Event): StepStatus[] {
         ? `${socialsCount} of ${SOCIAL_PLATFORMS.length} platforms posted`
         : "Publish the event first",
     },
+    {
+      key: "survey",
+      label: "Send post-event survey",
+      done: !!state.survey_sent_at,
+      blocked: !eventPast,
+      detail: state.survey_sent_at
+        ? `Sent ${fmtRelative(state.survey_sent_at)}`
+        : eventPast
+          ? "Build the survey and share the link with attendees"
+          : "Unlocks once the event has happened",
+    },
+    {
+      key: "debrief",
+      label: "Team debrief",
+      done: !!state.debrief_at,
+      blocked: !eventPast,
+      detail: state.debrief_at
+        ? `Logged ${fmtRelative(state.debrief_at)}`
+        : eventPast
+          ? "Capture what worked, what didn't, and what to try next time"
+          : "Unlocks once the event has happened",
+    },
   ];
+}
+
+// The URL we deep-link to when the team clicks "Build survey" — pre-selects
+// the event so they don't hunt through the dropdown.
+export function surveyBuilderUrl(event: Event): string {
+  const params = new URLSearchParams({
+    eventId: event.id,
+    title: `${event.title} — post-event feedback`,
+  });
+  return `/admin/surveys/new?${params.toString()}`;
 }
 
 function fmtRelative(iso: string): string {

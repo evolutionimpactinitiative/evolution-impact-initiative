@@ -26,6 +26,8 @@ async function requireTeam() {
 //   { action: 'toggle_social', platform: 'instagram'|'linkedin'|'facebook'|'tiktok' }
 //   { action: 'publish' }                    ← flips events.status → 'published'
 //   { action: 'set_social_image', url: string|null }
+//   { action: 'mark_survey_sent' }
+//   { action: 'save_debrief', notes: string }
 //
 // Team-only. Each action is a targeted write so we never blow away
 // unrelated keys the wizard adds later.
@@ -34,6 +36,7 @@ interface Body {
   action?: string;
   platform?: string;
   url?: string | null;
+  notes?: string;
 }
 
 const SOCIAL_KEYS = new Set<SocialPlatform>(SOCIAL_PLATFORMS.map((p) => p.key));
@@ -107,6 +110,23 @@ export async function POST(
       // Direct column write — no playbook_state change.
       eventUpdate.social_image_url = body.url ?? null;
       break;
+
+    case "mark_survey_sent":
+      next.survey_sent_at = now;
+      break;
+
+    case "save_debrief": {
+      const notes = (body.notes ?? "").trim();
+      if (!notes) {
+        return NextResponse.json({ error: "Debrief notes required" }, { status: 400 });
+      }
+      if (notes.length > 5000) {
+        return NextResponse.json({ error: "Debrief too long" }, { status: 400 });
+      }
+      next.debrief_notes = notes;
+      next.debrief_at = now;
+      break;
+    }
 
     default:
       return NextResponse.json({ error: "Unknown action" }, { status: 400 });

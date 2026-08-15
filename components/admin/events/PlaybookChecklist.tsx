@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Check,
+  ClipboardCheck,
+  ClipboardList,
   Copy,
   ExternalLink,
   ImageIcon,
@@ -24,6 +26,7 @@ import {
   announcementEmailUrl,
   derivePlaybookSteps,
   designerBriefMessage,
+  surveyBuilderUrl,
   whatsAppGroupUrl,
   type SocialPlatform,
 } from "@/lib/events/playbook";
@@ -38,7 +41,9 @@ type Action =
   | "mark_announcement_sent"
   | "toggle_social"
   | "publish"
-  | "set_social_image";
+  | "set_social_image"
+  | "mark_survey_sent"
+  | "save_debrief";
 
 export function PlaybookChecklist({ event: initialEvent, siteOrigin }: Props) {
   const router = useRouter();
@@ -46,6 +51,12 @@ export function PlaybookChecklist({ event: initialEvent, siteOrigin }: Props) {
   const [pending, setPending] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [briefCopied, setBriefCopied] = React.useState(false);
+  const [debriefDraft, setDebriefDraft] = React.useState<string>(
+    initialEvent.playbook_state?.debrief_notes ?? "",
+  );
+  const [editingDebrief, setEditingDebrief] = React.useState<boolean>(
+    !initialEvent.playbook_state?.debrief_at,
+  );
 
   const steps = derivePlaybookSteps(event);
   const doneCount = steps.filter((s) => s.done).length;
@@ -343,6 +354,134 @@ export function PlaybookChecklist({ event: initialEvent, siteOrigin }: Props) {
             );
           })}
         </div>
+      </StepCard>
+
+      {/* Step 6 — Post-event survey */}
+      <StepCard
+        num={6}
+        icon={<ClipboardList className="h-5 w-5" />}
+        title="Send post-event survey"
+        done={steps[5].done}
+        blocked={steps[5].blocked}
+        detail={steps[5].detail}
+      >
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={surveyBuilderUrl(event)}
+            onClick={() => {
+              // Same pattern as the announcement email — mark done as they
+              // hop into the builder.
+              if (!steps[5].done && !steps[5].blocked) {
+                runAction("mark_survey_sent", undefined, "survey-link");
+              }
+            }}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest ${
+              steps[5].blocked
+                ? "bg-gray-100 text-gray-400 pointer-events-none"
+                : "bg-brand-blue text-white hover:bg-brand-dark"
+            }`}
+          >
+            {steps[5].blocked ? (
+              <Lock className="h-4 w-4" />
+            ) : (
+              <ClipboardList className="h-4 w-4" />
+            )}
+            Build survey
+          </Link>
+          {steps[5].done && (
+            <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-md text-sm">
+              <Check className="h-4 w-4" />
+              Marked sent
+            </span>
+          )}
+        </div>
+      </StepCard>
+
+      {/* Step 7 — Debrief */}
+      <StepCard
+        num={7}
+        icon={<ClipboardCheck className="h-5 w-5" />}
+        title="Team debrief"
+        done={steps[6].done}
+        blocked={steps[6].blocked}
+        detail={steps[6].detail}
+      >
+        {steps[6].done && !editingDebrief ? (
+          <div className="space-y-3">
+            <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-sm text-brand-dark whitespace-pre-wrap">
+              {event.playbook_state?.debrief_notes || "(no notes)"}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setDebriefDraft(event.playbook_state?.debrief_notes ?? "");
+                setEditingDebrief(true);
+              }}
+              className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-brand-dark px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:border-brand-blue"
+            >
+              Edit
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              What worked? What didn&rsquo;t? What would you change next time?
+              Keep it short — future-you will thank you.
+            </p>
+            <textarea
+              value={debriefDraft}
+              onChange={(e) => setDebriefDraft(e.target.value)}
+              disabled={!!steps[6].blocked}
+              placeholder="e.g. Turnout stronger than expected. Ran short on snacks. Next time: pre-book a second facilitator."
+              rows={5}
+              maxLength={5000}
+              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 disabled:opacity-50"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={
+                  !!steps[6].blocked ||
+                  !debriefDraft.trim() ||
+                  pending === "save_debrief"
+                }
+                onClick={async () => {
+                  const notes = debriefDraft.trim();
+                  await runAction("save_debrief", { notes });
+                  setEvent((e) => ({
+                    ...e,
+                    playbook_state: {
+                      ...(e.playbook_state ?? {}),
+                      debrief_notes: notes,
+                      debrief_at: new Date().toISOString(),
+                    },
+                  }));
+                  setEditingDebrief(false);
+                }}
+                className="inline-flex items-center gap-1.5 bg-brand-blue text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:bg-brand-dark disabled:opacity-50"
+              >
+                {pending === "save_debrief" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ClipboardCheck className="h-4 w-4" />
+                )}
+                Save debrief
+              </button>
+              {steps[6].done && (
+                <button
+                  type="button"
+                  onClick={() => setEditingDebrief(false)}
+                  className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-brand-dark px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:border-brand-blue"
+                >
+                  Cancel
+                </button>
+              )}
+              <span className="text-xs text-gray-500 ml-auto">
+                {debriefDraft.length}/5000
+              </span>
+            </div>
+          </div>
+        )}
       </StepCard>
     </div>
   );
