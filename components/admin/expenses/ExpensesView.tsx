@@ -102,7 +102,13 @@ export function ExpensesView({
       ).length,
       visible: me.isTreasurer,
     },
-    { key: "all", label: "All", count: expenses.length, visible: true },
+    {
+      // Only chair + treasurer see the firm-wide list; editors just get Mine.
+      key: "all",
+      label: "All",
+      count: expenses.length,
+      visible: me.isChair || me.isTreasurer,
+    },
   ];
   const visibleTabs = tabs.filter((t) => t.visible);
 

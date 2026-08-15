@@ -52,15 +52,22 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
 
   const isChair = me.role === "admin";
   const isTreasurer = !!me.is_treasurer;
+  const canSeeAll = isChair || isTreasurer;
 
   const supabase = createAdminClient();
 
+  // Editors only ever see their own submissions — everyone else sees
+  // the firm-wide queue. Filter server-side so the data never leaves
+  // the DB for the wrong user.
+  const expensesQuery = supabase
+    .from("expense_submissions")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (!canSeeAll) expensesQuery.eq("submitted_by", me.id);
+
   const [expensesRes, teamRes, fundsRes, categoriesRes, accountsRes, eventsRes] =
     await Promise.all([
-      supabase
-        .from("expense_submissions")
-        .select("*")
-        .order("created_at", { ascending: false }),
+      expensesQuery,
       supabase.from("team_members").select("id, name, email"),
       supabase
         .from("funds")
