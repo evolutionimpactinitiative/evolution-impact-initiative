@@ -31,6 +31,7 @@ const TITLE_MAP: Array<{ prefix: string; title: string; exact?: boolean }> = [
   { prefix: "/admin/gallery", title: "Gallery" },
   { prefix: "/admin/festival", title: "Festival 2026" },
   { prefix: "/admin/accounting", title: "Accounting" },
+  { prefix: "/admin/expenses", title: "Expenses" },
   { prefix: "/admin/outcomes", title: "Outcomes" },
   { prefix: "/admin/registrations", title: "All registrations" },
   { prefix: "/admin/donations", title: "Donations" },

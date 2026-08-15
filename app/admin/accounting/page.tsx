@@ -6,6 +6,7 @@ import {
   Wallet,
   Paperclip,
   Lock,
+  ReceiptText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -248,6 +249,12 @@ export default async function AccountingLandingPage() {
             <Link href="/admin/accounting/transactions/new">
               <Plus className="w-4 h-4 mr-2" />
               New transaction
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/admin/expenses">
+              <ReceiptText className="w-4 h-4 mr-2" />
+              Expenses
             </Link>
           </Button>
           <Button variant="outline" asChild>
