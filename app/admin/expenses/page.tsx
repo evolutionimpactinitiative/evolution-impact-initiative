@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ReceiptText } from "lucide-react";
+import { ArrowLeft, CalendarClock, ReceiptText } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type {
@@ -121,6 +121,25 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
             </p>
           </div>
           <NewExpenseButton funds={funds} events={events} />
+        </div>
+      </div>
+
+      {/* Payment schedule banner — visible to everyone so nobody's guessing */}
+      <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-2xl p-4 md:p-5 flex items-start gap-3">
+        <div className="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center shrink-0">
+          <CalendarClock className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-heading font-bold text-brand-dark">
+            Payment run — every Friday, by bank transfer
+          </p>
+          <p className="text-sm text-gray-700 mt-0.5">
+            Submit by <span className="font-bold">Thursday 2pm</span> to make
+            that week&rsquo;s run. Anything approved after Thursday 2pm rolls
+            to the following Friday. Urgent? Tick the box on the form — the
+            treasurer will try to squeeze it in, but same-day isn&rsquo;t
+            guaranteed.
+          </p>
         </div>
       </div>
 

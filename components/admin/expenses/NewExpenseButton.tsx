@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Receipt, Upload, User } from "lucide-react";
+import { AlertTriangle, Loader2, Plus, Receipt, Upload, User, Zap } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { createClient } from "@/lib/supabase/client";
 import type { Fund } from "@/lib/accounting/types";
@@ -29,6 +29,8 @@ export function NewExpenseButton({ funds, events }: Props) {
   const [fundId, setFundId] = React.useState("");
   const [eventId, setEventId] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
+  const [isUrgent, setIsUrgent] = React.useState(false);
+  const [urgentReason, setUrgentReason] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -42,6 +44,8 @@ export function NewExpenseButton({ funds, events }: Props) {
     setFundId("");
     setEventId("");
     setFile(null);
+    setIsUrgent(false);
+    setUrgentReason("");
     setError(null);
   }
 
@@ -84,6 +88,8 @@ export function NewExpenseButton({ funds, events }: Props) {
           event_id: eventId || null,
           receipt_url: receiptUrl,
           receipt_filename: receiptFilename,
+          is_urgent: isUrgent,
+          urgent_reason: isUrgent ? urgentReason.trim() || undefined : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -116,6 +122,15 @@ export function NewExpenseButton({ funds, events }: Props) {
         title="Submit an expense"
       >
         <form onSubmit={submit} className="space-y-3">
+          {/* Payment schedule notice — same wording as the page banner */}
+          <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-md px-3 py-2 text-xs text-brand-dark">
+            <span className="font-heading font-bold uppercase tracking-widest">
+              Payment run:
+            </span>{" "}
+            Fridays, by bank transfer. Submit by{" "}
+            <span className="font-bold">Thursday 2pm</span> to make that week&rsquo;s run.
+          </div>
+
           {/* Kind toggle */}
           <div className="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-lg">
             <button
@@ -295,6 +310,50 @@ export function NewExpenseButton({ funds, events }: Props) {
               )}
             </div>
           </label>
+
+          {/* Urgent flag — off by default */}
+          <div className="border border-gray-200 rounded-md overflow-hidden">
+            <label className="flex items-start gap-2.5 p-3 cursor-pointer hover:bg-gray-50">
+              <input
+                type="checkbox"
+                checked={isUrgent}
+                onChange={(e) => setIsUrgent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-heading font-bold text-brand-dark inline-flex items-center gap-1.5">
+                  <Zap className="h-4 w-4 text-amber-500" />
+                  Mark as urgent
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Ask the treasurer to try paying this outside the Friday run.
+                </p>
+              </div>
+            </label>
+            {isUrgent && (
+              <div className="px-3 pb-3 space-y-2 border-t border-gray-100 pt-3">
+                <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <span>
+                    Same-day payment isn&rsquo;t guaranteed — the treasurer will
+                    try to squeeze it in but the Friday run is still the default.
+                  </span>
+                </div>
+                <label className="block">
+                  <span className="text-xs text-gray-600 font-heading font-bold uppercase tracking-widest">
+                    Why is it urgent? (optional)
+                  </span>
+                  <textarea
+                    value={urgentReason}
+                    onChange={(e) => setUrgentReason(e.target.value)}
+                    rows={2}
+                    placeholder="e.g. Supplier needs paying before event on Wednesday."
+                    className="mt-1 w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
 
           {error && (
             <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">

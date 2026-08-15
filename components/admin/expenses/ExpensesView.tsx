@@ -18,6 +18,7 @@ import {
   Wallet,
   X,
   XCircle,
+  Zap,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { createClient } from "@/lib/supabase/client";
@@ -330,6 +331,15 @@ function ExpenseCard({
                 Dual approval
               </span>
             )}
+            {exp.is_urgent && exp.status !== "paid" && (
+              <span
+                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-heading font-bold uppercase tracking-widest bg-amber-100 text-amber-800"
+                title="Submitter flagged this as urgent"
+              >
+                <Zap className="h-3 w-3" />
+                Urgent
+              </span>
+            )}
           </div>
           <p className="text-sm text-brand-dark">{exp.description}</p>
           <p className="text-xs text-gray-500 mt-1">
@@ -349,6 +359,14 @@ function ExpenseCard({
                 For treasurer:
               </span>
               {exp.payee_notes}
+            </p>
+          )}
+          {exp.is_urgent && exp.urgent_reason && exp.status !== "paid" && (
+            <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 mt-2 whitespace-pre-wrap">
+              <span className="font-heading font-bold uppercase tracking-widest text-amber-700 mr-1">
+                Urgent because:
+              </span>
+              {exp.urgent_reason}
             </p>
           )}
           {exp.rejection_reason && (

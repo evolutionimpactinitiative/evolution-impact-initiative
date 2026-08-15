@@ -21,6 +21,8 @@ export interface ExpenseSubmission {
   event_id: string | null;
   receipt_url: string | null;
   receipt_filename: string | null;
+  is_urgent: boolean;
+  urgent_reason: string | null;
   status: ExpenseStatus;
   chair_approved_by: string | null;
   chair_approved_at: string | null;

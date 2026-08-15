@@ -49,6 +49,12 @@ CREATE TABLE IF NOT EXISTS expense_submissions (
   receipt_url TEXT,
   receipt_filename TEXT,
 
+  -- Urgency flag — submissions default to the weekly Friday run;
+  -- ticking this asks the treasurer to try to pay outside the run
+  -- (no same-day guarantee — communicated in the UI).
+  is_urgent BOOLEAN NOT NULL DEFAULT FALSE,
+  urgent_reason TEXT,
+
   -- Workflow
   status TEXT NOT NULL DEFAULT 'submitted'
     CHECK (status IN ('submitted', 'chair_approved', 'paid', 'rejected')),

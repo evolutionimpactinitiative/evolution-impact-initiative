@@ -32,6 +32,8 @@ interface Body {
   event_id?: string | null;
   receipt_url?: string | null;
   receipt_filename?: string | null;
+  is_urgent?: boolean;
+  urgent_reason?: string;
 }
 
 // POST /api/expenses — create a new submission. Team-only.
@@ -80,6 +82,8 @@ export async function POST(request: NextRequest) {
       event_id: body.event_id || null,
       receipt_url: body.receipt_url || null,
       receipt_filename: body.receipt_filename || null,
+      is_urgent: !!body.is_urgent,
+      urgent_reason: body.urgent_reason?.trim() || null,
       status: "submitted",
     })
     .select("id")
