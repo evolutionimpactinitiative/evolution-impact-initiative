@@ -198,7 +198,7 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
         )}
 
         {families.length > 0 && (
-          <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-4 text-sm text-gray-600">
+          <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-4 text-sm text-gray-600 space-y-2">
             <p>
               <span className="font-heading font-bold text-brand-dark">
                 {totalLabels} label{totalLabels === 1 ? "" : "s"}
@@ -207,6 +207,19 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
               the label printer is loaded with 4×6&Prime; stock, then hit
               <Printer className="h-3.5 w-3.5 inline mx-0.5" /> Print.
             </p>
+            <div className="text-xs text-gray-700 bg-brand-blue/5 border border-brand-blue/20 rounded-md px-3 py-2">
+              <p className="font-heading font-bold uppercase tracking-widest text-brand-blue mb-1">
+                Print dialog settings
+              </p>
+              <p>
+                In the browser print dialog: pick your <b>label printer</b> as
+                destination, set <b>Paper size = 4×6&Prime;</b> (or
+                101.6×152.4mm), <b>Scale = Default</b> or <b>100%</b> (NOT
+                &ldquo;Fit to page&rdquo; — that shrinks everything), and{" "}
+                <b>Margins = None</b>. Turn <b>Background graphics ON</b> so
+                the yellow note highlight prints.
+              </p>
+            </div>
           </div>
         )}
       </div>
