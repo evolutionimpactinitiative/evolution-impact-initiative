@@ -433,9 +433,9 @@ export default async function BackToSchoolAdminPage() {
             Bag labels
           </h3>
           <p className="text-sm text-gray-600 mb-3">
-            One 4×6&Prime; label per child, printed on the thermal label
-            printer. Stick to each bag Friday night — picker scans the QR
-            on the day for the pick list.
+            One 4×6&Prime; label per child on the thermal printer, with
+            that child&rsquo;s pick list on it. Stick to a bag Friday
+            night, then the picker fills straight from the label.
           </p>
           <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
             Open

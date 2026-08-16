@@ -3,7 +3,10 @@ import { AlertTriangle, ArrowLeft } from "lucide-react";
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S_SLUG } from "@/lib/back-to-school";
-import { PickLabel } from "@/components/admin/back-to-school/PickLabel";
+import {
+  PickLabel,
+  type PickLabelChild,
+} from "@/components/admin/back-to-school/PickLabel";
 import { PickTicketAutoPrint } from "@/components/back-to-school/PickTicketAutoPrint";
 import {
   PICK_LABEL_PRINT_STYLES,
@@ -13,19 +16,14 @@ import {
 const PRINT_STYLES =
   PICK_LABEL_PRINT_STYLES + pickLabelPrintMediaRules("single-print-area");
 
-// Station 2 walk-in flow needs enough family data to print a label per
-// child. Kept as a local type — the shared PickLabel component only
-// needs { id, child_name } per child + minimal family fields.
+// Station 2 walk-in flow needs the full child pick-list data since
+// each label now carries the items to grab for that specific child.
 type LabelPrintFamily = {
   id: string;
   parent_name: string;
   status: string;
   qr_token: string | null;
-  registration_children: Array<{
-    id: string;
-    child_name: string;
-    display_order: number;
-  }>;
+  registration_children: Array<PickLabelChild & { display_order: number }>;
 };
 
 interface Props {
@@ -75,7 +73,10 @@ export default async function B2SPrintPage({ params, searchParams }: Props) {
     .from("registrations")
     .select(
       `id, parent_name, status, qr_token,
-       registration_children ( id, child_name, display_order )`,
+       registration_children (
+         id, child_name, child_age, uniform_size, sex, school, needs,
+         uniform_choices, notes, display_order
+       )`,
     )
     .eq("qr_token", qr_token)
     .maybeSingle();
@@ -117,7 +118,7 @@ export default async function B2SPrintPage({ params, searchParams }: Props) {
           {kids.map((c) => (
             <PickLabel
               key={c.id}
-              child={{ id: c.id, child_name: c.child_name }}
+              child={c}
               family={{
                 id: family.id,
                 parent_name: family.parent_name,

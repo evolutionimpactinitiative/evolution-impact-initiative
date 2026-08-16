@@ -18,8 +18,10 @@ import {
 const PRINT_STYLES =
   PICK_LABEL_PRINT_STYLES + pickLabelPrintMediaRules("tickets-print-area");
 
+import type { PickLabelChild } from "@/components/admin/back-to-school/PickLabel";
+
 type LabelFamilyWithChildren = PickLabelFamily & {
-  registration_children: Array<{ id: string; child_name: string; display_order: number }>;
+  registration_children: Array<PickLabelChild & { display_order: number }>;
 };
 
 interface PageProps {
@@ -74,7 +76,10 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
     .from("registrations")
     .select(
       `id, parent_name, status, qr_token,
-       registration_children ( id, child_name, display_order )`,
+       registration_children (
+         id, child_name, child_age, uniform_size, sex, school, needs,
+         uniform_choices, notes, display_order
+       )`,
     )
     .eq("event_id", eventId)
     .in("status", wantedStatuses)
@@ -129,9 +134,10 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
               Bag labels
             </h1>
             <p className="text-sm text-gray-600 mt-1">
-              One 4×6&Prime; label per child, printed on the thermal label
-              printer. Stick to each bag on Friday night; on the day the
-              picker scans the QR to see what to grab for that child.
+              One 4×6&Prime; label per child on the thermal printer, with
+              that child&rsquo;s pick list on it. Stick to a bag Friday
+              night, then the picker fills straight from the label. The QR
+              is for the handout scan at the door.
             </p>
           </div>
           <PrintButton
@@ -214,7 +220,7 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
           return kids.map((c) => (
             <PickLabel
               key={c.id}
-              child={{ id: c.id, child_name: c.child_name }}
+              child={c}
               family={{
                 id: f.id,
                 parent_name: f.parent_name,
