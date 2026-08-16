@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
+import type { TeamMember } from "@/lib/supabase/types";
+import { hatsFor, navVisible } from "@/lib/permissions";
 import {
   LayoutDashboard,
   MoreHorizontal,
@@ -91,10 +93,25 @@ const moreSections: MoreSection[] = [
   },
 ];
 
-export function MobileBottomNav() {
+interface MobileBottomNavProps {
+  teamMember: TeamMember | null;
+}
+
+export function MobileBottomNav({ teamMember }: MobileBottomNavProps) {
   const pathname = usePathname();
   const scrollDirection = useScrollDirection();
   const [showMore, setShowMore] = useState(false);
+  const hats = hatsFor(teamMember);
+
+  // Filter the More sheet by role — restricted sections don't tempt
+  // users who can't open them. Primary bottom-bar entries are all
+  // team-safe today, so no filtering there.
+  const visibleMoreSections = moreSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => item.external || navVisible(hats, item.href)),
+    }))
+    .filter((section) => section.items.length > 0);
 
   const isActive = (href: string, exact = false) => {
     if (exact) return pathname === href;
@@ -133,7 +150,7 @@ export function MobileBottomNav() {
             </button>
           </div>
           <div className="space-y-5 pb-2">
-            {moreSections.map((section) => (
+            {visibleMoreSections.map((section) => (
               <div key={section.label}>
                 <p className="text-[10px] font-heading font-bold uppercase tracking-widest text-gray-500 mb-2 px-2">
                   {section.label}

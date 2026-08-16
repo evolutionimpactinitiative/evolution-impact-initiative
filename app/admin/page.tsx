@@ -10,6 +10,7 @@ import {
   DataCardBadge,
 } from "@/components/admin/DataCard";
 import type { Event, Registration, RegistrationChild } from "@/lib/supabase/types";
+import { hatsFor, canSeeSection } from "@/lib/permissions";
 
 type RegistrationWithRelations = Registration & {
   events: { title: string; date: string } | null;
@@ -18,6 +19,23 @@ type RegistrationWithRelations = Registration & {
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
+
+  // Role-derived visibility — editors don't see money totals on the home
+  // dashboard even though they can reach it.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: meRow } = user
+    ? await supabase
+        .from("team_members")
+        .select("role, is_treasurer")
+        .eq("email", user.email || "")
+        .maybeSingle()
+    : { data: null };
+  const hats = hatsFor(
+    meRow as { role: "admin" | "editor" | "treasurer"; is_treasurer: boolean } | null,
+  );
+  const canSeeMoney = canSeeSection(hats, "money");
 
   // Get upcoming events count
   const { count: upcomingEventsCount } = await supabase
@@ -118,16 +136,18 @@ export default async function AdminDashboard() {
           href="/admin/registrations"
           linkText="View"
         />
-        <StatCard
-          title="Donations"
-          value={`£${(totalDonationsThisMonth / 100).toFixed(0)}`}
-          subtitle="This month"
-          icon="Heart"
-          iconColor="text-red-500"
-          iconBgColor="bg-red-100"
-          href="/admin/donations"
-          linkText="View"
-        />
+        {canSeeMoney && (
+          <StatCard
+            title="Donations"
+            value={`£${(totalDonationsThisMonth / 100).toFixed(0)}`}
+            subtitle="This month"
+            icon="Heart"
+            iconColor="text-red-500"
+            iconBgColor="bg-red-100"
+            href="/admin/donations"
+            linkText="View"
+          />
+        )}
         <StatCard
           title="Subscribers"
           value={activeSubscribersCount || 0}
@@ -148,14 +168,16 @@ export default async function AdminDashboard() {
           href="/admin/surveys"
           linkText="View"
         />
-        <StatCard
-          title="Recurring"
-          value="£0"
-          subtitle="Monthly"
-          icon="TrendingUp"
-          iconColor="text-purple-500"
-          iconBgColor="bg-purple-100"
-        />
+        {canSeeMoney && (
+          <StatCard
+            title="Recurring"
+            value="£0"
+            subtitle="Monthly"
+            icon="TrendingUp"
+            iconColor="text-purple-500"
+            iconBgColor="bg-purple-100"
+          />
+        )}
       </div>
 
       {/* Quick actions - Full width buttons on mobile */}

@@ -37,7 +37,7 @@ export default async function AdminLayout({
         >
           {children}
         </AdminLayoutContent>
-        <MobileBottomNav />
+        <MobileBottomNav teamMember={teamMember} />
       </div>
     </SidebarProvider>
   );

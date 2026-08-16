@@ -84,6 +84,7 @@ export interface Database {
           email: string;
           name: string;
           role: "admin" | "editor" | "treasurer";
+          is_treasurer: boolean;
           avatar_url: string | null;
           created_at: string;
           updated_at: string;
@@ -93,6 +94,7 @@ export interface Database {
           email: string;
           name: string;
           role?: "admin" | "editor" | "treasurer";
+          is_treasurer?: boolean;
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -102,6 +104,7 @@ export interface Database {
           email?: string;
           name?: string;
           role?: "admin" | "editor" | "treasurer";
+          is_treasurer?: boolean;
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;

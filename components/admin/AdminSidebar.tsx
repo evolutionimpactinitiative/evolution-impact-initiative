@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/SidebarContext";
 import type { User } from "@supabase/supabase-js";
 import type { TeamMember } from "@/lib/supabase/types";
+import { hatsFor, navVisible } from "@/lib/permissions";
 import {
   LayoutDashboard,
   Calendar,
@@ -24,6 +25,7 @@ import {
   Activity,
   Backpack,
   Image as ImageIcon,
+  ReceiptText,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -37,6 +39,7 @@ const navigation = [
   { name: "Festival 2026", href: "/admin/festival/vendors", icon: Sparkles },
   { name: "Back to School", href: "/admin/back-to-school", icon: Backpack },
   { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
+  { name: "Expenses", href: "/admin/expenses", icon: ReceiptText },
   { name: "Accounting", href: "/admin/accounting", icon: Calculator },
   { name: "Outcomes", href: "/admin/outcomes", icon: Activity },
   { name: "Registrations", href: "/admin/registrations", icon: Users },
@@ -50,6 +53,15 @@ const navigation = [
 export function AdminSidebar({ user, teamMember }: AdminSidebarProps) {
   const pathname = usePathname();
   const { isCollapsed, toggleCollapsed } = useSidebar();
+  const hats = hatsFor(teamMember);
+  const visibleNav = navigation.filter((item) => navVisible(hats, item.href));
+  const roleLabel = hats.isChair
+    ? hats.isTreasurer
+      ? "Chair + Treasurer"
+      : "Administrator"
+    : hats.isTreasurer
+      ? "Treasurer"
+      : "Editor";
 
   return (
     <>
@@ -116,7 +128,7 @@ export function AdminSidebar({ user, teamMember }: AdminSidebarProps) {
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
                 <ul role="list" className={cn("-mx-2 space-y-1", isCollapsed && "mx-0")}>
-                  {navigation.map((item) => {
+                  {visibleNav.map((item) => {
                     const isActive =
                       pathname === item.href ||
                       (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -188,11 +200,7 @@ export function AdminSidebar({ user, teamMember }: AdminSidebarProps) {
                         {teamMember?.name || "Team Member"}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {teamMember?.role === "admin"
-                          ? "Administrator"
-                          : teamMember?.role === "treasurer"
-                          ? "Treasurer"
-                          : "Editor"}
+                        {roleLabel}
                       </p>
                     </div>
                   </div>
