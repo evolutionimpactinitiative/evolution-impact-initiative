@@ -430,11 +430,12 @@ export default async function BackToSchoolAdminPage() {
         >
           <Printer className="h-6 w-6 text-brand-blue mb-3" />
           <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
-            Pick tickets
+            Bag labels
           </h3>
           <p className="text-sm text-gray-600 mb-3">
-            One printable A5 ticket per family, for the runners on the day.
-            Bulk-print Friday night after the approval blast.
+            One 4×6&Prime; label per child, printed on the thermal label
+            printer. Stick to each bag Friday night — picker scans the QR
+            on the day for the pick list.
           </p>
           <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
             Open

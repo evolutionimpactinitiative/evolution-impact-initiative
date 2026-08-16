@@ -2,21 +2,25 @@ import Link from "next/link";
 import { ArrowLeft, Printer, AlertTriangle } from "lucide-react";
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { B2S, B2S_SLUG } from "@/lib/back-to-school";
+import { B2S_SLUG } from "@/lib/back-to-school";
 import {
-  PickTicket,
-  type PickTicketFamily,
-} from "@/components/admin/back-to-school/PickTicket";
+  PickLabel,
+  type PickLabelFamily,
+} from "@/components/admin/back-to-school/PickLabel";
 import { PrintButton } from "@/components/admin/back-to-school/PrintButton";
 import {
-  PICK_TICKET_PRINT_STYLES,
-  pickTicketPrintMediaRules,
-} from "@/lib/back-to-school/pick-ticket-styles";
+  PICK_LABEL_PRINT_STYLES,
+  pickLabelPrintMediaRules,
+} from "@/lib/back-to-school/pick-label-styles";
 
-// Full stylesheet = base ticket styles (shared) + @media print rules keyed
-// to this page's print-area container.
+// One 4×6" label per child (thermal-printer sized). Sticks to the bag;
+// picker scans the QR to see what to grab.
 const PRINT_STYLES =
-  PICK_TICKET_PRINT_STYLES + pickTicketPrintMediaRules("tickets-print-area");
+  PICK_LABEL_PRINT_STYLES + pickLabelPrintMediaRules("tickets-print-area");
+
+type LabelFamilyWithChildren = PickLabelFamily & {
+  registration_children: Array<{ id: string; child_name: string; display_order: number }>;
+};
 
 interface PageProps {
   searchParams: Promise<{ status?: string }>;
@@ -69,22 +73,22 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
   const { data: regs } = await supabase
     .from("registrations")
     .select(
-      `id, parent_name, parent_email, parent_phone, parent_postcode,
-       status, qr_token,
-       registration_children (
-         id, child_name, child_age, uniform_size, sex, school, needs,
-         uniform_choices, notes, display_order
-       )`,
+      `id, parent_name, status, qr_token,
+       registration_children ( id, child_name, display_order )`,
     )
     .eq("event_id", eventId)
     .in("status", wantedStatuses)
     .order("parent_name", { ascending: true });
 
-  const families = (regs as PickTicketFamily[] | null) ?? [];
+  const families = (regs as LabelFamilyWithChildren[] | null) ?? [];
+  const totalLabels = families.reduce(
+    (n, f) => n + (f.registration_children?.length ?? 0),
+    0,
+  );
 
   // Build a QR data-URL per family. Families without a qr_token get a
-  // placeholder — those need the send-approval blast to run first (Friday 6pm)
-  // or a walk-in registration to complete.
+  // placeholder — those need the send-approval blast to run first
+  // (Friday 6pm) or a walk-in registration to complete.
   const BASE_URL =
     process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
   const qrByFamily = new Map<string, string | null>();
@@ -96,7 +100,7 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
       }
       const url = `${BASE_URL}/b2s/verify/${f.qr_token}`;
       const src = await QRCode.toDataURL(url, {
-        width: 200,
+        width: 500,       // bigger since the label QR renders at 60mm
         margin: 1,
         errorCorrectionLevel: "M",
         color: { dark: "#111111", light: "#FFFFFF" },
@@ -122,15 +126,16 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-heading font-black text-brand-dark">
-              Pick tickets
+              Bag labels
             </h1>
             <p className="text-sm text-gray-600 mt-1">
-              One A5 ticket per family. Bulk-print Friday night after the
-              approval blast, then hand to the pick team on Saturday morning.
+              One 4×6&Prime; label per child, printed on the thermal label
+              printer. Stick to each bag on Friday night; on the day the
+              picker scans the QR to see what to grab for that child.
             </p>
           </div>
           <PrintButton
-            label={`Print ${families.length} ticket${families.length === 1 ? "" : "s"}`}
+            label={`Print ${totalLabels} label${totalLabels === 1 ? "" : "s"}`}
           />
         </div>
 
@@ -190,24 +195,36 @@ export default async function B2STicketsPage({ searchParams }: PageProps) {
           <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-4 text-sm text-gray-600">
             <p>
               <span className="font-heading font-bold text-brand-dark">
-                {families.length} ticket{families.length === 1 ? "" : "s"}
+                {totalLabels} label{totalLabels === 1 ? "" : "s"}
               </span>{" "}
-              queued to print · roughly {families.length} sheets of A5. Preview
-              below then hit <Printer className="h-3.5 w-3.5 inline mx-0.5" /> Print.
+              queued to print for {families.length} famil{families.length === 1 ? "y" : "ies"}. Make sure
+              the label printer is loaded with 4×6&Prime; stock, then hit
+              <Printer className="h-3.5 w-3.5 inline mx-0.5" /> Print.
             </p>
           </div>
         )}
       </div>
 
-      {/* Print area */}
+      {/* Print area — one label per child, families grouped for tidy preview */}
       <div id="tickets-print-area">
-        {families.map((f) => (
-          <PickTicket
-            key={f.id}
-            family={f}
-            qrDataUrl={qrByFamily.get(f.id) ?? null}
-          />
-        ))}
+        {families.flatMap((f) => {
+          const kids = [...(f.registration_children ?? [])].sort(
+            (a, b) => a.display_order - b.display_order,
+          );
+          return kids.map((c) => (
+            <PickLabel
+              key={c.id}
+              child={{ id: c.id, child_name: c.child_name }}
+              family={{
+                id: f.id,
+                parent_name: f.parent_name,
+                status: f.status,
+                qr_token: f.qr_token,
+              }}
+              qrDataUrl={qrByFamily.get(f.id) ?? null}
+            />
+          ));
+        })}
       </div>
     </div>
   );

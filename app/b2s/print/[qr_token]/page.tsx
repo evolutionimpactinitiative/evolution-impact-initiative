@@ -3,18 +3,30 @@ import { AlertTriangle, ArrowLeft } from "lucide-react";
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S_SLUG } from "@/lib/back-to-school";
-import {
-  PickTicket,
-  type PickTicketFamily,
-} from "@/components/admin/back-to-school/PickTicket";
+import { PickLabel } from "@/components/admin/back-to-school/PickLabel";
 import { PickTicketAutoPrint } from "@/components/back-to-school/PickTicketAutoPrint";
 import {
-  PICK_TICKET_PRINT_STYLES,
-  pickTicketPrintMediaRules,
-} from "@/lib/back-to-school/pick-ticket-styles";
+  PICK_LABEL_PRINT_STYLES,
+  pickLabelPrintMediaRules,
+} from "@/lib/back-to-school/pick-label-styles";
 
 const PRINT_STYLES =
-  PICK_TICKET_PRINT_STYLES + pickTicketPrintMediaRules("single-print-area");
+  PICK_LABEL_PRINT_STYLES + pickLabelPrintMediaRules("single-print-area");
+
+// Station 2 walk-in flow needs enough family data to print a label per
+// child. Kept as a local type — the shared PickLabel component only
+// needs { id, child_name } per child + minimal family fields.
+type LabelPrintFamily = {
+  id: string;
+  parent_name: string;
+  status: string;
+  qr_token: string | null;
+  registration_children: Array<{
+    id: string;
+    child_name: string;
+    display_order: number;
+  }>;
+};
 
 interface Props {
   params: Promise<{ qr_token: string }>;
@@ -62,17 +74,13 @@ export default async function B2SPrintPage({ params, searchParams }: Props) {
   const { data: reg } = await supabase
     .from("registrations")
     .select(
-      `id, parent_name, parent_email, parent_phone, parent_postcode,
-       status, qr_token,
-       registration_children (
-         id, child_name, child_age, uniform_size, sex, school, needs,
-         uniform_choices, notes, display_order
-       )`,
+      `id, parent_name, status, qr_token,
+       registration_children ( id, child_name, display_order )`,
     )
     .eq("qr_token", qr_token)
     .maybeSingle();
 
-  const family = reg as PickTicketFamily | null;
+  const family = reg as LabelPrintFamily | null;
   if (!family) {
     return <ErrorState message="QR not recognised — no family found." />;
   }
@@ -82,7 +90,7 @@ export default async function B2SPrintPage({ params, searchParams }: Props) {
   const qrDataUrl = await QRCode.toDataURL(
     `${BASE_URL}/b2s/verify/${family.qr_token}`,
     {
-      width: 200,
+      width: 500,           // bigger — label QR renders at 60mm
       margin: 1,
       errorCorrectionLevel: "M",
       color: { dark: "#111111", light: "#FFFFFF" },
@@ -90,6 +98,9 @@ export default async function B2SPrintPage({ params, searchParams }: Props) {
   );
 
   const scannerHref = `/b2s/scan/${encodeURIComponent(stewardToken)}?mode=checkin`;
+  const kids = [...(family.registration_children ?? [])].sort(
+    (a, b) => a.display_order - b.display_order,
+  );
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-6 md:py-10">
@@ -98,11 +109,24 @@ export default async function B2SPrintPage({ params, searchParams }: Props) {
       <div className="max-w-2xl mx-auto space-y-4">
         <PickTicketAutoPrint
           scannerHref={scannerHref}
-          familyLabel={family.parent_name}
+          familyLabel={`${family.parent_name} · ${kids.length} label${kids.length === 1 ? "" : "s"}`}
         />
 
+        {/* One 4×6" label per child */}
         <div id="single-print-area">
-          <PickTicket family={family} qrDataUrl={qrDataUrl} />
+          {kids.map((c) => (
+            <PickLabel
+              key={c.id}
+              child={{ id: c.id, child_name: c.child_name }}
+              family={{
+                id: family.id,
+                parent_name: family.parent_name,
+                status: family.status,
+                qr_token: family.qr_token,
+              }}
+              qrDataUrl={qrDataUrl}
+            />
+          ))}
         </div>
       </div>
     </div>
