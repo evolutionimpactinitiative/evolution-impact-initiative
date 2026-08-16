@@ -1,11 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import { Settings, Users, Bell, Shield } from "lucide-react";
+import { Users, Bell, Shield } from "lucide-react";
+import { TreasurerToggle } from "@/components/admin/settings/TreasurerToggle";
 
 type TeamMember = {
   id: string;
   name: string;
   email: string;
   role: string;
+  is_treasurer: boolean;
   created_at: string;
 };
 
@@ -54,35 +56,46 @@ export default async function SettingsPage() {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-gray-900 truncate">{member.name}</p>
-                    <span
-                      className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
-                        member.role === "admin"
-                          ? "bg-purple-100 text-purple-700"
-                          : member.role === "treasurer"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {member.role === "admin"
-                        ? "Admin"
-                        : member.role === "treasurer"
-                        ? "Treasurer"
-                        : "Editor"}
-                    </span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-gray-900 truncate">{member.name}</p>
+                        <span
+                          className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
+                            member.role === "admin"
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {member.role === "admin" ? "Chair" : "Editor"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 truncate mt-0.5">{member.email}</p>
+                    </div>
+                    <TreasurerToggle
+                      memberId={member.id}
+                      memberName={member.name}
+                      isTreasurer={!!member.is_treasurer}
+                    />
                   </div>
-                  <p className="text-sm text-gray-500 truncate mt-0.5">{member.email}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="p-4 bg-gray-50 border-t border-gray-200">
+        <div className="p-4 bg-gray-50 border-t border-gray-200 space-y-1">
+          <p className="text-sm text-gray-600">
+            <span className="font-heading font-bold uppercase tracking-widest text-gray-500 text-xs mr-1">
+              Treasurer:
+            </span>
+            controls who can co-approve payments ≥ £500 and mark expenses paid.
+            Multiple treasurers allowed — the same person can&rsquo;t be both
+            approvers on a single expense.
+          </p>
           <p className="text-sm text-gray-500">
-            To add or remove team members, please contact your administrator or update the
-            database directly in Supabase.
+            To add or remove team members, or to change roles between chair /
+            editor, update the database directly in Supabase for now.
           </p>
         </div>
       </div>
