@@ -200,6 +200,20 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
     0,
   );
 
+  // Shortfall-if-waitlist-promoted: rebuild the gap using active + waitlist
+  // demand so the user can see the *real* exposure without flipping the
+  // toggle. Only interesting if a waitlist actually exists.
+  const combinedDemand = new Map(activeDemand);
+  for (const [k, v] of waitlistDemand.entries()) {
+    combinedDemand.set(k, (combinedDemand.get(k) ?? 0) + v);
+  }
+  const combinedMatrix = buildMatrix(stockRows, combinedDemand);
+  const totalGapWithWaitlist = combinedMatrix.reduce(
+    (s, g) => s + Math.max(0, g.totalRequested - g.totalStock),
+    0,
+  );
+  const extraGapFromWaitlist = totalGapWithWaitlist - totalGap;
+
   // Category counts (unfiltered, so tabs always show accurate counts).
   const categoryCounts: Record<string, number> = { all: matrix.length };
   for (const g of matrix) {
@@ -391,7 +405,19 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
           value={totalGap}
           icon={<AlertTriangle className="h-5 w-5" />}
           tone={totalGap > 0 ? "red" : "gray"}
-          subtitle={totalGap > 0 ? "items short of demand" : "we're covered"}
+          subtitle={
+            totalGap > 0
+              ? "items short of demand (excludes waitlist)"
+              : "we're covered (excludes waitlist)"
+          }
+          secondary={
+            extraGapFromWaitlist > 0
+              ? {
+                  label: `+${extraGapFromWaitlist} more if the waitlist is promoted`,
+                  tone: "amber",
+                }
+              : undefined
+          }
         />
         <StatTile
           title="Unique SKUs"
@@ -508,12 +534,16 @@ function StatTile({
   icon,
   tone,
   subtitle,
+  secondary,
 }: {
   title: string;
   value: number;
   icon: React.ReactNode;
   tone: "blue" | "green" | "red" | "gray" | "amber";
   subtitle?: string;
+  // Optional secondary line — used to show a "waitlist-included" figure
+  // beside the primary count so the user can see both at once.
+  secondary?: { label: string; tone?: "amber" | "red" | "gray" };
 }) {
   const tones: Record<string, { bg: string; text: string }> = {
     blue: { bg: "bg-brand-blue/10", text: "text-brand-blue" },
@@ -522,7 +552,13 @@ function StatTile({
     gray: { bg: "bg-gray-100", text: "text-gray-600" },
     amber: { bg: "bg-amber-100", text: "text-amber-800" },
   };
+  const secondaryTones: Record<string, string> = {
+    amber: "bg-amber-50 text-amber-800 border-amber-200",
+    red: "bg-red-50 text-red-700 border-red-200",
+    gray: "bg-gray-50 text-gray-600 border-gray-200",
+  };
   const t = tones[tone];
+  const sTone = secondaryTones[secondary?.tone ?? "amber"];
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 lg:p-6">
       <div className="flex items-start justify-between">
@@ -533,6 +569,13 @@ function StatTile({
           </p>
           {subtitle && (
             <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
+          )}
+          {secondary && (
+            <p
+              className={`inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-md border ${sTone}`}
+            >
+              {secondary.label}
+            </p>
           )}
         </div>
         <div
