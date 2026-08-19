@@ -19,6 +19,11 @@ import { StatCard } from "@/components/admin/StatCard";
 import { QrShareCard } from "@/components/admin/QrShareCard";
 import { RegistrationModeToggle } from "@/components/admin/back-to-school/RegistrationModeToggle";
 
+// Live totals (donations, registrations, stock) need to reflect DB
+// state as of THIS request — don't let Next.js cache the render.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function BackToSchoolAdminPage() {
   const supabase = createAdminClient();
 
