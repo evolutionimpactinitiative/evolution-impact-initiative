@@ -293,11 +293,14 @@ function StockCell(props: CellProps) {
         className={`w-full min-w-[52px] px-1 py-1.5 rounded-md text-xs leading-tight border transition-colors ${
           isEmpty
             ? "border-transparent hover:border-gray-200 text-gray-300 hover:text-gray-600"
-            : gap < 0
+            : effective.shortfall > 0
               ? "border-red-100 bg-red-50 hover:bg-red-100 text-red-900"
-              : gap > 0 || displayReq > 0
-                ? "border-emerald-100 bg-emerald-50 hover:bg-emerald-100 text-emerald-900"
-                : "border-gray-100 bg-white hover:bg-gray-50 text-brand-dark"
+              : hasAllocs
+                ? // Covered / affected by a substitution — amber tells the
+                  // team "the numbers here come from a swap, not the raw
+                  // stock line".
+                  "border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-900"
+                : "border-emerald-100 bg-emerald-50 hover:bg-emerald-100 text-emerald-900"
         }`}
         aria-label={`Adjust stock for ${props.category} size ${props.size}`}
       >
@@ -312,14 +315,6 @@ function StockCell(props: CellProps) {
                 +{props.reserved}
               </div>
             ) : null}
-            {hasAllocs && (
-              <div
-                className="text-[10px] mt-0.5 font-heading font-bold text-brand-blue bg-brand-blue/10 rounded-full px-1.5 leading-tight"
-                title={`${cellAllocs.length} substitution${cellAllocs.length === 1 ? "" : "s"}`}
-              >
-                ⇄ {cellAllocs.length}
-              </div>
-            )}
           </>
         )}
       </button>

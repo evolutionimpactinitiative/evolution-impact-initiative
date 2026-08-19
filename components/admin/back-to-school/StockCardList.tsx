@@ -285,15 +285,17 @@ function SizeRow(props: SizeRowProps) {
   );
   const displayStock = effective.freeStock;
   const displayReq = effective.uncovered;
-  const gap = displayStock - displayReq;
-  const tone =
-    gap < 0
-      ? "text-red-700"
-      : gap > 0
-        ? "text-emerald-700"
-        : "text-gray-500";
   const canSubstitute = effective.shortfall > 0 || effective.surplus > 0;
   const hasAllocs = rowAllocs.length > 0;
+  const gap = displayStock - displayReq;
+  const tone =
+    effective.shortfall > 0
+      ? "text-red-700"
+      : hasAllocs
+        ? "text-amber-700"
+        : displayStock > 0 || displayReq > 0
+          ? "text-emerald-700"
+          : "text-gray-500";
 
   async function submit(sign: 1 | -1) {
     if (!Number.isFinite(delta) || delta < 1) return;
@@ -326,7 +328,7 @@ function SizeRow(props: SizeRowProps) {
   }
 
   return (
-    <li>
+    <li className={hasAllocs ? "bg-amber-50" : ""}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -370,14 +372,6 @@ function SizeRow(props: SizeRowProps) {
               title="Reserved via shopping list"
             >
               +{props.reserved}
-            </span>
-          )}
-          {hasAllocs && (
-            <span
-              className="text-[10px] font-heading font-bold text-brand-blue bg-brand-blue/10 px-1.5 py-0.5 rounded-full"
-              title={`${rowAllocs.length} substitution${rowAllocs.length === 1 ? "" : "s"}`}
-            >
-              ⇄ {rowAllocs.length}
             </span>
           )}
           <span className={`ml-auto text-xs font-heading font-bold ${tone}`}>
