@@ -5,6 +5,7 @@ import {
   TrendingDown,
   AlertTriangle,
   Clock,
+  Download,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S_SLUG, UNIFORM_SIZES } from "@/lib/back-to-school";
@@ -367,7 +368,18 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
             with the gap in red or green.
           </p>
         </div>
-        <AddStockButton />
+        <div className="flex flex-wrap gap-2">
+          <a
+            href="/api/back-to-school/stock/export"
+            download
+            className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-brand-dark px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:border-brand-blue"
+            title="Download a CSV of every SKU × size with stock, demand, and shortfall"
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </a>
+          <AddStockButton />
+        </div>
       </div>
 
       {/* Header shown only in print — cheap, prints the drive name */}
