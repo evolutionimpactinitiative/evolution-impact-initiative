@@ -201,6 +201,133 @@ export function groupNetSurplus(group: MatrixGroup): number {
   return group.totalStock - group.totalRequested;
 }
 
+// ─── Allocations ───────────────────────────────────────────────────
+// A record of "N units of the FROM sku have been earmarked to cover
+// demand for the TO sku". Persisted in `back_to_school_stock_allocations`.
+// Effect on displayed numbers (applied at read time):
+//   FROM cell:  free_stock decreases (that stock is reserved)
+//   TO   cell:  demand covered increases (that request is fulfilled)
+
+export interface StockAllocation {
+  id: string;
+  category: StockCategory;
+  from_colour: StockColour;
+  from_sleeve: StockSleeve;
+  from_fit: StockFit;
+  from_size: string;
+  to_colour: StockColour;
+  to_sleeve: StockSleeve;
+  to_fit: StockFit;
+  to_size: string;
+  qty: number;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+// Aggregated allocation totals for a single cell — sums across all
+// allocations touching this SKU on either side.
+export interface CellAllocationSummary {
+  outQty: number; // units earmarked FROM this cell to cover other cells
+  inQty: number;  // units of demand for this cell being covered by others
+}
+
+// Index allocations by cell key for fast lookup during matrix rendering.
+export interface AllocationIndex {
+  byCell: Map<string, CellAllocationSummary>;
+  // Full list — useful for the modal that shows the audit trail.
+  all: StockAllocation[];
+}
+
+export function indexAllocations(rows: StockAllocation[]): AllocationIndex {
+  const byCell = new Map<string, CellAllocationSummary>();
+  const bump = (key: string, patch: Partial<CellAllocationSummary>) => {
+    const cur = byCell.get(key) ?? { outQty: 0, inQty: 0 };
+    byCell.set(key, {
+      outQty: cur.outQty + (patch.outQty ?? 0),
+      inQty: cur.inQty + (patch.inQty ?? 0),
+    });
+  };
+  for (const a of rows) {
+    const fromKey = skuCellKey({
+      category: a.category,
+      colour: a.from_colour,
+      sleeve: a.from_sleeve,
+      fit: a.from_fit,
+      size: a.from_size,
+    });
+    const toKey = skuCellKey({
+      category: a.category,
+      colour: a.to_colour,
+      sleeve: a.to_sleeve,
+      fit: a.to_fit,
+      size: a.to_size,
+    });
+    bump(fromKey, { outQty: a.qty });
+    bump(toKey, { inQty: a.qty });
+  }
+  return { byCell, all: rows };
+}
+
+// Effective view of a single cell after allocations. Use this everywhere
+// we compute shortfall / free stock so the UI + shopping list stay
+// consistent.
+export interface EffectiveCell {
+  stock: number;         // raw stock on the row
+  requested: number;     // raw demand
+  outAllocated: number;  // stock earmarked out to other SKUs
+  inAllocated: number;   // demand covered by other SKUs
+  freeStock: number;     // stock still available (stock - outAllocated)
+  uncovered: number;     // demand still to satisfy (max(0, requested - inAllocated))
+  shortfall: number;     // items still to buy (max(0, uncovered - freeStock))
+  surplus: number;       // items free after covering own demand (max(0, freeStock - uncovered))
+}
+
+export function effectiveCell(
+  cell: { stock: number; requested: number } | undefined,
+  cellKey: string,
+  index: AllocationIndex,
+): EffectiveCell {
+  const stock = cell?.stock ?? 0;
+  const requested = cell?.requested ?? 0;
+  const summary = index.byCell.get(cellKey) ?? { outQty: 0, inQty: 0 };
+  const outAllocated = summary.outQty;
+  const inAllocated = summary.inQty;
+  const freeStock = Math.max(0, stock - outAllocated);
+  const uncovered = Math.max(0, requested - inAllocated);
+  const shortfall = Math.max(0, uncovered - freeStock);
+  const surplus = Math.max(0, freeStock - uncovered);
+  return {
+    stock,
+    requested,
+    outAllocated,
+    inAllocated,
+    freeStock,
+    uncovered,
+    shortfall,
+    surplus,
+  };
+}
+
+// Sum of TRUE shortfall for a group, allocations applied.
+export function groupShortfallEffective(
+  group: MatrixGroup,
+  index: AllocationIndex,
+): number {
+  let sum = 0;
+  for (const [size, cell] of group.cells.entries()) {
+    const key = skuCellKey({
+      category: group.category,
+      colour: group.colour,
+      sleeve: group.sleeve,
+      fit: group.fit,
+      size,
+    });
+    sum += effectiveCell(cell, key, index).shortfall;
+  }
+  return sum;
+}
+
 export function buildMatrix(
   stockRows: StockRow[],
   demand: Map<string, number>,

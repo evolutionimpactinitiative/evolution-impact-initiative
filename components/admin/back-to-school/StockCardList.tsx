@@ -1,19 +1,28 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, ChevronUp, Plus, Minus, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Minus, Loader2, Shuffle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
-  groupShortfall,
+  effectiveCell,
+  groupShortfallEffective,
+  indexAllocations,
   skuCellKey,
   type MatrixGroup,
+  type StockAllocation,
 } from "@/lib/back-to-school-stock";
+import {
+  AllocationSheet,
+  type EffectiveCellRow,
+} from "./AllocationSheet";
 
 interface Props {
   groups: MatrixGroup[];
   visibleSizes?: readonly string[];
   cellMask?: Set<string> | null;
   reservedMap?: Map<string, number>;
+  allocations?: StockAllocation[];
+  allEffectiveCells?: EffectiveCellRow[];
 }
 
 // Mobile-friendly alternative to the item×size matrix. Renders each SKU
@@ -23,6 +32,8 @@ export function StockCardList({
   visibleSizes,
   cellMask,
   reservedMap,
+  allocations,
+  allEffectiveCells,
 }: Props) {
   return (
     <div className="space-y-3">
@@ -33,6 +44,8 @@ export function StockCardList({
           visibleSizes={visibleSizes}
           cellMask={cellMask ?? null}
           reservedMap={reservedMap ?? null}
+          allocations={allocations ?? []}
+          allEffectiveCells={allEffectiveCells ?? []}
         />
       ))}
     </div>
@@ -44,17 +57,43 @@ function StockCard({
   visibleSizes,
   cellMask,
   reservedMap,
+  allocations,
+  allEffectiveCells,
 }: {
   group: MatrixGroup;
   visibleSizes?: readonly string[];
   cellMask: Set<string> | null;
   reservedMap: Map<string, number> | null;
+  allocations: StockAllocation[];
+  allEffectiveCells: EffectiveCellRow[];
 }) {
   const [expanded, setExpanded] = React.useState(false);
-  // Per-cell shortfall (true) + net surplus (indicative). We show
-  // shortfall first if any size is short — a positive net surplus can
-  // hide a per-size shortage inside the same group.
-  const shortfall = groupShortfall(group);
+
+  // Allocations scoped to this group (both directions).
+  const groupAllocations = React.useMemo(
+    () =>
+      allocations.filter(
+        (a) =>
+          a.category === group.category &&
+          (((a.from_colour === group.colour &&
+            a.from_fit === group.fit &&
+            (a.from_sleeve ?? "") === (group.sleeve ?? "")) &&
+            group.cells.has(a.from_size)) ||
+            ((a.to_colour === group.colour &&
+              a.to_fit === group.fit &&
+              (a.to_sleeve ?? "") === (group.sleeve ?? "")) &&
+              group.cells.has(a.to_size))),
+      ),
+    [allocations, group],
+  );
+
+  // Effective shortfall reflecting allocations (so the row pill matches
+  // the top-of-page tile).
+  const groupIdx = React.useMemo(
+    () => indexAllocations(groupAllocations),
+    [groupAllocations],
+  );
+  const shortfall = groupShortfallEffective(group, groupIdx);
   const netSurplus = group.totalStock - group.totalRequested;
 
   // Only show cells whose mask allows them and (either have stock or demand
@@ -166,19 +205,43 @@ function StockCard({
             </p>
           ) : (
             <ul className="divide-y divide-gray-100 bg-white rounded-xl overflow-hidden">
-              {cells.map((c) => (
-                <SizeRow
-                  key={c.size}
-                  category={group.category}
-                  colour={group.colour}
-                  sleeve={group.sleeve}
-                  fit={group.fit}
-                  size={c.size}
-                  stock={c.stock}
-                  requested={c.requested}
-                  reserved={c.reserved}
-                />
-              ))}
+              {cells.map((c) => {
+                const cellKey = skuCellKey({
+                  category: group.category,
+                  colour: group.colour,
+                  sleeve: group.sleeve,
+                  fit: group.fit,
+                  size: c.size,
+                });
+                const rowAllocs = groupAllocations.filter(
+                  (a) =>
+                    (a.from_size === c.size &&
+                      a.from_colour === group.colour &&
+                      a.from_fit === group.fit &&
+                      (a.from_sleeve ?? "") === (group.sleeve ?? "")) ||
+                    (a.to_size === c.size &&
+                      a.to_colour === group.colour &&
+                      a.to_fit === group.fit &&
+                      (a.to_sleeve ?? "") === (group.sleeve ?? "")),
+                );
+                return (
+                  <SizeRow
+                    key={c.size}
+                    category={group.category}
+                    colour={group.colour}
+                    sleeve={group.sleeve}
+                    fit={group.fit}
+                    size={c.size}
+                    stock={c.stock}
+                    requested={c.requested}
+                    reserved={c.reserved}
+                    groupLabel={group.label}
+                    cellKey={cellKey}
+                    cellAllocations={rowAllocs}
+                    allEffectiveCells={allEffectiveCells}
+                  />
+                );
+              })}
             </ul>
           )}
         </div>
@@ -196,11 +259,16 @@ interface SizeRowProps {
   stock: number;
   requested: number;
   reserved: number;
+  groupLabel?: string;
+  cellKey?: string;
+  cellAllocations?: StockAllocation[];
+  allEffectiveCells?: EffectiveCellRow[];
 }
 
 function SizeRow(props: SizeRowProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [substituteOpen, setSubstituteOpen] = React.useState(false);
   const [busy, setBusy] = React.useState<"add" | "remove" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [delta, setDelta] = React.useState<number>(1);
@@ -212,6 +280,18 @@ function SizeRow(props: SizeRowProps) {
       : gap > 0
         ? "text-emerald-700"
         : "text-gray-500";
+
+  // Effective numbers (allocations applied) for the substitution CTA.
+  const rowAllocs = props.cellAllocations ?? [];
+  const idx = React.useMemo(() => indexAllocations(rowAllocs), [rowAllocs]);
+  const cellKey = props.cellKey ?? "";
+  const effective = effectiveCell(
+    { stock: props.stock, requested: props.requested },
+    cellKey,
+    idx,
+  );
+  const canSubstitute = effective.shortfall > 0 || effective.surplus > 0;
+  const hasAllocs = rowAllocs.length > 0;
 
   async function submit(sign: 1 | -1) {
     if (!Number.isFinite(delta) || delta < 1) return;
@@ -278,6 +358,14 @@ function SizeRow(props: SizeRowProps) {
               +{props.reserved}
             </span>
           )}
+          {hasAllocs && (
+            <span
+              className="text-[10px] font-heading font-bold text-brand-blue bg-brand-blue/10 px-1.5 py-0.5 rounded-full"
+              title={`${rowAllocs.length} substitution${rowAllocs.length === 1 ? "" : "s"}`}
+            >
+              ⇄ {rowAllocs.length}
+            </span>
+          )}
           <span className={`ml-auto text-xs font-heading font-bold ${tone}`}>
             {gap > 0 ? "+" : ""}
             {gap}
@@ -321,8 +409,47 @@ function SizeRow(props: SizeRowProps) {
               Remove
             </button>
           </div>
+          {(canSubstitute || hasAllocs) && props.allEffectiveCells && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setSubstituteOpen(true);
+              }}
+              className="w-full inline-flex items-center justify-center gap-1 bg-brand-blue/10 text-brand-blue px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-brand-blue/20"
+            >
+              <Shuffle className="h-3.5 w-3.5" />
+              Substitute
+              {hasAllocs && (
+                <span className="ml-1 text-[10px] opacity-70">
+                  ({rowAllocs.length})
+                </span>
+              )}
+            </button>
+          )}
           {error && <p className="text-xs text-red-700">{error}</p>}
         </div>
+      )}
+
+      {props.allEffectiveCells && (
+        <AllocationSheet
+          open={substituteOpen}
+          onClose={() => setSubstituteOpen(false)}
+          clickedCell={{
+            category: props.category,
+            colour: props.colour,
+            sleeve: props.sleeve,
+            fit: props.fit,
+            size: props.size,
+            freeStock: effective.freeStock,
+            uncovered: effective.uncovered,
+            shortfall: effective.shortfall,
+            surplus: effective.surplus,
+            label: props.groupLabel ?? "",
+          }}
+          allCells={props.allEffectiveCells}
+          existingAllocations={rowAllocs}
+        />
       )}
     </li>
   );

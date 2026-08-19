@@ -1,14 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Minus, Loader2 } from "lucide-react";
+import { Plus, Minus, Loader2, Shuffle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AllocationSheet } from "./AllocationSheet";
 import {
   STOCK_SIZES,
-  groupShortfall,
+  effectiveCell,
+  groupShortfallEffective,
+  indexAllocations,
   skuCellKey,
   type MatrixGroup,
+  type StockAllocation,
 } from "@/lib/back-to-school-stock";
+import type { EffectiveCellRow } from "./AllocationSheet";
 
 interface Props {
   groups: MatrixGroup[];
@@ -19,9 +24,19 @@ interface Props {
   cellMask?: Set<string> | null;
   // Amber pill count of shopping-list reservations per cell key.
   reservedMap?: Map<string, number>;
+  // For the substitution sheet:
+  allocations?: StockAllocation[];
+  allEffectiveCells?: EffectiveCellRow[];
 }
 
-export function StockMatrix({ groups, visibleSizes, cellMask, reservedMap }: Props) {
+export function StockMatrix({
+  groups,
+  visibleSizes,
+  cellMask,
+  reservedMap,
+  allocations,
+  allEffectiveCells,
+}: Props) {
   const sizes = visibleSizes && visibleSizes.length > 0 ? visibleSizes : STOCK_SIZES;
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
@@ -53,6 +68,8 @@ export function StockMatrix({ groups, visibleSizes, cellMask, reservedMap }: Pro
                 sizes={sizes}
                 cellMask={cellMask ?? null}
                 reservedMap={reservedMap ?? null}
+                allocations={allocations ?? []}
+                allEffectiveCells={allEffectiveCells ?? []}
               />
             ))}
           </tbody>
@@ -67,14 +84,32 @@ function GroupRow({
   sizes,
   cellMask,
   reservedMap,
+  allocations,
+  allEffectiveCells,
 }: {
   group: MatrixGroup;
   sizes: readonly string[];
   cellMask: Set<string> | null;
   reservedMap: Map<string, number> | null;
+  allocations: StockAllocation[];
+  allEffectiveCells: EffectiveCellRow[];
 }) {
-  // Per-cell shortfall (truth) + net surplus (indicative).
-  const shortfall = groupShortfall(group);
+  // Group allocations touching this row (either side) so we can compute
+  // the true "still short" figure with substitutions applied.
+  const groupAllocs = allocations.filter(
+    (a) =>
+      a.category === group.category &&
+      ((a.from_colour === group.colour &&
+        a.from_fit === group.fit &&
+        (a.from_sleeve ?? "") === (group.sleeve ?? "") &&
+        group.cells.has(a.from_size)) ||
+        (a.to_colour === group.colour &&
+          a.to_fit === group.fit &&
+          (a.to_sleeve ?? "") === (group.sleeve ?? "") &&
+          group.cells.has(a.to_size))),
+  );
+  const rowIndex = indexAllocations(groupAllocs);
+  const shortfall = groupShortfallEffective(group, rowIndex);
   const netSurplus = group.totalStock - group.totalRequested;
   return (
     <tr className="hover:bg-brand-pale/20">
@@ -94,6 +129,20 @@ function GroupRow({
         });
         const masked = cellMask ? !cellMask.has(key) : false;
         const reserved = reservedMap?.get(key) ?? 0;
+        // Allocations that reference this cell (either side) so the sheet
+        // can render an undo list.
+        const cellAllocs = allocations.filter(
+          (a) =>
+            a.category === group.category &&
+            ((a.from_colour === group.colour &&
+              a.from_fit === group.fit &&
+              (a.from_sleeve ?? "") === (group.sleeve ?? "") &&
+              a.from_size === size) ||
+              (a.to_colour === group.colour &&
+                a.to_fit === group.fit &&
+                (a.to_sleeve ?? "") === (group.sleeve ?? "") &&
+                a.to_size === size)),
+        );
         return (
           <td key={size} className="px-1 py-2 text-center">
             <StockCell
@@ -107,6 +156,9 @@ function GroupRow({
               stockId={cell?.stockId ?? null}
               masked={masked}
               reserved={reserved}
+              groupLabel={group.label}
+              cellAllocations={cellAllocs}
+              allEffectiveCells={allEffectiveCells}
             />
           </td>
         );
@@ -148,11 +200,16 @@ interface CellProps {
   stockId: string | null;
   masked?: boolean;
   reserved?: number;
+  // For the allocation sheet:
+  groupLabel?: string;
+  cellAllocations?: StockAllocation[];
+  allEffectiveCells?: EffectiveCellRow[];
 }
 
 function StockCell(props: CellProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [substituteOpen, setSubstituteOpen] = React.useState(false);
   const [busy, setBusy] = React.useState<"add" | "remove" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [delta, setDelta] = React.useState<number>(1);
@@ -161,6 +218,24 @@ function StockCell(props: CellProps) {
   const gap = props.stock - props.requested;
   const isEmpty =
     props.masked || (props.stock === 0 && props.requested === 0);
+
+  // Effective numbers (allocations applied) for the "Substitute" section.
+  const cellAllocs = props.cellAllocations ?? [];
+  const idx = React.useMemo(() => indexAllocations(cellAllocs), [cellAllocs]);
+  const cellKey = [
+    props.category,
+    props.colour,
+    props.sleeve ?? "",
+    props.fit,
+    props.size,
+  ].join("|");
+  const effective = effectiveCell(
+    { stock: props.stock, requested: props.requested },
+    cellKey,
+    idx,
+  );
+  const canSubstitute = effective.shortfall > 0 || effective.surplus > 0;
+  const hasAllocs = cellAllocs.length > 0;
 
   async function submit(sign: 1 | -1) {
     if (!Number.isFinite(delta) || delta < 1) {
@@ -226,6 +301,14 @@ function StockCell(props: CellProps) {
                 +{props.reserved}
               </div>
             ) : null}
+            {hasAllocs && (
+              <div
+                className="text-[10px] mt-0.5 font-heading font-bold text-brand-blue bg-brand-blue/10 rounded-full px-1.5 leading-tight"
+                title={`${cellAllocs.length} substitution${cellAllocs.length === 1 ? "" : "s"}`}
+              >
+                ⇄ {cellAllocs.length}
+              </div>
+            )}
           </>
         )}
       </button>
@@ -297,7 +380,46 @@ function StockCell(props: CellProps) {
               Remove
             </button>
           </div>
+          {(canSubstitute || hasAllocs) && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setSubstituteOpen(true);
+              }}
+              className="mt-2 w-full inline-flex items-center justify-center gap-1 bg-brand-blue/10 text-brand-blue px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-brand-blue/20"
+            >
+              <Shuffle className="h-3.5 w-3.5" />
+              Substitute
+              {hasAllocs && (
+                <span className="ml-1 text-[10px] opacity-70">
+                  ({cellAllocs.length})
+                </span>
+              )}
+            </button>
+          )}
         </div>
+      )}
+
+      {props.allEffectiveCells && (
+        <AllocationSheet
+          open={substituteOpen}
+          onClose={() => setSubstituteOpen(false)}
+          clickedCell={{
+            category: props.category,
+            colour: props.colour,
+            sleeve: props.sleeve,
+            fit: props.fit,
+            size: props.size,
+            freeStock: effective.freeStock,
+            uncovered: effective.uncovered,
+            shortfall: effective.shortfall,
+            surplus: effective.surplus,
+            label: props.groupLabel ?? "",
+          }}
+          allCells={props.allEffectiveCells}
+          existingAllocations={cellAllocs}
+        />
       )}
     </div>
   );

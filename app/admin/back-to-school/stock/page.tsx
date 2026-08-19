@@ -17,13 +17,18 @@ import type {
 import {
   aggregateDemand,
   buildMatrix,
+  effectiveCell,
   groupShortfall,
+  groupShortfallEffective,
+  indexAllocations,
   skuCellKey,
   skuGroupLabel,
   type ChildAsk,
+  type StockAllocation,
   type StockRow,
   type StockCategory,
 } from "@/lib/back-to-school-stock";
+import type { EffectiveCellRow } from "@/components/admin/back-to-school/AllocationSheet";
 import { StockMatrix } from "@/components/admin/back-to-school/StockMatrix";
 import { StockCardList } from "@/components/admin/back-to-school/StockCardList";
 import { aggregateReservations } from "@/lib/back-to-school/shopping-list";
@@ -171,6 +176,17 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
 
   const matrix = buildMatrix(stockRows, effectiveDemand);
 
+  // ─── Allocations (substitutions) ─────────────────────────────────
+  // These represent "N of the FROM sku are earmarked to cover the TO
+  // sku's demand". Applied at render time to compute effective stock
+  // and effective demand for every cell.
+  const { data: allocRaw } = await supabase
+    .from("back_to_school_stock_allocations")
+    .select("*")
+    .order("created_at", { ascending: false });
+  const allAllocations = (allocRaw as StockAllocation[] | null) ?? [];
+  const allocationIndex = indexAllocations(allAllocations);
+
   // Active reservations from the shopping list — aggregated per SKU cell
   // so the matrix + cards can render an amber "N reserved" pill on cells
   // where donors have committed to bringing items.
@@ -201,8 +217,9 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
   // Shortfall MUST be summed per-cell (i.e. per size), not per group —
   // otherwise a surplus of small sizes cancels a shortage of larger ones
   // inside the same category+colour+fit and understates the true gap.
+  // Allocations reduce the effective shortfall further.
   const sumCellShortfall = (m: typeof matrix) =>
-    m.reduce((s, g) => s + groupShortfall(g), 0);
+    m.reduce((s, g) => s + groupShortfallEffective(g, allocationIndex), 0);
 
   const totalGap = sumCellShortfall(matrix);
 
@@ -216,6 +233,35 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
   const combinedMatrix = buildMatrix(stockRows, combinedDemand);
   const totalGapWithWaitlist = sumCellShortfall(combinedMatrix);
   const extraGapFromWaitlist = totalGapWithWaitlist - totalGap;
+
+  // ─── Flat list of every cell with effective numbers ──────────────
+  // Passed to the allocation sheet inside cells so the picker can rank
+  // candidate donors/recipients by proximity.
+  const allEffectiveCells: EffectiveCellRow[] = [];
+  for (const g of matrix) {
+    for (const [size, cell] of g.cells.entries()) {
+      const key = skuCellKey({
+        category: g.category,
+        colour: g.colour,
+        sleeve: g.sleeve,
+        fit: g.fit,
+        size,
+      });
+      const ec = effectiveCell(cell, key, allocationIndex);
+      allEffectiveCells.push({
+        category: g.category,
+        colour: g.colour,
+        sleeve: g.sleeve,
+        fit: g.fit,
+        size,
+        label: g.label,
+        freeStock: ec.freeStock,
+        uncovered: ec.uncovered,
+        shortfall: ec.shortfall,
+        surplus: ec.surplus,
+      });
+    }
+  }
 
   // Category counts (unfiltered, so tabs always show accurate counts).
   const categoryCounts: Record<string, number> = { all: matrix.length };
@@ -300,19 +346,29 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
   if (sort === "gap") {
     // Sort by true per-cell shortfall so groups with mismatched-size
     // shortages rise to the top even when net totals look balanced.
+    // Uses effective (allocation-aware) shortfall.
     visibleMatrix = [...visibleMatrix].sort(
-      (a, b) => groupShortfall(b) - groupShortfall(a),
+      (a, b) =>
+        groupShortfallEffective(b, allocationIndex) -
+        groupShortfallEffective(a, allocationIndex),
     );
   }
 
   // ─── Shopping list (respects all current filters + visible sizes) ─
+  // Uses EFFECTIVE numbers so allocations reduce what we need to buy.
   const shoppingLines: ShoppingLine[] = [];
   for (const g of visibleMatrix) {
     for (const size of visibleSizes) {
       const cell = g.cells.get(size);
-      const stock = cell?.stock ?? 0;
-      const req = cell?.requested ?? 0;
-      const needed = req - stock;
+      const cellKeyStr = skuCellKey({
+        category: g.category,
+        colour: g.colour,
+        sleeve: g.sleeve,
+        fit: g.fit,
+        size,
+      });
+      const ec = effectiveCell(cell, cellKeyStr, allocationIndex);
+      const needed = ec.shortfall;
       if (needed > 0) {
         shoppingLines.push({
           label: skuGroupLabel({
@@ -510,6 +566,8 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
               visibleSizes={visibleSizes}
               cellMask={cellMask}
               reservedMap={reservedMap}
+              allocations={allAllocations}
+              allEffectiveCells={allEffectiveCells}
             />
           </div>
           {/* Mobile: expandable cards, one per SKU group */}
@@ -519,6 +577,8 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
               visibleSizes={visibleSizes}
               cellMask={cellMask}
               reservedMap={reservedMap}
+              allocations={allAllocations}
+              allEffectiveCells={allEffectiveCells}
             />
           </div>
         </>

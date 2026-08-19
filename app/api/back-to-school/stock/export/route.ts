@@ -10,8 +10,11 @@ import type {
 import {
   aggregateDemand,
   buildMatrix,
+  effectiveCell,
+  indexAllocations,
   skuCellKey,
   type ChildAsk,
+  type StockAllocation,
   type StockRow,
 } from "@/lib/back-to-school-stock";
 import { aggregateReservations } from "@/lib/back-to-school/shopping-list";
@@ -121,6 +124,13 @@ export async function GET() {
 
   const activeMatrix = buildMatrix(stockRows, activeDemand);
 
+  const { data: allocRaw } = await supabase
+    .from("back_to_school_stock_allocations")
+    .select("*");
+  const allocIndex = indexAllocations(
+    (allocRaw as StockAllocation[] | null) ?? [],
+  );
+
   const { data: reservationsRaw } = await supabase
     .from("back_to_school_shopping_reservations")
     .select("category, colour, sleeve, fit, size, qty, status")
@@ -164,11 +174,15 @@ export async function GET() {
     "Sleeve",
     "Size",
     "In stock",
+    "Allocated out",
+    "Allocated in",
+    "Free stock",
     "Requested (approved)",
+    "Uncovered demand",
     "Waitlisted",
     "Reserved (shopping list)",
-    "Shortfall (excl waitlist)",
-    "Shortfall (incl waitlist)",
+    "Shortfall after allocations (excl waitlist)",
+    "Shortfall after allocations (incl waitlist)",
     "Notes",
   ];
   const lines: string[] = [headers.map(csvCell).join(",")];
@@ -187,11 +201,24 @@ export async function GET() {
       const requested = cell?.requested ?? 0;
       const waitlisted = waitlistDemand.get(cellKey) ?? 0;
       const reserved = reservedMap.get(cellKey) ?? 0;
-      if (stock === 0 && requested === 0 && waitlisted === 0 && reserved === 0) {
+      const ec = effectiveCell(cell, cellKey, allocIndex);
+      if (
+        stock === 0 &&
+        requested === 0 &&
+        waitlisted === 0 &&
+        reserved === 0 &&
+        ec.outAllocated === 0 &&
+        ec.inAllocated === 0
+      ) {
         continue;
       }
-      const shortExcl = Math.max(0, requested - stock);
-      const shortIncl = Math.max(0, requested + waitlisted - stock);
+      // Shortfall calcs use effective free stock (post-allocation-out) vs
+      // uncovered demand (post-allocation-in). This matches the UI.
+      const shortExcl = ec.shortfall;
+      const shortIncl = Math.max(
+        0,
+        Math.max(0, requested + waitlisted - ec.inAllocated) - ec.freeStock,
+      );
       lines.push(
         [
           g.category,
@@ -200,7 +227,11 @@ export async function GET() {
           g.sleeve ?? "",
           size,
           stock,
+          ec.outAllocated,
+          ec.inAllocated,
+          ec.freeStock,
           requested,
+          ec.uncovered,
           waitlisted,
           reserved,
           shortExcl,
