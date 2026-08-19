@@ -283,8 +283,12 @@ function SizeRow(props: SizeRowProps) {
     cellKey,
     idx,
   );
-  const displayStock = effective.freeStock;
-  const displayReq = effective.uncovered;
+  // Match the desktop cell display: substitution-in raises the top
+  // number so a covered cell reads "2 / req 2" — same visual pattern
+  // as a naturally-covered green cell.
+  const displayStock =
+    props.stock + effective.inAllocated - effective.outAllocated;
+  const displayReq = props.requested;
   const canSubstitute = effective.shortfall > 0 || effective.surplus > 0;
   const hasAllocs = rowAllocs.length > 0;
   const gap = displayStock - displayReq;

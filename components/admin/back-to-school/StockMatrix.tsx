@@ -232,8 +232,13 @@ function StockCell(props: CellProps) {
     cellKey,
     idx,
   );
-  const displayStock = effective.freeStock;
-  const displayReq = effective.uncovered;
+  // Display like a normal cell: "stock available here / demand here".
+  // Substitutions IN raise the top number (the demand is now covered);
+  // substitutions OUT lower it (that stock is earmarked elsewhere). Req
+  // stays the raw number so a covered cell reads "2 / req 2".
+  const displayStock =
+    props.stock + effective.inAllocated - effective.outAllocated;
+  const displayReq = props.requested;
   const gap = displayStock - displayReq;
   const isEmpty =
     props.masked ||
