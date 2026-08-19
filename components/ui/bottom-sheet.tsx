@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 interface BottomSheetProps {
@@ -65,13 +66,17 @@ export function BottomSheet({
   }, [open]);
 
   if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
+  // Portal to <body> so ancestor transforms / contain / filter don't
+  // shrink our position:fixed viewport — otherwise a sheet rendered
+  // inside a table cell or popover ends up clipped to the parent.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby={labelledBy}
-      className="fixed inset-0 z-50"
+      className="fixed inset-0 z-[100]"
     >
       {/* Backdrop */}
       <div
@@ -127,6 +132,7 @@ export function BottomSheet({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
