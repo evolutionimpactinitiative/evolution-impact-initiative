@@ -3,7 +3,11 @@
 import * as React from "react";
 import { ChevronDown, ChevronUp, Plus, Minus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { skuCellKey, type MatrixGroup } from "@/lib/back-to-school-stock";
+import {
+  groupShortfall,
+  skuCellKey,
+  type MatrixGroup,
+} from "@/lib/back-to-school-stock";
 
 interface Props {
   groups: MatrixGroup[];
@@ -47,7 +51,11 @@ function StockCard({
   reservedMap: Map<string, number> | null;
 }) {
   const [expanded, setExpanded] = React.useState(false);
-  const totalGap = group.totalStock - group.totalRequested;
+  // Per-cell shortfall (true) + net surplus (indicative). We show
+  // shortfall first if any size is short — a positive net surplus can
+  // hide a per-size shortage inside the same group.
+  const shortfall = groupShortfall(group);
+  const netSurplus = group.totalStock - group.totalRequested;
 
   // Only show cells whose mask allows them and (either have stock or demand
   // or the mask includes them). Prevents rendering rows of dashes.
@@ -123,19 +131,22 @@ function StockCard({
                 +{groupReserved} reserved
               </span>
             )}
-            <span
-              className={
-                (totalGap < 0
-                  ? "bg-red-100 text-red-800"
-                  : totalGap > 0
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-gray-100 text-gray-700") +
-                " inline-flex items-center px-2 py-0.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest"
-              }
-            >
-              {totalGap > 0 ? "+" : ""}
-              {totalGap}
-            </span>
+            {shortfall > 0 ? (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest bg-red-100 text-red-800"
+                title="Sum of per-size shortages inside this group"
+              >
+                -{shortfall} short
+              </span>
+            ) : netSurplus > 0 ? (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800">
+                +{netSurplus}
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest bg-gray-100 text-gray-700">
+                0
+              </span>
+            )}
           </div>
         </div>
         <div className="w-10 h-10 shrink-0 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">

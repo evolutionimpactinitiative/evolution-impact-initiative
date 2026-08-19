@@ -182,6 +182,25 @@ export interface MatrixGroup {
   totalRequested: number;
 }
 
+// True shortfall for a group — sum of per-size shortages. Different from
+// (totalRequested − totalStock) because a surplus in one size does NOT
+// cancel a shortage in another size within the same group. Use this
+// anywhere you'd otherwise write group.totalRequested − group.totalStock.
+export function groupShortfall(group: MatrixGroup): number {
+  let sum = 0;
+  for (const c of group.cells.values()) {
+    if (c.requested > c.stock) sum += c.requested - c.stock;
+  }
+  return sum;
+}
+
+// Net across sizes (positive = surplus overall, negative = net short).
+// Still useful for the "we're covered overall" indicator alongside the
+// true shortfall.
+export function groupNetSurplus(group: MatrixGroup): number {
+  return group.totalStock - group.totalRequested;
+}
+
 export function buildMatrix(
   stockRows: StockRow[],
   demand: Map<string, number>,

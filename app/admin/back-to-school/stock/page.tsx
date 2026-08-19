@@ -16,6 +16,7 @@ import type {
 import {
   aggregateDemand,
   buildMatrix,
+  groupShortfall,
   skuCellKey,
   skuGroupLabel,
   type ChildAsk,
@@ -195,10 +196,14 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
     (s, n) => s + n,
     0,
   );
-  const totalGap = matrix.reduce(
-    (s, g) => s + Math.max(0, g.totalRequested - g.totalStock),
-    0,
-  );
+
+  // Shortfall MUST be summed per-cell (i.e. per size), not per group —
+  // otherwise a surplus of small sizes cancels a shortage of larger ones
+  // inside the same category+colour+fit and understates the true gap.
+  const sumCellShortfall = (m: typeof matrix) =>
+    m.reduce((s, g) => s + groupShortfall(g), 0);
+
+  const totalGap = sumCellShortfall(matrix);
 
   // Shortfall-if-waitlist-promoted: rebuild the gap using active + waitlist
   // demand so the user can see the *real* exposure without flipping the
@@ -208,10 +213,7 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
     combinedDemand.set(k, (combinedDemand.get(k) ?? 0) + v);
   }
   const combinedMatrix = buildMatrix(stockRows, combinedDemand);
-  const totalGapWithWaitlist = combinedMatrix.reduce(
-    (s, g) => s + Math.max(0, g.totalRequested - g.totalStock),
-    0,
-  );
+  const totalGapWithWaitlist = sumCellShortfall(combinedMatrix);
   const extraGapFromWaitlist = totalGapWithWaitlist - totalGap;
 
   // Category counts (unfiltered, so tabs always show accurate counts).
@@ -295,11 +297,11 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
 
   // ─── Sort ─────────────────────────────────────────────────────────
   if (sort === "gap") {
-    visibleMatrix = [...visibleMatrix].sort((a, b) => {
-      const ga = Math.max(0, a.totalRequested - a.totalStock);
-      const gb = Math.max(0, b.totalRequested - b.totalStock);
-      return gb - ga; // biggest gap first
-    });
+    // Sort by true per-cell shortfall so groups with mismatched-size
+    // shortages rise to the top even when net totals look balanced.
+    visibleMatrix = [...visibleMatrix].sort(
+      (a, b) => groupShortfall(b) - groupShortfall(a),
+    );
   }
 
   // ─── Shopping list (respects all current filters + visible sizes) ─

@@ -5,6 +5,7 @@ import { Plus, Minus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   STOCK_SIZES,
+  groupShortfall,
   skuCellKey,
   type MatrixGroup,
 } from "@/lib/back-to-school-stock";
@@ -72,7 +73,9 @@ function GroupRow({
   cellMask: Set<string> | null;
   reservedMap: Map<string, number> | null;
 }) {
-  const totalGap = group.totalStock - group.totalRequested;
+  // Per-cell shortfall (truth) + net surplus (indicative).
+  const shortfall = groupShortfall(group);
+  const netSurplus = group.totalStock - group.totalRequested;
   return (
     <tr className="hover:bg-brand-pale/20">
       <td className="text-left px-4 py-3 sticky left-0 bg-white z-10 border-r border-gray-100">
@@ -115,18 +118,20 @@ function GroupRow({
         <div className="text-xs text-gray-500">
           req {group.totalRequested}
         </div>
-        <div
-          className={`text-xs font-heading font-bold ${
-            totalGap < 0
-              ? "text-red-700"
-              : totalGap > 0
-                ? "text-emerald-700"
-                : "text-gray-400"
-          }`}
-        >
-          {totalGap > 0 ? "+" : ""}
-          {totalGap}
-        </div>
+        {shortfall > 0 ? (
+          <div
+            className="text-xs font-heading font-bold text-red-700"
+            title="Sum of per-size shortages inside this row"
+          >
+            -{shortfall} short
+          </div>
+        ) : netSurplus > 0 ? (
+          <div className="text-xs font-heading font-bold text-emerald-700">
+            +{netSurplus}
+          </div>
+        ) : (
+          <div className="text-xs font-heading font-bold text-gray-400">0</div>
+        )}
       </td>
     </tr>
   );
