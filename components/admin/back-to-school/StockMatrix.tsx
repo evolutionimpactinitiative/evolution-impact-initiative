@@ -215,11 +215,9 @@ function StockCell(props: CellProps) {
   const [delta, setDelta] = React.useState<number>(1);
   const [notes, setNotes] = React.useState("");
 
-  const gap = props.stock - props.requested;
-  const isEmpty =
-    props.masked || (props.stock === 0 && props.requested === 0);
-
-  // Effective numbers (allocations applied) for the "Substitute" section.
+  // Effective numbers (allocations applied). We display these instead of
+  // the raw stock/requested so allocated cells stop looking red — the
+  // whole point of the feature is that a substitution covers demand.
   const cellAllocs = props.cellAllocations ?? [];
   const idx = React.useMemo(() => indexAllocations(cellAllocs), [cellAllocs]);
   const cellKey = [
@@ -234,8 +232,22 @@ function StockCell(props: CellProps) {
     cellKey,
     idx,
   );
+  const displayStock = effective.freeStock;
+  const displayReq = effective.uncovered;
+  const gap = displayStock - displayReq;
+  const isEmpty =
+    props.masked ||
+    (props.stock === 0 &&
+      props.requested === 0 &&
+      effective.outAllocated === 0 &&
+      effective.inAllocated === 0);
   const canSubstitute = effective.shortfall > 0 || effective.surplus > 0;
   const hasAllocs = cellAllocs.length > 0;
+  // Tooltip surfaces the raw numbers so the team can double-check where
+  // an allocation moved things around — the display shows post-allocation.
+  const rawTooltip = hasAllocs
+    ? `Raw: ${props.stock} in stock, ${props.requested} requested. ${effective.outAllocated} allocated out, ${effective.inAllocated} covered by other SKUs.`
+    : undefined;
 
   async function submit(sign: 1 | -1) {
     if (!Number.isFinite(delta) || delta < 1) {
@@ -277,12 +289,13 @@ function StockCell(props: CellProps) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        title={rawTooltip}
         className={`w-full min-w-[52px] px-1 py-1.5 rounded-md text-xs leading-tight border transition-colors ${
           isEmpty
             ? "border-transparent hover:border-gray-200 text-gray-300 hover:text-gray-600"
             : gap < 0
               ? "border-red-100 bg-red-50 hover:bg-red-100 text-red-900"
-              : gap > 0 || props.requested > 0
+              : gap > 0 || displayReq > 0
                 ? "border-emerald-100 bg-emerald-50 hover:bg-emerald-100 text-emerald-900"
                 : "border-gray-100 bg-white hover:bg-gray-50 text-brand-dark"
         }`}
@@ -292,10 +305,8 @@ function StockCell(props: CellProps) {
           <span>—</span>
         ) : (
           <>
-            <div className="font-heading font-bold text-sm">
-              {props.stock}
-            </div>
-            <div className="text-[10px] opacity-75">req {props.requested}</div>
+            <div className="font-heading font-bold text-sm">{displayStock}</div>
+            <div className="text-[10px] opacity-75">req {displayReq}</div>
             {props.reserved && props.reserved > 0 ? (
               <div className="text-[10px] mt-0.5 font-heading font-bold text-amber-700 bg-amber-100 rounded-full px-1.5 leading-tight">
                 +{props.reserved}
@@ -326,8 +337,14 @@ function StockCell(props: CellProps) {
             Adjust stock
           </p>
           <p className="text-xs text-gray-600 mb-3">
-            Size {props.size}. Currently {props.stock} in stock,{" "}
-            {props.requested} requested.
+            Size {props.size}. {props.stock} in stock, {props.requested}{" "}
+            requested.
+            {hasAllocs && (
+              <span className="block text-brand-blue mt-0.5">
+                After substitutions: {displayStock} free · {displayReq} still
+                needed.
+              </span>
+            )}
           </p>
           <label className="text-xs text-gray-600 font-heading font-bold uppercase tracking-widest">
             Amount

@@ -300,24 +300,25 @@ export default async function B2SStockPage({ searchParams }: PageProps) {
     for (const g of visibleMatrix) {
       for (const size of VALID_SIZES) {
         const cell = g.cells.get(size);
-        const stock = cell?.stock ?? 0;
-        const req = cell?.requested ?? 0;
+        const key = skuCellKey({
+          category: g.category,
+          colour: g.colour,
+          sleeve: g.sleeve,
+          fit: g.fit,
+          size,
+        });
+        // Filters read allocation-aware numbers — a cell that's been
+        // fully covered by a substitution shouldn't still show under
+        // "Show shortfall".
+        const ec = effectiveCell(cell, key, allocationIndex);
         const passShow =
           show === "shortfall"
-            ? req > stock
+            ? ec.shortfall > 0
             : show === "surplus"
-              ? stock > 0 && stock > req
-              : /* demand */ req > 0;
+              ? ec.surplus > 0
+              : /* demand */ ec.uncovered > 0;
         if (passShow) {
-          cellMask.add(
-            skuCellKey({
-              category: g.category,
-              colour: g.colour,
-              sleeve: g.sleeve,
-              fit: g.fit,
-              size,
-            }),
-          );
+          cellMask.add(key);
         }
       }
     }

@@ -273,15 +273,8 @@ function SizeRow(props: SizeRowProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [delta, setDelta] = React.useState<number>(1);
 
-  const gap = props.stock - props.requested;
-  const tone =
-    gap < 0
-      ? "text-red-700"
-      : gap > 0
-        ? "text-emerald-700"
-        : "text-gray-500";
-
-  // Effective numbers (allocations applied) for the substitution CTA.
+  // Effective numbers (allocations applied) — we display these so the
+  // row stops looking red once its shortfall has been covered.
   const rowAllocs = props.cellAllocations ?? [];
   const idx = React.useMemo(() => indexAllocations(rowAllocs), [rowAllocs]);
   const cellKey = props.cellKey ?? "";
@@ -290,6 +283,15 @@ function SizeRow(props: SizeRowProps) {
     cellKey,
     idx,
   );
+  const displayStock = effective.freeStock;
+  const displayReq = effective.uncovered;
+  const gap = displayStock - displayReq;
+  const tone =
+    gap < 0
+      ? "text-red-700"
+      : gap > 0
+        ? "text-emerald-700"
+        : "text-gray-500";
   const canSubstitute = effective.shortfall > 0 || effective.surplus > 0;
   const hasAllocs = rowAllocs.length > 0;
 
@@ -334,20 +336,32 @@ function SizeRow(props: SizeRowProps) {
           {props.size}
         </div>
         <div className="flex-1 flex items-center gap-3 text-sm">
-          <span>
+          <span
+            title={
+              hasAllocs
+                ? `Raw: ${props.stock} in, ${effective.outAllocated} allocated out`
+                : undefined
+            }
+          >
             <span className="text-gray-500 text-xs uppercase tracking-widest font-heading font-bold mr-1">
               In
             </span>
             <span className="font-heading font-black text-brand-dark">
-              {props.stock}
+              {displayStock}
             </span>
           </span>
-          <span>
+          <span
+            title={
+              hasAllocs
+                ? `Raw: ${props.requested} requested, ${effective.inAllocated} covered by other SKUs`
+                : undefined
+            }
+          >
             <span className="text-gray-500 text-xs uppercase tracking-widest font-heading font-bold mr-1">
               Req
             </span>
             <span className="font-heading font-black text-brand-dark">
-              {props.requested}
+              {displayReq}
             </span>
           </span>
           {props.reserved > 0 && (
