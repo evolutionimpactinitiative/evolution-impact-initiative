@@ -425,6 +425,24 @@ export default async function BackToSchoolAdminPage() {
         </Link>
 
         <Link
+          href="/admin/back-to-school/count"
+          className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
+        >
+          <ClipboardList className="h-6 w-6 text-brand-blue mb-3" />
+          <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
+            Stock count
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Tally items as they go into their labelled boxes, then
+            reconcile — the system updates to match your physical count.
+          </p>
+          <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
           href="/admin/back-to-school/tickets"
           className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
         >

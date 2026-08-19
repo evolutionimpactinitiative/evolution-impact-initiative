@@ -20,6 +20,7 @@ const TITLE_MAP: Array<{ prefix: string; title: string; exact?: boolean }> = [
   { prefix: "/admin/back-to-school/registrations", title: "Registrations" },
   { prefix: "/admin/back-to-school/shopping-list", title: "Shopping list" },
   { prefix: "/admin/back-to-school/stock", title: "Stock" },
+  { prefix: "/admin/back-to-school/count", title: "Stock count" },
   { prefix: "/admin/back-to-school/day-view", title: "Day view" },
   { prefix: "/admin/back-to-school/tickets", title: "Bag labels" },
   { prefix: "/admin/back-to-school/stewards", title: "Stewards" },
