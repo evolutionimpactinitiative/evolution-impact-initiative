@@ -40,22 +40,27 @@ export function StockMatrix({
   const sizes = visibleSizes && visibleSizes.length > 0 ? visibleSizes : STOCK_SIZES;
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Single scroll container for both axes — sticky header + sticky
+          "Item" column both anchor to this element, so the ages stay put
+          when you scroll down and the item labels stay put when you
+          scroll right. Height is capped so scrolling happens inside the
+          table area rather than at the page level. */}
+      <div className="overflow-auto max-h-[75vh]">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-xs uppercase tracking-widest text-gray-500">
-              <th className="text-left px-4 py-3 sticky left-0 bg-gray-50 min-w-[220px] z-10">
+              <th className="text-left px-4 py-3 sticky top-0 left-0 bg-gray-50 min-w-[220px] z-30">
                 Item
               </th>
               {sizes.map((s) => (
                 <th
                   key={s}
-                  className="text-center px-2 py-3 font-heading font-bold text-brand-dark w-16"
+                  className="text-center px-2 py-3 font-heading font-bold text-brand-dark w-16 sticky top-0 bg-gray-50 z-20"
                 >
                   {s}
                 </th>
               ))}
-              <th className="text-center px-3 py-3 font-heading font-bold text-brand-dark w-20 bg-gray-100">
+              <th className="text-center px-3 py-3 font-heading font-bold text-brand-dark w-20 bg-gray-100 sticky top-0 z-20">
                 Total
               </th>
             </tr>
