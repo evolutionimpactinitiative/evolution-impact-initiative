@@ -44,6 +44,7 @@ export const UNIFORM_SIZES = [
   "10-11",
   "11",
   "11-12",
+  "12",
   "12-13",
   "13",
 ] as const;
