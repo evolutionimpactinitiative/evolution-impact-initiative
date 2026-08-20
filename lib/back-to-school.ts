@@ -45,6 +45,7 @@ export const UNIFORM_SIZES = [
   "11",
   "11-12",
   "12-13",
+  "13",
 ] as const;
 
 export type UniformSize = (typeof UNIFORM_SIZES)[number];
