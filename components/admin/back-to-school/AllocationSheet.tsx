@@ -133,7 +133,10 @@ export function AllocationSheet({
     const filtered = allCells.filter((c) => {
       if (c.category !== clickedCell.category) return false;
       if (sameCell(clickedCell, c)) return false;
-      return mode === "pull" ? c.freeStock > 0 : c.uncovered > 0;
+      // Only offer donors that have TRUE spare (stock left after
+      // covering their own demand). Pulling more than surplus would
+      // just shift the shortage to the donor cell.
+      return mode === "pull" ? c.surplus > 0 : c.uncovered > 0;
     });
     return filtered.sort((a, b) => distance(clickedCell, a) - distance(clickedCell, b));
   }, [allCells, clickedCell, mode]);
@@ -141,11 +144,12 @@ export function AllocationSheet({
   const selected =
     (selectedKey && candidates.find((c) => cellKeyOf(c) === selectedKey)) || null;
 
-  // Max qty we can allocate: min(available on donor, uncovered on recipient)
+  // Max qty we can allocate: min(true spare on donor, uncovered on recipient).
+  // "Surplus" already accounts for the donor's own uncovered demand.
   const maxQty = selected
     ? mode === "pull"
-      ? Math.min(selected.freeStock, clickedCell.uncovered || Infinity)
-      : Math.min(clickedCell.freeStock, selected.uncovered)
+      ? Math.min(selected.surplus, clickedCell.uncovered || Infinity)
+      : Math.min(clickedCell.surplus, selected.uncovered)
     : 0;
 
   async function save() {
@@ -230,10 +234,10 @@ export function AllocationSheet({
           </p>
           <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-600">
             <span>
-              Free stock: <b>{clickedCell.freeStock}</b>
+              Stock: <b>{clickedCell.freeStock}</b>
             </span>
             <span>
-              Uncovered demand: <b>{clickedCell.uncovered}</b>
+              Requested here: <b>{clickedCell.uncovered}</b>
             </span>
             {clickedCell.shortfall > 0 && (
               <span className="text-red-700 font-bold">
@@ -242,7 +246,7 @@ export function AllocationSheet({
             )}
             {clickedCell.surplus > 0 && (
               <span className="text-emerald-700 font-bold">
-                {clickedCell.surplus} spare
+                {clickedCell.surplus} spare to give
               </span>
             )}
           </div>
@@ -351,8 +355,11 @@ export function AllocationSheet({
                 {candidates.map((c) => {
                   const k = cellKeyOf(c);
                   const chosen = k === selectedKey;
+                  // Show TRUE spare on donors (surplus after own demand),
+                  // not raw free stock — otherwise a donor with 10 stock
+                  // and 3 own req would look like it has 10 to give.
                   const capacity =
-                    mode === "pull" ? c.freeStock : c.uncovered;
+                    mode === "pull" ? c.surplus : c.uncovered;
                   return (
                     <li key={k}>
                       <button
@@ -362,7 +369,7 @@ export function AllocationSheet({
                           const cap =
                             mode === "pull"
                               ? Math.min(capacity, clickedCell.uncovered || Infinity)
-                              : Math.min(clickedCell.freeStock, capacity);
+                              : Math.min(clickedCell.surplus, capacity);
                           setQty(Math.max(1, Math.min(qty, cap || 1)));
                         }}
                         className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded-md border text-sm transition-colors ${
@@ -375,7 +382,7 @@ export function AllocationSheet({
                           <span className="block truncate">{cellLabel(c)}</span>
                           <span className="block text-xs text-gray-500">
                             {mode === "pull"
-                              ? `${capacity} free`
+                              ? `${capacity} spare to give`
                               : `${capacity} short`}
                           </span>
                         </span>
