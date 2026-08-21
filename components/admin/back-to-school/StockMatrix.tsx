@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Plus, Minus, Loader2, Shuffle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AllocationSheet } from "./AllocationSheet";
@@ -219,6 +220,43 @@ function StockCell(props: CellProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [delta, setDelta] = React.useState<number>(1);
   const [notes, setNotes] = React.useState("");
+  // Popover is portalled to <body> so it escapes the table's overflow
+  // clip (the sticky header requires the table to be a scroll container).
+  // We compute position from the button's viewport rect and re-place on
+  // scroll/resize so the popover follows the trigger.
+  const btnRef = React.useRef<HTMLButtonElement | null>(null);
+  const [pos, setPos] = React.useState<{
+    top: number;
+    left: number;
+    placeAbove: boolean;
+  } | null>(null);
+
+  const POPOVER_WIDTH = 256; // matches w-64
+  const POPOVER_H_ESTIMATE = 340; // rough — enough for the tallest state
+
+  const reposition = React.useCallback(() => {
+    if (!btnRef.current) return;
+    const r = btnRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - r.bottom;
+    const placeAbove = spaceBelow < POPOVER_H_ESTIMATE && r.top > spaceBelow;
+    const top = placeAbove ? r.top - 6 : r.bottom + 6;
+    // Centre horizontally on the button, clamped to viewport.
+    let left = r.left + r.width / 2 - POPOVER_WIDTH / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - POPOVER_WIDTH - 8));
+    setPos({ top, left, placeAbove });
+  }, []);
+
+  React.useLayoutEffect(() => {
+    if (!open) return;
+    reposition();
+    const onScroll = () => reposition();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [open, reposition]);
 
   // Effective numbers (allocations applied). We display these instead of
   // the raw stock/requested so allocated cells stop looking red — the
@@ -297,6 +335,7 @@ function StockCell(props: CellProps) {
   return (
     <div className="relative">
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         title={rawTooltip}
@@ -329,99 +368,108 @@ function StockCell(props: CellProps) {
         )}
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setOpen(false)}
-          aria-hidden
-        />
-      )}
-      {open && (
-        <div className="absolute z-50 top-full mt-1 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-64 text-left">
-          <p className="text-xs font-heading font-bold text-brand-dark uppercase tracking-widest mb-1">
-            Adjust stock
-          </p>
-          <p className="text-xs text-gray-600 mb-3">
-            Size {props.size}. {props.stock} in stock, {props.requested}{" "}
-            requested.
-            {hasAllocs && (
-              <span className="block text-brand-blue mt-0.5">
-                After substitutions: {displayStock} free · {displayReq} still
-                needed.
-              </span>
-            )}
-          </p>
-          <label className="text-xs text-gray-600 font-heading font-bold uppercase tracking-widest">
-            Amount
-          </label>
-          <input
-            type="number"
-            min={1}
-            value={delta}
-            onChange={(e) => setDelta(Number(e.target.value))}
-            className="mt-1 w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm"
-          />
-          <label className="text-xs text-gray-600 font-heading font-bold uppercase tracking-widest mt-2 block">
-            Note (optional)
-          </label>
-          <input
-            type="text"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g. donation from Sainsbury's"
-            className="mt-1 w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm"
-          />
-          {error && (
-            <p className="text-xs text-red-700 mt-2">{error}</p>
-          )}
-          <div className="flex gap-2 mt-3">
-            <button
-              type="button"
-              onClick={() => submit(1)}
-              disabled={!!busy}
-              className="flex-1 inline-flex items-center justify-center gap-1 bg-brand-green text-white px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50"
-            >
-              {busy === "add" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Plus className="h-3.5 w-3.5" />
-              )}
-              Add
-            </button>
-            <button
-              type="button"
-              onClick={() => submit(-1)}
-              disabled={!!busy || props.stock <= 0}
-              className="flex-1 inline-flex items-center justify-center gap-1 bg-white text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-red-50 disabled:opacity-50"
-            >
-              {busy === "remove" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Minus className="h-3.5 w-3.5" />
-              )}
-              Remove
-            </button>
-          </div>
-          {(canSubstitute || hasAllocs) && (
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                setSubstituteOpen(true);
+      {open && pos && typeof document !== "undefined" &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[90]"
+              onClick={() => setOpen(false)}
+              aria-hidden
+            />
+            <div
+              className="fixed z-[95] bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-64 text-left"
+              style={{
+                top: pos.placeAbove ? undefined : pos.top,
+                bottom: pos.placeAbove
+                  ? window.innerHeight - pos.top
+                  : undefined,
+                left: pos.left,
               }}
-              className="mt-2 w-full inline-flex items-center justify-center gap-1 bg-brand-blue/10 text-brand-blue px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-brand-blue/20"
             >
-              <Shuffle className="h-3.5 w-3.5" />
-              Substitute
-              {hasAllocs && (
-                <span className="ml-1 text-[10px] opacity-70">
-                  ({cellAllocs.length})
-                </span>
+              <p className="text-xs font-heading font-bold text-brand-dark uppercase tracking-widest mb-1">
+                Adjust stock
+              </p>
+              <p className="text-xs text-gray-600 mb-3">
+                Size {props.size}. {props.stock} in stock, {props.requested}{" "}
+                requested.
+                {hasAllocs && (
+                  <span className="block text-brand-blue mt-0.5">
+                    After substitutions: {displayStock} free · {displayReq}{" "}
+                    still needed.
+                  </span>
+                )}
+              </p>
+              <label className="text-xs text-gray-600 font-heading font-bold uppercase tracking-widest">
+                Amount
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={delta}
+                onChange={(e) => setDelta(Number(e.target.value))}
+                className="mt-1 w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm"
+              />
+              <label className="text-xs text-gray-600 font-heading font-bold uppercase tracking-widest mt-2 block">
+                Note (optional)
+              </label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. donation from Sainsbury's"
+                className="mt-1 w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm"
+              />
+              {error && <p className="text-xs text-red-700 mt-2">{error}</p>}
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => submit(1)}
+                  disabled={!!busy}
+                  className="flex-1 inline-flex items-center justify-center gap-1 bg-brand-green text-white px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50"
+                >
+                  {busy === "add" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Plus className="h-3.5 w-3.5" />
+                  )}
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submit(-1)}
+                  disabled={!!busy || props.stock <= 0}
+                  className="flex-1 inline-flex items-center justify-center gap-1 bg-white text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-red-50 disabled:opacity-50"
+                >
+                  {busy === "remove" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Minus className="h-3.5 w-3.5" />
+                  )}
+                  Remove
+                </button>
+              </div>
+              {(canSubstitute || hasAllocs) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setSubstituteOpen(true);
+                  }}
+                  className="mt-2 w-full inline-flex items-center justify-center gap-1 bg-brand-blue/10 text-brand-blue px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-brand-blue/20"
+                >
+                  <Shuffle className="h-3.5 w-3.5" />
+                  Substitute
+                  {hasAllocs && (
+                    <span className="ml-1 text-[10px] opacity-70">
+                      ({cellAllocs.length})
+                    </span>
+                  )}
+                </button>
               )}
-            </button>
-          )}
-        </div>
-      )}
+            </div>
+          </>,
+          document.body,
+        )}
 
       {props.allEffectiveCells && (
         <AllocationSheet
