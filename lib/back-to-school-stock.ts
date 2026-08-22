@@ -277,23 +277,30 @@ export interface EffectiveCell {
   requested: number;     // raw demand
   outAllocated: number;  // stock earmarked out to other SKUs
   inAllocated: number;   // demand covered by other SKUs
-  freeStock: number;     // stock still available (stock - outAllocated)
+  reservedForPick: number; // active pick reservations against this SKU
+  freeStock: number;     // stock still available (stock - outAllocated - reservedForPick)
   uncovered: number;     // demand still to satisfy (max(0, requested - inAllocated))
   shortfall: number;     // items still to buy (max(0, uncovered - freeStock))
   surplus: number;       // items free after covering own demand (max(0, freeStock - uncovered))
 }
 
+// Pick reservations by SKU cell key. Only counts active ('reserved')
+// rows — consumed/released have no effect on available stock.
+export type ReservationIndex = Map<string, number>;
+
 export function effectiveCell(
   cell: { stock: number; requested: number } | undefined,
   cellKey: string,
   index: AllocationIndex,
+  reservations?: ReservationIndex,
 ): EffectiveCell {
   const stock = cell?.stock ?? 0;
   const requested = cell?.requested ?? 0;
   const summary = index.byCell.get(cellKey) ?? { outQty: 0, inQty: 0 };
   const outAllocated = summary.outQty;
   const inAllocated = summary.inQty;
-  const freeStock = Math.max(0, stock - outAllocated);
+  const reservedForPick = reservations?.get(cellKey) ?? 0;
+  const freeStock = Math.max(0, stock - outAllocated - reservedForPick);
   const uncovered = Math.max(0, requested - inAllocated);
   const shortfall = Math.max(0, uncovered - freeStock);
   const surplus = Math.max(0, freeStock - uncovered);
@@ -302,6 +309,7 @@ export function effectiveCell(
     requested,
     outAllocated,
     inAllocated,
+    reservedForPick,
     freeStock,
     uncovered,
     shortfall,

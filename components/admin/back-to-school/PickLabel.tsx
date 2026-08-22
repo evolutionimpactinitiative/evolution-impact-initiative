@@ -24,10 +24,20 @@ export interface PickLabelFamily {
   qr_token: string | null;
 }
 
+// Explicit pick items — when provided, overrides the items derived
+// from uniform_choices. Used after the Station 2 prep flow so labels
+// print the substituted SKUs instead of the originally-requested ones.
+export interface PickLabelItem {
+  label: string;                 // "Grey trousers · size 5"
+  substitutingFor?: string;      // "size 5-6" — shown as small suffix
+  needsSubstitutionBlank?: boolean; // renders the "Given: ___" line
+}
+
 interface Props {
   child: PickLabelChild;
   family: PickLabelFamily;
   qrDataUrl: string | null;
+  overrideItems?: PickLabelItem[];
 }
 
 const COLOUR_LABEL: Record<string, string> = {
@@ -51,7 +61,7 @@ const SEX_LABEL: Record<string, string> = {
   prefer_not_to_say: "—",
 };
 
-export function PickLabel({ child, family, qrDataUrl }: Props) {
+export function PickLabel({ child, family, qrDataUrl, overrideItems }: Props) {
   const ref = family.id.slice(0, 8).toUpperCase();
   const isWalkIn = family.status === "walk_in";
   const sexLabel = child.sex ? SEX_LABEL[child.sex] ?? child.sex : null;
@@ -61,6 +71,7 @@ export function PickLabel({ child, family, qrDataUrl }: Props) {
   const wantsUniform = needs.includes("uniform");
   const wantsStationery = needs.includes("stationery");
   const wantsBag = needs.includes("bag");
+  const useOverride = Array.isArray(overrideItems);
 
   const metaBits: string[] = [];
   if (child.child_age != null) metaBits.push(`Age ${child.child_age}`);
@@ -85,28 +96,41 @@ export function PickLabel({ child, family, qrDataUrl }: Props) {
       <div>
         <p className="pl-section-label">To pick</p>
         <ul className="pl-items">
-          {wantsUniform && uc?.bottom && (
-            <PickItem
-              label={`${COLOUR_LABEL[uc.bottom.colour] ?? uc.bottom.colour} ${
-                BOTTOM_LABEL[uc.bottom.type] ?? uc.bottom.type
-              }`}
-              withSubstitution
-            />
+          {useOverride ? (
+            overrideItems!.map((it, i) => (
+              <PickItem
+                key={i}
+                label={it.label}
+                substitutingFor={it.substitutingFor}
+                withSubstitution={it.needsSubstitutionBlank ?? false}
+              />
+            ))
+          ) : (
+            <>
+              {wantsUniform && uc?.bottom && (
+                <PickItem
+                  label={`${COLOUR_LABEL[uc.bottom.colour] ?? uc.bottom.colour} ${
+                    BOTTOM_LABEL[uc.bottom.type] ?? uc.bottom.type
+                  }`}
+                  withSubstitution
+                />
+              )}
+              {wantsUniform && uc?.polo && (
+                <PickItem
+                  label={`${COLOUR_LABEL[uc.polo.colour] ?? uc.polo.colour} polo (${uc.polo.sleeve} sleeve)`}
+                  withSubstitution
+                />
+              )}
+              {wantsUniform && uc?.shirt && (
+                <PickItem
+                  label={`White shirt (${uc.shirt.sleeve} sleeve)`}
+                  withSubstitution
+                />
+              )}
+              {wantsStationery && <PickItem label="Stationery pack" />}
+              {wantsBag && <PickItem label="School bag" />}
+            </>
           )}
-          {wantsUniform && uc?.polo && (
-            <PickItem
-              label={`${COLOUR_LABEL[uc.polo.colour] ?? uc.polo.colour} polo (${uc.polo.sleeve} sleeve)`}
-              withSubstitution
-            />
-          )}
-          {wantsUniform && uc?.shirt && (
-            <PickItem
-              label={`White shirt (${uc.shirt.sleeve} sleeve)`}
-              withSubstitution
-            />
-          )}
-          {wantsStationery && <PickItem label="Stationery pack" />}
-          {wantsBag && <PickItem label="School bag" />}
         </ul>
 
         {child.school && (
@@ -151,14 +175,31 @@ export function PickLabel({ child, family, qrDataUrl }: Props) {
 function PickItem({
   label,
   withSubstitution,
+  substitutingFor,
 }: {
   label: string;
   withSubstitution?: boolean;
+  substitutingFor?: string;
 }) {
   return (
     <li className="pl-item">
       <span className="pl-item-check">☐</span>
-      <span className="pl-item-label">{label}</span>
+      <span className="pl-item-label">
+        {label}
+        {substitutingFor && (
+          <span
+            style={{
+              display: "block",
+              fontSize: "8pt",
+              color: "#B45309",
+              fontWeight: 600,
+              marginTop: "0.5mm",
+            }}
+          >
+            substituting for {substitutingFor}
+          </span>
+        )}
+      </span>
       {withSubstitution && (
         <span className="pl-item-given">
           <span className="pl-item-given-label">Given:</span>

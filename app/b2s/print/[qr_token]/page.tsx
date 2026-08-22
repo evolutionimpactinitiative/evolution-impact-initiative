@@ -6,12 +6,20 @@ import { B2S_SLUG } from "@/lib/back-to-school";
 import {
   PickLabel,
   type PickLabelChild,
+  type PickLabelItem,
 } from "@/components/admin/back-to-school/PickLabel";
 import { PickTicketAutoPrint } from "@/components/back-to-school/PickTicketAutoPrint";
 import {
   PICK_LABEL_PRINT_STYLES,
   pickLabelPrintMediaRules,
 } from "@/lib/back-to-school/pick-label-styles";
+import type { PickReservation } from "@/lib/back-to-school/pick-reservations";
+import { isSubstitute } from "@/lib/back-to-school/pick-reservations";
+import {
+  COLOUR_LABELS,
+  SLEEVE_LABELS,
+  type StockCategory,
+} from "@/lib/back-to-school-stock";
 
 const PRINT_STYLES =
   PICK_LABEL_PRINT_STYLES + pickLabelPrintMediaRules("single-print-area");
@@ -103,6 +111,60 @@ export default async function B2SPrintPage({ params, searchParams }: Props) {
     (a, b) => a.display_order - b.display_order,
   );
 
+  // If the prep step created pick reservations for this family, use
+  // them to build the per-child pick list — labels then reflect any
+  // substitutions the steward accepted.
+  const { data: resRaw } = await supabase
+    .from("back_to_school_pick_reservations")
+    .select("*")
+    .eq("registration_id", family.id)
+    .eq("status", "reserved");
+  const reservations = (resRaw as PickReservation[] | null) ?? [];
+  const resByChild = new Map<string, PickReservation[]>();
+  for (const r of reservations) {
+    const arr = resByChild.get(r.child_id) ?? [];
+    arr.push(r);
+    resByChild.set(r.child_id, arr);
+  }
+
+  function itemLabelForCategory(
+    category: StockCategory,
+    colour: string,
+    sleeve: string | null,
+    size: string,
+  ): string {
+    const c = COLOUR_LABELS[colour as keyof typeof COLOUR_LABELS] ?? colour;
+    if (category === "polo") {
+      return `${c} polo (${sleeve ? SLEEVE_LABELS[sleeve as keyof typeof SLEEVE_LABELS] : "?"} sleeve) · size ${size}`;
+    }
+    if (category === "shirt") {
+      return `${c} shirt (${sleeve ? SLEEVE_LABELS[sleeve as keyof typeof SLEEVE_LABELS] : "?"} sleeve) · size ${size}`;
+    }
+    return `${c} ${category} · size ${size}`;
+  }
+
+  function overrideFor(childId: string, child: PickLabelChild): PickLabelItem[] | undefined {
+    const rs = resByChild.get(childId);
+    if (!rs || rs.length === 0) return undefined;
+    // Uniform items from reservations…
+    const items: PickLabelItem[] = rs.map((r) => ({
+      label: itemLabelForCategory(r.category, r.colour, r.sleeve, r.size),
+      substitutingFor: isSubstitute(r)
+        ? `size ${r.original_size}`
+        : undefined,
+      needsSubstitutionBlank: false, // steward already decided; no free-form blank needed
+    }));
+    // Stationery / bag aren't tracked via reservations, still driven by needs
+    const needs = child.needs ?? [];
+    if (needs.includes("stationery")) {
+      items.push({ label: "Stationery pack" });
+    }
+    if (needs.includes("bag")) {
+      items.push({ label: "School bag" });
+    }
+    return items;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-6 md:py-10">
       <style dangerouslySetInnerHTML={{ __html: PRINT_STYLES }} />
@@ -126,6 +188,7 @@ export default async function B2SPrintPage({ params, searchParams }: Props) {
                 qr_token: family.qr_token,
               }}
               qrDataUrl={qrDataUrl}
+              overrideItems={overrideFor(c.id, c)}
             />
           ))}
         </div>

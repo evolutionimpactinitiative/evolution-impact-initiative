@@ -974,12 +974,12 @@ function WalkInTicket({
         <div className="mt-6 flex flex-wrap justify-center gap-2 border-t border-brand-blue/20 pt-4">
           {result?.qrToken && stewardToken && (
             <a
-              href={`/b2s/print/${encodeURIComponent(result.qrToken)}?s=${encodeURIComponent(stewardToken)}`}
+              href={`/b2s/prep/${encodeURIComponent(result.qrToken)}?s=${encodeURIComponent(stewardToken)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 bg-brand-blue text-white px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:bg-brand-dark"
             >
-              Print ticket
+              Prep &amp; print
             </a>
           )}
           <button

@@ -65,11 +65,13 @@ export function StewardScannerB2S({
   }
 
   function goToVerify(token: string) {
-    // Check-in mode goes to the print route (Station 2 flow); pick + collect
-    // go to the verify page with the appropriate mode.
+    // Check-in mode goes through the prep screen first so the steward
+    // can confirm availability and accept substitutions before the
+    // labels print. Pick + collect skip prep — those flows are for
+    // reading picks and marking collected on the day.
     if (mode === "checkin") {
       router.push(
-        `/b2s/print/${encodeURIComponent(token)}?s=${encodeURIComponent(stewardToken)}`,
+        `/b2s/prep/${encodeURIComponent(token)}?s=${encodeURIComponent(stewardToken)}`,
       );
       return;
     }
