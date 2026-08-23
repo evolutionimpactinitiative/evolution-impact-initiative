@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { EventCard } from "@/components/shared/EventCard";
-import { B2SPromoBanner } from "@/components/back-to-school/B2SPromoBanner";
+// B2S 2026 promo banner archived — re-import for the 2027 drive:
+// import { B2SPromoBanner } from "@/components/back-to-school/B2SPromoBanner";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
@@ -131,12 +132,8 @@ export default async function EventsPage() {
         subtitle="Join us at our upcoming events or see what we've been up to."
       />
 
-      {/* Featured campaign */}
-      <section className="bg-brand-pale/40 pt-10 pb-2">
-        <div className="container mx-auto px-4">
-          <B2SPromoBanner variant="register" />
-        </div>
-      </section>
+      {/* B2S 2026 featured-campaign banner archived — restore for the
+          2027 drive when registration reopens. */}
 
       {/* Upcoming Events */}
       <section className="bg-white py-16 md:py-24">

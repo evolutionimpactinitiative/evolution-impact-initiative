@@ -29,7 +29,9 @@ export const FESTIVAL = {
   // `campaignKey`, regardless of what the donor selected on the form. This
   // covers the run-up to the Back to School Drive so nothing slips through
   // as "general" during the appeal window. Set to null to disable.
-  donationCampaignOverrideUntil: "2026-08-22T23:59:59+01:00",
+  // B2S 2026 window expired — override off. Set to a fresh ISO timestamp
+  // for the 2027 drive window when it opens.
+  donationCampaignOverrideUntil: null as string | null,
   applicationDeadline: "2026-07-18",
   applicationDeadlineLabel: "Saturday 18 July 2026",
   volunteerDeadline: "2026-07-22",

@@ -20,8 +20,11 @@ export function Navbar() {
 
   const ctaClass =
     "bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white";
-  const ctaLabel = "Back to School · Register";
-  const ctaHref = "/back-to-school/register";
+  // B2S 2026 archived — CTA reverted to the year-round donate ask.
+  // For the 2027 drive, flip back to:
+  //   ctaLabel = "Back to School · Register"; ctaHref = "/back-to-school/register";
+  const ctaLabel = "Donate";
+  const ctaHref = "/donate";
 
   React.useEffect(() => {
     const handleScroll = () => {

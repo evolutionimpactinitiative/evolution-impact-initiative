@@ -5,7 +5,8 @@ import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { Button } from "@/components/ui/button";
 import { PolaroidCard } from "@/components/shared/PolaroidCard";
-import { B2SPromoBanner } from "@/components/back-to-school/B2SPromoBanner";
+// B2S 2026 promo banner archived — re-import for the 2027 drive:
+// import { B2SPromoBanner } from "@/components/back-to-school/B2SPromoBanner";
 import { Users, Building2, CheckCircle } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -55,12 +56,8 @@ export default function GetInvolvedPage() {
         subtitle="There are many ways to support what we do, and none of them require a cape."
       />
 
-      {/* Featured campaign */}
-      <section className="bg-brand-pale/40 pt-10 pb-2">
-        <div className="container mx-auto px-4">
-          <B2SPromoBanner variant="supplies" />
-        </div>
-      </section>
+      {/* B2S 2026 featured-campaign banner archived — restore for the
+          2027 drive when the supplies pledge window reopens. */}
 
       {/* Volunteer With Us */}
       <section className="bg-white py-16 md:py-24">

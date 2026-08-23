@@ -4,7 +4,8 @@ import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { DonationForm } from "@/components/donations/DonationForm";
 import { Button } from "@/components/ui/button";
-import { B2SPromoBanner } from "@/components/back-to-school/B2SPromoBanner";
+// B2S 2026 promo banner archived — re-import for the 2027 drive:
+// import { B2SPromoBanner } from "@/components/back-to-school/B2SPromoBanner";
 import { fullDonationTiers } from "@/lib/constants";
 import { Suspense } from "react";
 import { Heart, Building, BarChart3 } from "lucide-react";
@@ -23,12 +24,8 @@ export default function DonatePage() {
         subtitle="Every donation, no matter the size, directly supports our work in Medway."
       />
 
-      {/* Featured campaign */}
-      <section className="bg-brand-pale/40 pt-10 pb-2">
-        <div className="container mx-auto px-4">
-          <B2SPromoBanner variant="sponsor" />
-        </div>
-      </section>
+      {/* B2S 2026 featured-campaign banner archived — restore for the
+          2027 drive when the campaign hub is refreshed. */}
 
       {/* Intro & Donation Form */}
       <section id="donate-form" className="bg-white py-16 md:py-24">

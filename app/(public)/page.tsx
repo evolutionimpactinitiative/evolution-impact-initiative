@@ -6,14 +6,15 @@ import { ImpactSection } from "@/components/sections/ImpactSection";
 import { AnniversarySection } from "@/components/sections/AnniversarySection";
 import { DonateSection } from "@/components/sections/DonateSection";
 import { GetInvolvedSection } from "@/components/sections/GetInvolvedSection";
-import { HomepagePromoStrip } from "@/components/back-to-school/HomepagePromoStrip";
+
+// B2S 2026 promo strip archived — re-enable for the 2027 drive:
+// import { HomepagePromoStrip } from "@/components/back-to-school/HomepagePromoStrip";
 
 export default function Home() {
   return (
     <>
       <HeroSection />
       <MarqueeBanner />
-      <HomepagePromoStrip />
       <AboutSection />
       <ProgrammesSection />
       <ImpactSection />

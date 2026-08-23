@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Calendar, MapPin, ArrowRight, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { FIRST_YEAR_STATS } from "@/lib/festival";
-import { B2S } from "@/lib/back-to-school";
+// Archived B2S 2026 imports — re-enable when the 2027 card comes back:
+// import { Calendar, MapPin, Sparkles } from "lucide-react";
+// import { Button } from "@/components/ui/button";
+// import { B2S } from "@/lib/back-to-school";
 
 export function AnniversarySection() {
   return (
@@ -39,82 +41,9 @@ export function AnniversarySection() {
           <StatTile value={FIRST_YEAR_STATS.uniformsGiven} label="Uniforms handed out" />
         </div>
 
-        {/* B2S campaign card */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-10 lg:p-12 backdrop-blur-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 bg-brand-accent/15 text-brand-accent px-3 py-1 rounded-full text-xs font-heading font-semibold uppercase tracking-wider mb-5">
-                <Sparkles className="h-3.5 w-3.5" />
-                The next chapter starts here
-              </div>
-
-              <h3 className="font-heading font-black text-2xl md:text-4xl lg:text-5xl leading-tight mb-4">
-                {B2S.title}
-              </h3>
-              <p className="text-brand-accent font-heading font-semibold text-lg md:text-xl mb-5">
-                Free uniforms, stationery and school bags for {B2S.goalChildren} children.
-              </p>
-
-              <p className="text-white/70 mb-6 leading-relaxed max-w-xl">
-                Our biggest campaign of the year — helping families across
-                Medway send their children back to school with everything they
-                need. Register your family, donate, or pledge new supplies.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 text-sm text-white/80 mb-8">
-                <span className="inline-flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-brand-accent" />
-                  {B2S.dateLabel} · {B2S.timeLabel}
-                </span>
-                <span className="hidden sm:inline text-white/30">·</span>
-                <span className="inline-flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-brand-accent" />
-                  {B2S.venueName}, {B2S.venueArea}
-                </span>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white"
-                >
-                  <Link href="/back-to-school/register">
-                    Register a family
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white hover:text-brand-dark">
-                  <Link href="/back-to-school">Campaign hub</Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Right: secondary CTAs */}
-            <div className="lg:col-span-5">
-              <p className="text-xs uppercase tracking-widest text-white/50 mb-4 font-heading font-semibold">
-                Other ways to help
-              </p>
-              <div className="space-y-3">
-                <CampaignCtaRow
-                  href="/back-to-school#donate-money"
-                  title="Donate to the drive"
-                  subtitle="£20 kits one child head-to-toe"
-                />
-                <CampaignCtaRow
-                  href="/back-to-school/sponsor"
-                  title="Sponsor the campaign"
-                  subtitle="From £50 to £3,000+"
-                />
-                <CampaignCtaRow
-                  href="/back-to-school/donate-supplies"
-                  title="Pledge new supplies"
-                  subtitle="Uniforms, stationery, school bags"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* B2S 2026 campaign card archived — restore for the 2027 drive
+            when dates + venue are locked in. Uses B2S.* constants +
+            CampaignCtaRow, both still exported. */}
       </div>
     </section>
   );

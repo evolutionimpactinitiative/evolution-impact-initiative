@@ -7,10 +7,8 @@ import {
   Mail,
   MapPin,
   MessageCircle,
-  Sparkles,
 } from "lucide-react";
 import { footerNav, footerInvolve, footerGovernance } from "@/lib/constants";
-import { B2S } from "@/lib/back-to-school";
 import { FooterSubscribeForm } from "./FooterSubscribeForm";
 
 export function Footer() {
@@ -48,66 +46,8 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Back to School Drive */}
-          <div>
-            <h3 className="font-heading font-bold text-lg mb-6 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-brand-accent" />
-              Back to School Drive
-            </h3>
-            <p className="text-white/50 text-xs uppercase tracking-widest mb-4">
-              {B2S.dateLabel}
-            </p>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/back-to-school"
-                  className="text-white/70 hover:text-brand-accent transition-colors"
-                >
-                  Campaign hub
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/back-to-school/register"
-                  className="text-white/70 hover:text-brand-accent transition-colors"
-                >
-                  Register a family
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/back-to-school#donate-money"
-                  className="text-white/70 hover:text-brand-accent transition-colors"
-                >
-                  Donate
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/back-to-school/donate-supplies"
-                  className="text-white/70 hover:text-brand-accent transition-colors"
-                >
-                  Pledge supplies
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/back-to-school/sponsor"
-                  className="text-white/70 hover:text-brand-accent transition-colors"
-                >
-                  Sponsor the drive
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/our-first-year"
-                  className="text-white/70 hover:text-brand-accent transition-colors"
-                >
-                  Our first year
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* B2S 2026 archived — restore the "Back to School Drive"
+              column here for the 2027 drive with fresh dates + links. */}
 
           {/* Get Involved */}
           <div>
