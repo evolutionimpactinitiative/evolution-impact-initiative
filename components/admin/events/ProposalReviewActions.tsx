@@ -24,7 +24,10 @@ type Action =
 interface Props {
   proposalId: string;
   status: ProposalStatus;
-  isAdmin: boolean;
+  // The designated reviewer (info@ today) — only they can move to
+  // review, request info, or approve/reject. Anyone else sees just the
+  // "Submit for review" button on their own drafts.
+  isReviewer: boolean;
 }
 
 const NOTE_PROMPT: Partial<Record<Action, { title: string; placeholder: string; required?: boolean }>> = {
@@ -44,7 +47,7 @@ const NOTE_PROMPT: Partial<Record<Action, { title: string; placeholder: string; 
   },
 };
 
-export function ProposalReviewActions({ proposalId, status, isAdmin }: Props) {
+export function ProposalReviewActions({ proposalId, status, isReviewer }: Props) {
   const router = useRouter();
   const [pending, setPending] = React.useState<Action | null>(null);
   const [noteFor, setNoteFor] = React.useState<Action | null>(null);
@@ -82,12 +85,16 @@ export function ProposalReviewActions({ proposalId, status, isAdmin }: Props) {
     }
   }
 
-  // Available actions per status
+  // Available actions per status. Everything except "submit" is
+  // reviewer-only — that's the gate enforced in the API too.
   const canSubmit = status === "draft";
-  const canMoveToReview = status === "submitted" || status === "needs_info";
-  const canRequestInfo = status === "submitted" || status === "in_review";
+  const canMoveToReview =
+    isReviewer && (status === "submitted" || status === "needs_info");
+  const canRequestInfo =
+    isReviewer && (status === "submitted" || status === "in_review");
   const canApproveReject =
-    isAdmin && (status === "submitted" || status === "in_review" || status === "needs_info");
+    isReviewer &&
+    (status === "submitted" || status === "in_review" || status === "needs_info");
 
   const nothingToDo =
     !canSubmit && !canMoveToReview && !canRequestInfo && !canApproveReject;

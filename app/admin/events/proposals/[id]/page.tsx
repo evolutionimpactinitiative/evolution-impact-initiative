@@ -34,6 +34,7 @@ import {
 } from "@/lib/event-proposals/types";
 import { ProposalCommentForm } from "@/components/admin/events/ProposalCommentForm";
 import { ProposalReviewActions } from "@/components/admin/events/ProposalReviewActions";
+import { PROPOSAL_REVIEWER_EMAIL } from "@/lib/event-proposals/constants";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -71,20 +72,24 @@ function fmtMoney(pence: number) {
 export default async function ProposalReviewPage({ params }: Props) {
   const { id } = await params;
 
-  // Auth — we need the current user's role for the actions bar.
+  // Auth — the actions bar needs to know if this user is the
+  // designated reviewer (info@ today). Review/approve/reject are
+  // gated to that account only; wizard-reopening still uses the
+  // creator/admin combo below.
   const authClient = await createClient();
   const {
     data: { user },
   } = await authClient.auth.getUser();
   if (!user) notFound();
+  const email = (user.email || "").toLowerCase();
   const { data: meRow } = await authClient
     .from("team_members")
     .select("id, role")
-    .eq("email", user.email || "")
+    .eq("email", email)
     .maybeSingle();
   const me = meRow as { id: string; role: string | null } | null;
   if (!me) notFound();
-  const isAdmin = me.role === "admin";
+  const isReviewer = email === PROPOSAL_REVIEWER_EMAIL;
 
   const supabase = createAdminClient();
 
@@ -175,10 +180,11 @@ export default async function ProposalReviewPage({ params }: Props) {
   // Only the creator can hop back into the wizard while it's still a draft
   const canEditDraft =
     proposal.status === "draft" && proposal.created_by === me.id;
-  // Once needs_info, the creator (or admin) should be able to reopen the wizard
+  // Once needs_info, the creator (or the reviewer who bounced it back)
+  // should be able to reopen the wizard.
   const canReopen =
     proposal.status === "needs_info" &&
-    (proposal.created_by === me.id || isAdmin);
+    (proposal.created_by === me.id || isReviewer);
 
   return (
     <div className="space-y-6 pb-16">
@@ -231,11 +237,12 @@ export default async function ProposalReviewPage({ params }: Props) {
         <ProposalReviewActions
           proposalId={proposal.id}
           status={proposal.status}
-          isAdmin={isAdmin}
+          isReviewer={isReviewer}
         />
-        {!isAdmin && (
+        {!isReviewer && (
           <p className="text-xs text-gray-500 mt-2 italic">
-            Approve / reject are chair-only.
+            Only the designated reviewer (info@) can move to review,
+            request info, or approve / reject.
           </p>
         )}
         {proposal.rejection_reason && (

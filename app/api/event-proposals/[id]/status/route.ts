@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { spawnEventFromProposal } from "@/lib/event-proposals/spawn";
 import type { EventProposal } from "@/lib/event-proposals/types";
+import { PROPOSAL_REVIEWER_EMAIL } from "@/lib/event-proposals/constants";
 
 async function requireTeam() {
   const supabase = await createClient();
@@ -10,10 +11,11 @@ async function requireTeam() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false as const, status: 401 };
+  const email = (user.email || "").toLowerCase();
   const { data: teamMember } = await supabase
     .from("team_members")
     .select("id, role")
-    .eq("email", user.email || "")
+    .eq("email", email)
     .maybeSingle();
   if (!teamMember) return { ok: false as const, status: 403 };
   const tm = teamMember as { id: string; role: string | null };
@@ -21,6 +23,8 @@ async function requireTeam() {
     ok: true as const,
     teamMemberId: tm.id,
     role: tm.role,
+    email,
+    isReviewer: email === PROPOSAL_REVIEWER_EMAIL,
   };
 }
 
@@ -28,9 +32,11 @@ async function requireTeam() {
 // Body: { status: 'submitted' | 'in_review' | 'needs_info' | 'approved'
 //                | 'rejected', note?: string }
 //
-// Any team member can submit / move-to-review / mark-needs-info.
-// Approve + reject are gated to admin (chair). Every transition writes
-// a system comment to the proposal thread for audit.
+// Any team member can submit their own proposal. Everything else
+// (move-to-review, needs-info, approve, reject) is gated to the
+// designated PROPOSAL_REVIEWER_EMAIL — the info@ account today.
+// Every transition writes a system comment to the proposal thread
+// for audit.
 
 const VALID_TRANSITIONS = [
   "submitted",
@@ -60,11 +66,19 @@ export async function POST(
   }
   const nextStatus = body.status as Status;
 
-  // Chair-only actions: approve + reject
-  if ((nextStatus === "approved" || nextStatus === "rejected") &&
-      auth.role !== "admin") {
+  // Reviewer-only actions: everything except a team member's own
+  // "submitted" transition. Anyone can submit their own draft.
+  const isReviewerAction =
+    nextStatus === "in_review" ||
+    nextStatus === "needs_info" ||
+    nextStatus === "approved" ||
+    nextStatus === "rejected";
+  if (isReviewerAction && !auth.isReviewer) {
     return NextResponse.json(
-      { error: "Only the chair (admin) can approve or reject proposals." },
+      {
+        error:
+          "Only the designated reviewer can move proposals to review, request info, approve, or reject.",
+      },
       { status: 403 },
     );
   }
