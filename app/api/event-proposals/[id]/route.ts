@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { PROPOSAL_REVIEWER_EMAIL } from "@/lib/event-proposals/constants";
 
 async function requireTeam() {
   const supabase = await createClient();
@@ -8,10 +9,11 @@ async function requireTeam() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false as const, status: 401 };
+  const email = (user.email || "").toLowerCase();
   const { data: teamMember } = await supabase
     .from("team_members")
     .select("id, role")
-    .eq("email", user.email || "")
+    .eq("email", email)
     .maybeSingle();
   if (!teamMember) return { ok: false as const, status: 403 };
   const tm = teamMember as { id: string; role: string | null };
@@ -19,6 +21,8 @@ async function requireTeam() {
     ok: true as const,
     teamMemberId: tm.id,
     role: tm.role,
+    email,
+    isReviewer: email === PROPOSAL_REVIEWER_EMAIL,
   };
 }
 
@@ -93,22 +97,31 @@ export async function PATCH(
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
-  // Refuse edits on approved/rejected proposals — they're locked from
-  // this point (except by an admin action to re-open, TBD).
+  // Edits allowed for: the person who created the proposal, OR the
+  // designated reviewer (info@). And only while the proposal is still
+  // in an editable status — approved/rejected are frozen (spawned
+  // event or rejection reason preserve intent from that point on).
   const admin = createAdminClient();
   const { data: current } = await admin
     .from("event_proposals")
-    .select("status")
+    .select("status, created_by")
     .eq("id", id)
     .maybeSingle();
-  const status = (current as { status: string } | null)?.status;
-  if (!status) {
+  const row = current as { status: string; created_by: string | null } | null;
+  if (!row) {
     return NextResponse.json({ error: "Proposal not found" }, { status: 404 });
   }
-  if (status === "approved" || status === "rejected") {
+  if (row.status === "approved" || row.status === "rejected") {
     return NextResponse.json(
-      { error: `Proposal is ${status} — edits locked. Ask an admin to re-open if this is wrong.` },
+      { error: `Proposal is ${row.status} — edits locked. Ask an admin to re-open if this is wrong.` },
       { status: 409 },
+    );
+  }
+  const isCreator = row.created_by === auth.teamMemberId;
+  if (!isCreator && !auth.isReviewer) {
+    return NextResponse.json(
+      { error: "Only the person who submitted the proposal or the reviewer (info@) can edit it." },
+      { status: 403 },
     );
   }
 

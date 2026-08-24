@@ -177,14 +177,16 @@ export default async function ProposalReviewPage({ params }: Props) {
     0,
   );
 
-  // Only the creator can hop back into the wizard while it's still a draft
-  const canEditDraft =
-    proposal.status === "draft" && proposal.created_by === me.id;
-  // Once needs_info, the creator (or the reviewer who bounced it back)
-  // should be able to reopen the wizard.
-  const canReopen =
-    proposal.status === "needs_info" &&
-    (proposal.created_by === me.id || isReviewer);
+  // Edits stay open to the submitter + the reviewer (info@) at every
+  // pre-decision status. Approved/rejected freeze — from that point
+  // the spawned event or rejection reason is the source of truth.
+  const editableStatus =
+    proposal.status === "draft" ||
+    proposal.status === "submitted" ||
+    proposal.status === "in_review" ||
+    proposal.status === "needs_info";
+  const canEdit =
+    editableStatus && (proposal.created_by === me.id || isReviewer);
 
   return (
     <div className="space-y-6 pb-16">
@@ -217,13 +219,13 @@ export default async function ProposalReviewPage({ params }: Props) {
                 ` · Reviewed ${fmtDateTime(proposal.reviewed_at)}`}
             </p>
           </div>
-          {(canEditDraft || canReopen) && (
+          {canEdit && (
             <Link
               href={`/admin/events/proposals/${proposal.id}/edit?step=1`}
               className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-brand-dark px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:border-brand-blue"
             >
               <Pencil className="h-4 w-4" />
-              {canEditDraft ? "Open wizard" : "Reopen for edits"}
+              Edit
             </Link>
           )}
         </div>
