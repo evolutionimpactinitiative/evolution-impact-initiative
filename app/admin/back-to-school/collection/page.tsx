@@ -6,9 +6,11 @@ import {
   Clock,
   Mail,
   ShieldAlert,
+  UserX,
   Users,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { B2S_SLUG } from "@/lib/back-to-school";
 import {
   COLLECTION,
   COLLECTION_SLOTS,
@@ -81,6 +83,41 @@ export default async function CollectionAdminPage() {
     .is("released_at", null)
     .order("added_at", { ascending: false });
   const blacklist = (bl as Blacklist[] | null) ?? [];
+
+  // August drive no-shows — parents who were approved for the August
+  // drive but never marked as collected. Fetched inline here so the
+  // chair can see who's on the follow-up list without a separate page.
+  const { data: augEventRow } = await admin
+    .from("events")
+    .select("id")
+    .eq("slug", B2S_SLUG)
+    .maybeSingle();
+  const augustEvent = augEventRow as { id: string } | null;
+  interface AugustNoShow {
+    id: string;
+    parent_name: string;
+    parent_email: string;
+    parent_phone: string;
+    created_at: string;
+  }
+  let augustNoShows: AugustNoShow[] = [];
+  if (augustEvent) {
+    const { data: aug } = await admin
+      .from("registrations")
+      .select("id, parent_name, parent_email, parent_phone, created_at, attended, status")
+      .eq("event_id", augustEvent.id)
+      .in("status", ["approved", "walk_in"])
+      .neq("attended", "yes")
+      .order("parent_name", { ascending: true });
+    augustNoShows =
+      ((aug as Array<AugustNoShow & { attended: string | null; status: string }> | null) ?? []).map((r) => ({
+        id: r.id,
+        parent_name: r.parent_name,
+        parent_email: r.parent_email,
+        parent_phone: r.parent_phone,
+        created_at: r.created_at,
+      }));
+  }
 
   // Bucket registrations by slot for the top summary
   const bySlot = new Map<string, CollectionRegistration[]>();
@@ -309,16 +346,49 @@ export default async function CollectionAdminPage() {
         )}
       </section>
 
-      {/* Bottom actions */}
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href={`/admin/back-to-school/collection/no-show-blast`}
-          className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-brand-dark px-4 py-2 rounded-md text-sm font-heading font-bold uppercase tracking-widest hover:border-brand-blue"
-        >
-          <Mail className="h-4 w-4" />
-          Email August no-shows
-        </Link>
-      </div>
+      {/* August no-shows */}
+      <section className="bg-white border border-gray-200 rounded-2xl p-4 md:p-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <UserX className="h-4 w-4 text-amber-600" />
+            <h2 className="font-heading font-bold text-brand-dark">
+              August drive no-shows
+            </h2>
+          </div>
+          <Link
+            href="/admin/back-to-school/collection/no-show-blast"
+            className="inline-flex items-center gap-1.5 bg-brand-blue text-white px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-brand-dark"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            Email all {augustNoShows.length}
+          </Link>
+        </div>
+        <p className="text-xs text-gray-600 mb-3">
+          Parents who were approved for the August drive and did not
+          attend. They&rsquo;re still welcome to book Collection Day.
+          Anyone who misses this one too gets auto-added to the blacklist.
+        </p>
+        {augustNoShows.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">
+            No August no-shows on record.
+          </p>
+        ) : (
+          <div className="max-h-80 overflow-y-auto -mx-2 px-2">
+            <ul className="divide-y divide-gray-100">
+              {augustNoShows.map((n) => (
+                <li key={n.id} className="py-2 text-sm">
+                  <p className="font-heading font-bold text-brand-dark truncate">
+                    {n.parent_name}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {n.parent_email} · {n.parent_phone}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

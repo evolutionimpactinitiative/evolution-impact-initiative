@@ -283,7 +283,7 @@ export async function POST(request: NextRequest) {
     if (ec.freeStock < qtyNeeded) {
       return NextResponse.json(
         {
-          error: `Sorry, we don't have enough of one of your picks (${cat} size ${parts[4]}). Someone may have booked it just before you — please refresh and try again.`,
+          error: `Sorry, we don't have enough of one of your picks (${cat} size ${parts[4]}). Someone may have booked it just before you. Please refresh and try again.`,
         },
         { status: 409 },
       );
@@ -391,7 +391,7 @@ export async function POST(request: NextRequest) {
         from: FROM_EMAIL,
         replyTo: REPLY_TO_EMAIL,
         to: emailNorm,
-        subject: `Your Back to School Collection slot — ${COLLECTION.dateLabel}`,
+        subject: `Your Back to School Collection slot on ${COLLECTION.dateLabel}`,
         html: emailBody,
       });
     } catch (e) {
@@ -435,13 +435,13 @@ function buildConfirmationEmail(input: {
     </p>
     <h1 style="font-size:26px;font-weight:900;margin:0 0 12px 0;">You&rsquo;re booked in, ${input.parentName}.</h1>
     <p style="font-size:15px;line-height:1.5;margin:0 0 16px 0;">
-      We&rsquo;ve reserved the items you picked for your ${input.childCount === 1 ? "child" : `${input.childCount} children`}. Everything will be pre-packed and ready to collect on the day — please just turn up in your slot.
+      We&rsquo;ve reserved the items you picked for your ${input.childCount === 1 ? "child" : `${input.childCount} children`}. Everything will be pre-packed and ready to collect on the day. Please arrive during your booked slot.
     </p>
 
     <div style="background:#F0F6FF;border:1px solid #C7DCFF;border-radius:12px;padding:16px;margin:16px 0;">
       <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:#17559D;font-weight:700;">Your slot</p>
       <p style="margin:6px 0 0 0;font-size:22px;font-weight:800;">${input.slotHuman}</p>
-      <p style="margin:4px 0 0 0;font-size:14px;color:#333;">${COLLECTION.dateLabel} · ${COLLECTION.venueName}, ${COLLECTION.venueAddress}</p>
+      <p style="margin:4px 0 0 0;font-size:14px;color:#333;">${COLLECTION.dateLabel}, ${COLLECTION.venueName}, ${COLLECTION.venueAddress}</p>
     </div>
 
     <div style="text-align:center;margin:16px 0;">
@@ -451,10 +451,10 @@ function buildConfirmationEmail(input: {
 
     <h2 style="font-size:18px;margin:24px 0 8px 0;">Things you need to know</h2>
     <ul style="font-size:14px;line-height:1.55;padding-left:18px;margin:0 0 16px 0;">
-      <li><b>Arrive in your slot.</b> If you miss it, come back between ${COLLECTION.graceLabel} and wait until everything else has been handed out.</li>
-      <li><b>Miss us twice, and that&rsquo;s it.</b> If you registered for our August drive and didn&rsquo;t collect, this is your second chance. Missing this too means you&rsquo;ll be blocked from every EII program going forward.</li>
-      <li><b>Zero tolerance for disrespect.</b> Any rudeness toward our volunteers or other families = asked to leave and blocked from all future events.</li>
-      <li><b>One bag per family, packed to your booking.</b> If your plans change, please email us so we can release your items to someone else.</li>
+      <li><b>Please attend during your booked slot.</b> If you arrive late, please return between ${COLLECTION.graceLabel}. Any remaining items will be distributed after all pre-booked slots have been served.</li>
+      <li><b>Final-chance policy for repeat no-shows.</b> If you registered for our August drive and did not attend, this is your final opportunity to collect from us. If you do not attend Collection Day either, you will be unable to take part in future EII programs.</li>
+      <li><b>Code of conduct.</b> Every family, volunteer and staff member should be treated with respect. Disrespectful or aggressive behaviour will result in you being asked to leave and being permanently excluded from all future EII events.</li>
+      <li><b>One bag per family, packed to your booking.</b> If your plans change, please email us so we can release the items to another family.</li>
     </ul>
 
     <p style="font-size:14px;line-height:1.55;margin:16px 0;">
@@ -464,7 +464,7 @@ function buildConfirmationEmail(input: {
       Questions? Just reply to this email.
     </p>
     <p style="font-size:13px;color:#666;margin:24px 0 0 0;">
-      — The Evolution Impact Initiative team
+      The Evolution Impact Initiative team
     </p>
   </div>
   `;

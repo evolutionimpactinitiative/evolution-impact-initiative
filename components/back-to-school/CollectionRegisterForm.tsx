@@ -343,8 +343,8 @@ export function CollectionRegisterForm({
           Pick your collection slot
         </legend>
         <p className="text-xs text-gray-600 -mt-2">
-          20 parents per slot. Miss it and you&rsquo;ll need to come back
-          between {COLLECTION.graceLabel}.
+          {COLLECTION.slotCapacity} parents per slot. If you miss it,
+          please return between {COLLECTION.graceLabel}.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {COLLECTION_SLOTS.map((s) => {
@@ -429,17 +429,72 @@ function ChildBlock({
   const fit = fitForSex(child.sex);
   const size = child.uniform_size || null;
 
-  // Filter helpers — only offer SKUs where freeStock > 0. Falls back
-  // to "unisex" if the child's sex isn't set yet (so they see options
-  // before picking).
-  const cellsForItem = (category: StockCategory) => {
-    return availableCells.filter(
-      (c) =>
-        c.category === category &&
-        c.freeStock > 0 &&
-        (!size || c.size === size) &&
-        (!fit || c.fit === fit || c.fit === "unisex"),
+  // Returns two buckets per category:
+  //   primary — exact size + exact fit (boys/girls). If the child is
+  //             a girl, "girls" only; the picker keeps unisex out of
+  //             primary so parents know when they're taking a swap.
+  //   alternatives — sensible fallbacks with a small badge each:
+  //             one size up/down, opposite sleeve, or the same size
+  //             in unisex fit. Anything more than a couple of steps
+  //             away is hidden to keep the list manageable.
+  const cellsForItem = (
+    category: StockCategory,
+  ): { primary: AvailableCell[]; alternatives: Array<AvailableCell & { badge: string }> } => {
+    if (!size || !fit) return { primary: [], alternatives: [] };
+
+    const targetIdx = UNIFORM_SIZE_OPTIONS.indexOf(size as (typeof UNIFORM_SIZE_OPTIONS)[number]);
+    const rows = availableCells.filter(
+      (c) => c.category === category && c.freeStock > 0,
     );
+
+    const primary: AvailableCell[] = [];
+    const alternatives: Array<AvailableCell & { badge: string }> = [];
+
+    for (const c of rows) {
+      const sameSize = c.size === size;
+      const sameFit = c.fit === fit;
+
+      if (sameSize && sameFit) {
+        primary.push(c);
+        continue;
+      }
+
+      // Alternatives get a badge that explains why they're a fallback.
+      // Never cross boys↔girls directly (usually a bad fit); unisex
+      // rows are always OK as a swap.
+      if (!sameFit && c.fit !== "unisex") continue;
+
+      const cIdx = UNIFORM_SIZE_OPTIONS.indexOf(
+        c.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
+      );
+      const sizeGap =
+        targetIdx >= 0 && cIdx >= 0 ? cIdx - targetIdx : Infinity;
+
+      const badges: string[] = [];
+      if (c.fit === "unisex" && !sameFit) badges.push("Unisex");
+      if (!sameSize) {
+        if (Math.abs(sizeGap) > 2) continue; // too far away
+        badges.push(sizeGap > 0 ? "Size up" : "Size down");
+      }
+      if (badges.length === 0) continue;
+      alternatives.push({ ...c, badge: badges.join(", ") });
+    }
+
+    primary.sort(
+      (a, b) =>
+        a.colour.localeCompare(b.colour) ||
+        (a.sleeve ?? "").localeCompare(b.sleeve ?? ""),
+    );
+    alternatives.sort((a, b) => {
+      const ai = UNIFORM_SIZE_OPTIONS.indexOf(
+        a.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
+      );
+      const bi = UNIFORM_SIZE_OPTIONS.indexOf(
+        b.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
+      );
+      return Math.abs(ai - targetIdx) - Math.abs(bi - targetIdx);
+    });
+    return { primary, alternatives };
   };
 
   return (
@@ -490,7 +545,7 @@ function ChildBlock({
             required
             className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
           >
-            <option value="">—</option>
+            <option value="">Choose</option>
             <option value="male">Boy</option>
             <option value="female">Girl</option>
           </select>
@@ -504,7 +559,7 @@ function ChildBlock({
             required
             className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
           >
-            <option value="">—</option>
+            <option value="">Choose</option>
             {UNIFORM_SIZE_OPTIONS.map((s) => (
               <option key={s} value={s}>
                 Age {s}
@@ -526,21 +581,21 @@ function ChildBlock({
       {size && fit && (
         <div className="space-y-3 pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-600">
-            Showing only what we have in stock for size <b>{size}</b>,{" "}
-            {child.sex === "male" ? "boys" : "girls"}.
+            Live stock for size <b>{size}</b>,{" "}
+            {child.sex === "male" ? "boys" : "girls"}. Anything a size
+            up, a size down, or in a unisex fit shows as an
+            &ldquo;alternative&rdquo; below the main options.
           </p>
 
           {/* Shirt */}
           <ItemPicker
             title="School shirt"
-            hint="1 shirt max"
+            hint="pick one"
             cells={cellsForItem("shirt")}
             selected={child.shirt}
             onSelect={(pick) =>
               onChange({
-                shirt: pick
-                  ? { ...pick, category: "shirt" }
-                  : null,
+                shirt: pick ? { ...pick, category: "shirt" } : null,
               })
             }
             axes={["colour", "sleeve"]}
@@ -549,14 +604,12 @@ function ChildBlock({
           {/* Polo */}
           <ItemPicker
             title="Polo shirt"
-            hint="1 polo max"
+            hint="pick one"
             cells={cellsForItem("polo")}
             selected={child.polo}
             onSelect={(pick) =>
               onChange({
-                polo: pick
-                  ? { ...pick, category: "polo" }
-                  : null,
+                polo: pick ? { ...pick, category: "polo" } : null,
               })
             }
             axes={["colour", "sleeve"]}
@@ -582,8 +635,8 @@ function ChildBlock({
                 Stationery pack
               </p>
               <p className="text-xs text-gray-600">
-                Subject to availability on the day — we&rsquo;ll add one if
-                we&rsquo;ve got them.
+                Subject to availability on the day. We&rsquo;ll add one
+                if we have them.
               </p>
             </div>
           </label>
@@ -619,19 +672,21 @@ function ItemPicker({
 }: {
   title: string;
   hint: string;
-  cells: AvailableCell[];
+  cells: { primary: AvailableCell[]; alternatives: Array<AvailableCell & { badge: string }> };
   selected: SkuPick | null;
   onSelect: (pick: SkuPick | null) => void;
   axes: Array<"colour" | "sleeve">;
 }) {
-  if (cells.length === 0) {
+  const { primary, alternatives } = cells;
+  if (primary.length === 0 && alternatives.length === 0) {
     return (
       <div className="bg-gray-50 border border-dashed border-gray-200 rounded-lg px-3 py-2.5">
         <p className="text-sm font-heading font-bold text-brand-dark">
           {title}
         </p>
         <p className="text-xs text-gray-600 mt-0.5">
-          Sorry — none in stock for this size.
+          Sorry, we don&rsquo;t currently have this item in your
+          child&rsquo;s size.
         </p>
       </div>
     );
@@ -642,12 +697,59 @@ function ItemPicker({
     (selected.sleeve ?? "") === (c.sleeve ?? "") &&
     selected.size === c.size;
 
+  const optionLabel = (c: AvailableCell) => {
+    const parts: string[] = [];
+    if (axes.includes("colour")) parts.push(COLOUR_LABEL[c.colour] ?? c.colour);
+    if (axes.includes("sleeve") && c.sleeve) parts.push(SLEEVE_LABEL[c.sleeve]);
+    return parts.join(", ") || `Size ${c.size}`;
+  };
+
+  const renderRow = (
+    c: AvailableCell,
+    badge?: string,
+    keyPrefix = "p",
+    idx = 0,
+  ) => {
+    const chosen = isSelected(c);
+    return (
+      <button
+        key={`${keyPrefix}-${idx}`}
+        type="button"
+        onClick={() =>
+          onSelect({
+            category: c.category,
+            colour: c.colour,
+            sleeve: c.sleeve,
+            size: c.size,
+          })
+        }
+        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm text-left ${
+          chosen
+            ? "bg-brand-blue/10 border-brand-blue"
+            : "bg-white border-gray-200 hover:border-brand-blue/60"
+        }`}
+      >
+        <span className="flex-1 min-w-0">
+          <span className="block truncate">{optionLabel(c)}</span>
+          {badge && (
+            <span className="block text-[10px] uppercase tracking-widest font-heading font-bold text-amber-700 mt-0.5">
+              {badge}
+            </span>
+          )}
+        </span>
+        <span className="text-xs text-gray-500 shrink-0">
+          {c.freeStock} left
+        </span>
+      </button>
+    );
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm font-heading font-bold text-brand-dark">
           {title}{" "}
-          <span className="text-xs font-normal text-gray-500">— {hint}</span>
+          <span className="text-xs font-normal text-gray-500">({hint})</span>
         </p>
         {selected && (
           <button
@@ -659,39 +761,23 @@ function ItemPicker({
           </button>
         )}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {cells.map((c, i) => {
-          const chosen = isSelected(c);
-          const parts: string[] = [];
-          if (axes.includes("colour")) parts.push(COLOUR_LABEL[c.colour] ?? c.colour);
-          if (axes.includes("sleeve") && c.sleeve)
-            parts.push(SLEEVE_LABEL[c.sleeve]);
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() =>
-                onSelect({
-                  category: c.category,
-                  colour: c.colour,
-                  sleeve: c.sleeve,
-                  size: c.size,
-                })
-              }
-              className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm text-left ${
-                chosen
-                  ? "bg-brand-blue/10 border-brand-blue"
-                  : "bg-white border-gray-200 hover:border-brand-blue/60"
-              }`}
-            >
-              <span>{parts.join(" · ") || `Size ${c.size}`}</span>
-              <span className="text-xs text-gray-500">
-                {c.freeStock} left
-              </span>
-            </button>
-          );
-        })}
-      </div>
+
+      {primary.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {primary.map((c, i) => renderRow(c, undefined, "p", i))}
+        </div>
+      )}
+
+      {alternatives.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-[10px] uppercase tracking-widest font-heading font-bold text-gray-500 mb-2">
+            Alternatives available
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {alternatives.map((c, i) => renderRow(c, c.badge, "a", i))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -704,25 +790,72 @@ function BottomPicker({
   onSelect,
 }: {
   child: Child;
-  cellsForItem: (category: StockCategory) => AvailableCell[];
+  cellsForItem: (
+    category: StockCategory,
+  ) => { primary: AvailableCell[]; alternatives: Array<AvailableCell & { badge: string }> };
   onSelect: (pick: SkuPick | null) => void;
 }) {
   const options = child.sex === "female" ? GIRLS_BOTTOM_TYPES : BOYS_BOTTOM_TYPES;
-  const grouped = options.map((type) => ({ type, cells: cellsForItem(type) }));
-  const anyAvailable = grouped.some((g) => g.cells.length > 0);
+  const grouped = options.map((type) => ({ type, ...cellsForItem(type) }));
+  const anyAvailable = grouped.some(
+    (g) => g.primary.length > 0 || g.alternatives.length > 0,
+  );
 
   if (!anyAvailable) {
     return (
       <div className="bg-gray-50 border border-dashed border-gray-200 rounded-lg px-3 py-2.5">
         <p className="text-sm font-heading font-bold text-brand-dark">
-          Bottom (trousers / skirt / dress / shorts)
+          Bottom (trousers, skirt, dress, or shorts)
         </p>
         <p className="text-xs text-gray-600 mt-0.5">
-          Sorry — no bottoms in stock for this size right now.
+          Sorry, no bottoms currently in stock for this size.
         </p>
       </div>
     );
   }
+
+  const renderRow = (
+    type: StockCategory,
+    c: AvailableCell,
+    badge: string | undefined,
+    keyPrefix: string,
+    idx: number,
+  ) => {
+    const chosen =
+      child.bottom &&
+      child.bottom.category === type &&
+      child.bottom.colour === c.colour &&
+      child.bottom.size === c.size;
+    return (
+      <button
+        key={`${keyPrefix}-${idx}`}
+        type="button"
+        onClick={() =>
+          onSelect({
+            category: type,
+            colour: c.colour,
+            sleeve: null,
+            size: c.size,
+          })
+        }
+        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm text-left ${
+          chosen
+            ? "bg-brand-blue/10 border-brand-blue"
+            : "bg-white border-gray-200 hover:border-brand-blue/60"
+        }`}
+      >
+        <span className="flex-1 min-w-0">
+          <span className="block truncate">{COLOUR_LABEL[c.colour] ?? c.colour}</span>
+          {badge && (
+            <span className="block text-[10px] uppercase tracking-widest font-heading font-bold text-amber-700 mt-0.5">
+              {badge}
+            </span>
+          )}
+        </span>
+        <span className="text-xs text-gray-500 shrink-0">{c.freeStock} left</span>
+      </button>
+    );
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3">
@@ -730,7 +863,7 @@ function BottomPicker({
         <p className="text-sm font-heading font-bold text-brand-dark">
           Bottom{" "}
           <span className="text-xs font-normal text-gray-500">
-            — 1 max ({options.map((o) => BOTTOM_TYPE_LABEL[o]).join(" / ")})
+            (pick one: {options.map((o) => BOTTOM_TYPE_LABEL[o]).join(", ")})
           </span>
         </p>
         {child.bottom && (
@@ -743,48 +876,36 @@ function BottomPicker({
           </button>
         )}
       </div>
-      <div className="space-y-2">
-        {grouped.map(({ type, cells }) =>
-          cells.length === 0 ? null : (
+      <div className="space-y-3">
+        {grouped.map(({ type, primary, alternatives }) => {
+          if (primary.length === 0 && alternatives.length === 0) return null;
+          return (
             <div key={type}>
               <p className="text-xs font-heading font-bold uppercase tracking-widest text-gray-500 mb-1">
                 {BOTTOM_TYPE_LABEL[type]}
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {cells.map((c, i) => {
-                  const chosen =
-                    child.bottom &&
-                    child.bottom.category === type &&
-                    child.bottom.colour === c.colour;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() =>
-                        onSelect({
-                          category: type,
-                          colour: c.colour,
-                          sleeve: null,
-                          size: c.size,
-                        })
-                      }
-                      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm text-left ${
-                        chosen
-                          ? "bg-brand-blue/10 border-brand-blue"
-                          : "bg-white border-gray-200 hover:border-brand-blue/60"
-                      }`}
-                    >
-                      <span>{COLOUR_LABEL[c.colour] ?? c.colour}</span>
-                      <span className="text-xs text-gray-500">
-                        {c.freeStock} left
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              {primary.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {primary.map((c, i) => renderRow(type, c, undefined, `p-${type}`, i))}
+                </div>
+              )}
+              {alternatives.length > 0 && (
+                <div className="mt-2">
+                  {primary.length > 0 && (
+                    <p className="text-[10px] uppercase tracking-widest font-heading font-bold text-gray-500 mb-1.5">
+                      Alternatives
+                    </p>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {alternatives.map((c, i) =>
+                      renderRow(type, c, c.badge, `a-${type}`, i),
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          ),
-        )}
+          );
+        })}
       </div>
     </div>
   );

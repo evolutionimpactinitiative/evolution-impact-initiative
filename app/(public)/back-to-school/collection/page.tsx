@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: `${COLLECTION.title} — ${COLLECTION.dateLabel}`,
+  title: `${COLLECTION.title}, ${COLLECTION.dateLabel}`,
   description:
     "A follow-on collection day for families in Medway. Pre-book a 30-minute slot, we pack your bag, you pick up.",
 };
@@ -65,15 +65,16 @@ export default async function CollectionHubPage() {
           <div className="max-w-3xl">
             <p className="inline-flex items-center gap-2 bg-brand-accent/20 text-brand-accent px-3 py-1 rounded-full text-xs font-heading font-bold uppercase tracking-widest mb-5">
               <Shirt className="h-3.5 w-3.5" />
-              Collection Day · Second Round
+              Collection Day, second round
             </p>
             <h1 className="font-heading font-black text-4xl md:text-6xl leading-tight mb-6">
               {COLLECTION.title}
             </h1>
             <p className="text-lg md:text-xl text-white/85 leading-relaxed mb-8">
-              Our August drive left us with stock spare. This is a follow-on
-              collection day for anyone in Medway who still needs uniform for
-              their children — including families who missed us in August.
+              Our August drive left us with stock available. This is a
+              follow-on collection day for anyone in Medway who still
+              needs uniform for their children, including families who
+              missed us in August.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 text-sm text-white/80 mb-8">
               <span className="inline-flex items-center gap-2">
@@ -123,11 +124,11 @@ export default async function CollectionHubPage() {
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-wrap items-baseline justify-between gap-3 mb-6">
               <div>
-                <p className="text-xs font-heading font-bold uppercase tracking-widest text-brand-blue">
+                <p className="text-xs font-heading font-semibold uppercase tracking-widest text-brand-blue">
                   Book a slot
                 </p>
-                <h2 className="text-2xl md:text-3xl font-heading font-black text-brand-dark mt-1">
-                  Six 30-minute slots · 20 parents per slot
+                <h2 className="text-xl md:text-2xl font-heading font-bold text-brand-dark mt-1">
+                  Six 30-minute slots, {COLLECTION.slotCapacity} parents per slot
                 </h2>
               </div>
               <p className="text-sm text-gray-600">
@@ -143,18 +144,18 @@ export default async function CollectionHubPage() {
                 return (
                   <div
                     key={s}
-                    className={`rounded-2xl border-2 p-4 text-center ${
+                    className={`rounded-xl border p-3 text-center ${
                       full
                         ? "border-red-200 bg-red-50"
-                        : "border-brand-blue/20 bg-white"
+                        : "border-gray-200 bg-white"
                     }`}
                   >
-                    <p className="font-heading font-black text-brand-dark text-xl">
+                    <p className="font-heading text-brand-dark text-base font-semibold">
                       {slotLabel(s)}
                     </p>
                     <p
-                      className={`text-xs mt-1 font-heading font-bold uppercase tracking-widest ${
-                        full ? "text-red-700" : "text-brand-blue"
+                      className={`text-xs mt-1 font-medium ${
+                        full ? "text-red-700" : "text-gray-500"
                       }`}
                     >
                       {full ? "Full" : `${remaining} left`}
@@ -179,24 +180,24 @@ export default async function CollectionHubPage() {
             </div>
             <ul className="space-y-4 text-brand-dark">
               <RuleRow
-                title="You must turn up in your booked slot"
-                body={`Arrive within your 30-minute window. If you miss it, you'll need to come back between ${COLLECTION.graceLabel} and wait until everything else has been distributed.`}
+                title="Please attend during your booked slot"
+                body={`The day runs on a strict schedule. Please arrive within your 30-minute window. If you arrive late, you can return between ${COLLECTION.graceLabel}, where remaining items will be distributed after all pre-booked slots have been served.`}
               />
               <RuleRow
-                title="Miss us twice, and that's it"
-                body="If you registered for our August drive and didn't collect, this is your second chance. If you register today and don't collect, you'll be blocked from all our future programs — a lot of prep and money goes into these drives, and other families need the space."
+                title="Final-chance policy for repeat no-shows"
+                body="If you registered for our August drive and did not attend, this is your final opportunity to collect from us. If you register for Collection Day and do not attend, you will be unable to take part in future EII programs. A significant amount of preparation and funding goes into each drive, and every unclaimed booking prevents another family from being helped."
               />
               <RuleRow
                 title="One bag per family, packed to your booking"
-                body="When you submit, we reserve your items and pack the bag ahead of time. Please only book what you'll actually pick up."
+                body="Submitting the form reserves your items so we can pack your bag in advance. Please only book what you intend to collect. If your plans change, contact us so we can release the items to another family."
               />
               <RuleRow
-                title="Respect for everyone"
-                body="Any disrespect toward volunteers or other families will get you asked to leave, and blocked from every future event we run. Zero tolerance."
+                title="Code of conduct"
+                body="Every family, volunteer and staff member should be treated with respect. Any disrespectful or aggressive behaviour towards our team or other visitors will result in you being asked to leave, and being permanently excluded from all future EII events."
               />
               <RuleRow
                 title="Up to 4 children per family"
-                body="If you have more than 4 school-age kids at home, drop us a note by email and we'll sort it out separately."
+                body="If you have more than 4 school-age children in your household, please email us and we will make separate arrangements."
               />
             </ul>
           </div>
@@ -210,8 +211,8 @@ export default async function CollectionHubPage() {
             Ready to book?
           </h2>
           <p className="text-white/70 mb-8 max-w-xl mx-auto">
-            The form takes 3 minutes. Live stock — you&rsquo;ll only be
-            shown what we actually have on the shelf.
+            The form takes 3 minutes and only shows items we currently
+            have in stock for your child&rsquo;s size.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button

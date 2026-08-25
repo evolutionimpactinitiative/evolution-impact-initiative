@@ -34,7 +34,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: `Book a slot — ${COLLECTION.title}`,
+  title: `Book a slot, ${COLLECTION.title}`,
   description:
     "Pre-book a 30-minute collection slot, pick what you need per child from what we've got in stock, and turn up on the day.",
 };
@@ -163,9 +163,9 @@ export default async function CollectionRegisterPage() {
             Book your slot
           </h1>
           <p className="text-sm text-gray-700 mt-2 leading-relaxed">
-            Live stock — you&rsquo;ll only see items we actually have in
-            your child&rsquo;s size. Submitting reserves the items and
-            locks your slot straight away.
+            You&rsquo;ll only be shown items we currently have in your
+            child&rsquo;s size. Submitting reserves the items and locks
+            your slot straight away.
           </p>
         </div>
 

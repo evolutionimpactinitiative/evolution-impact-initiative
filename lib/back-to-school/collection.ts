@@ -12,19 +12,19 @@ export const COLLECTION = {
   dateLabel: "Saturday 5 September 2026",
   startTime: "12:00",
   endTime: "15:00",
-  timeLabel: "12pm – 3pm",
+  timeLabel: "12pm to 3pm",
   graceStart: "15:00",
   graceEnd: "16:00",
-  graceLabel: "3pm – 4pm (walk-in only)",
-  venueName: "Sunlight Centre",
-  venueAddress: "Richmond Road, Gillingham, ME7 1LX",
-  venueArea: "Gillingham",
+  graceLabel: "3pm to 4pm (walk-in only)",
+  venueName: "ECA",
+  venueAddress: "86 King Street, Rochester, ME1 1YD",
+  venueArea: "Rochester",
   campaignKey: "back-to-school-collection-2026",
   maxChildrenPerRegistration: 4,
   minChildAge: 4,
   maxChildAge: 12,
   slotDurationMinutes: 30,
-  slotCapacity: 20,
+  slotCapacity: 15,
 } as const;
 
 // Explicit slot list — precomputed so it renders identically on server
@@ -54,7 +54,7 @@ export function slotLabel(slot: CollectionSlot): string {
   const endMM = endM % 60;
   const fmt = (hh: number, mm: number) =>
     `${hh}:${mm.toString().padStart(2, "0")}`;
-  return `${fmt(h, m)} – ${fmt(endH, endMM)}`;
+  return `${fmt(h, m)} to ${fmt(endH, endMM)}`;
 }
 
 // Normalisation for blacklist matching. Email → lowercased trimmed;
