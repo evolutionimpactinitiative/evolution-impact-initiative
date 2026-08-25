@@ -359,7 +359,7 @@ export function CollectionRegisterForm({
                 type="button"
                 disabled={full}
                 onClick={() => setSlot(s)}
-                className={`px-3 py-3 rounded-xl border-2 text-center ${
+                className={`px-3 py-2.5 rounded-xl border text-center ${
                   chosen
                     ? "bg-brand-blue text-white border-brand-blue"
                     : full
@@ -367,11 +367,11 @@ export function CollectionRegisterForm({
                       : "bg-white text-brand-dark border-gray-200 hover:border-brand-blue"
                 }`}
               >
-                <p className="font-heading font-black text-lg leading-tight">
+                <p className="font-heading text-base font-semibold leading-tight">
                   {slotLabel(s)}
                 </p>
                 <p
-                  className={`text-[10px] uppercase tracking-widest font-heading font-bold mt-1 ${
+                  className={`text-xs mt-1 font-medium ${
                     chosen ? "text-white/80" : full ? "text-red-700" : "text-gray-500"
                   }`}
                 >
