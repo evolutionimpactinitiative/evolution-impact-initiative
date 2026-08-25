@@ -395,6 +395,24 @@ export default async function BackToSchoolAdminPage() {
       {/* QUICK LINKS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link
+          href="/admin/back-to-school/collection"
+          className="group bg-brand-blue text-white rounded-2xl p-6 border-2 border-brand-blue hover:opacity-95 transition-opacity"
+        >
+          <Heart className="h-6 w-6 text-white mb-3" />
+          <h3 className="font-heading font-bold text-lg mb-1">
+            Collection Day (5 Sept)
+          </h3>
+          <p className="text-sm text-white/85 mb-3">
+            New bookings, slot occupancy, blacklist, and the "email
+            August no-shows" blast — all here.
+          </p>
+          <span className="inline-flex items-center gap-1 font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
           href="/admin/back-to-school/registrations"
           className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
         >

@@ -58,6 +58,7 @@ const moreSections: MoreSection[] = [
   {
     label: "Back to School",
     items: [
+      { name: "Collection Day", href: "/admin/back-to-school/collection", icon: Heart },
       { name: "Registrations", href: "/admin/back-to-school/registrations", icon: Users },
       { name: "Stock count", href: "/admin/back-to-school/count", icon: ClipboardList },
       { name: "Shopping list", href: "/admin/back-to-school/shopping-list", icon: ShoppingBag },
