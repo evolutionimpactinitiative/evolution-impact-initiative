@@ -429,72 +429,25 @@ function ChildBlock({
   const fit = fitForSex(child.sex);
   const size = child.uniform_size || null;
 
-  // Returns two buckets per category:
-  //   primary — exact size + exact fit (boys/girls). If the child is
-  //             a girl, "girls" only; the picker keeps unisex out of
-  //             primary so parents know when they're taking a swap.
-  //   alternatives — sensible fallbacks with a small badge each:
-  //             one size up/down, opposite sleeve, or the same size
-  //             in unisex fit. Anything more than a couple of steps
-  //             away is hidden to keep the list manageable.
-  const cellsForItem = (
-    category: StockCategory,
-  ): { primary: AvailableCell[]; alternatives: Array<AvailableCell & { badge: string }> } => {
-    if (!size || !fit) return { primary: [], alternatives: [] };
-
-    const targetIdx = UNIFORM_SIZE_OPTIONS.indexOf(size as (typeof UNIFORM_SIZE_OPTIONS)[number]);
-    const rows = availableCells.filter(
-      (c) => c.category === category && c.freeStock > 0,
+  // Returns every viable SKU for a category — the child's fit OR
+  // unisex, and within 2 sizes of the child's size. The picker itself
+  // then lets the parent pick a COLOUR, and shows the size options
+  // within that colour with their real numbers ("Size 6", "Size 5-6")
+  // instead of vague "size up/down" labels.
+  const cellsForItem = (category: StockCategory): AvailableCell[] => {
+    if (!size || !fit) return [];
+    const targetIdx = UNIFORM_SIZE_OPTIONS.indexOf(
+      size as (typeof UNIFORM_SIZE_OPTIONS)[number],
     );
-
-    const primary: AvailableCell[] = [];
-    const alternatives: Array<AvailableCell & { badge: string }> = [];
-
-    for (const c of rows) {
-      const sameSize = c.size === size;
-      const sameFit = c.fit === fit;
-
-      if (sameSize && sameFit) {
-        primary.push(c);
-        continue;
-      }
-
-      // Alternatives get a badge that explains why they're a fallback.
-      // Never cross boys↔girls directly (usually a bad fit); unisex
-      // rows are always OK as a swap.
-      if (!sameFit && c.fit !== "unisex") continue;
-
-      const cIdx = UNIFORM_SIZE_OPTIONS.indexOf(
-        c.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
-      );
-      const sizeGap =
-        targetIdx >= 0 && cIdx >= 0 ? cIdx - targetIdx : Infinity;
-
-      const badges: string[] = [];
-      if (c.fit === "unisex" && !sameFit) badges.push("Unisex");
-      if (!sameSize) {
-        if (Math.abs(sizeGap) > 2) continue; // too far away
-        badges.push(sizeGap > 0 ? "Size up" : "Size down");
-      }
-      if (badges.length === 0) continue;
-      alternatives.push({ ...c, badge: badges.join(", ") });
-    }
-
-    primary.sort(
-      (a, b) =>
-        a.colour.localeCompare(b.colour) ||
-        (a.sleeve ?? "").localeCompare(b.sleeve ?? ""),
-    );
-    alternatives.sort((a, b) => {
-      const ai = UNIFORM_SIZE_OPTIONS.indexOf(
-        a.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
-      );
-      const bi = UNIFORM_SIZE_OPTIONS.indexOf(
-        b.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
-      );
-      return Math.abs(ai - targetIdx) - Math.abs(bi - targetIdx);
-    });
-    return { primary, alternatives };
+    return availableCells
+      .filter((c) => c.category === category && c.freeStock > 0)
+      .filter((c) => c.fit === fit || c.fit === "unisex")
+      .filter((c) => {
+        const cIdx = UNIFORM_SIZE_OPTIONS.indexOf(
+          c.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
+        );
+        return targetIdx < 0 || cIdx < 0 || Math.abs(cIdx - targetIdx) <= 2;
+      });
   };
 
   return (
@@ -582,9 +535,9 @@ function ChildBlock({
         <div className="space-y-3 pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-600">
             Live stock for size <b>{size}</b>,{" "}
-            {child.sex === "male" ? "boys" : "girls"}. Anything a size
-            up, a size down, or in a unisex fit shows as an
-            &ldquo;alternative&rdquo; below the main options.
+            {child.sex === "male" ? "boys" : "girls"}. Pick a colour and
+            we&rsquo;ll show you the sizes we have. Nearby sizes and
+            unisex options are included.
           </p>
 
           {/* Shirt */}
@@ -598,7 +551,8 @@ function ChildBlock({
                 shirt: pick ? { ...pick, category: "shirt" } : null,
               })
             }
-            axes={["colour", "sleeve"]}
+            targetSize={size}
+            targetFit={fit}
           />
 
           {/* Polo */}
@@ -612,7 +566,8 @@ function ChildBlock({
                 polo: pick ? { ...pick, category: "polo" } : null,
               })
             }
-            axes={["colour", "sleeve"]}
+            targetSize={size}
+            targetFit={fit}
           />
 
           {/* Bottom */}
@@ -620,6 +575,8 @@ function ChildBlock({
             child={child}
             cellsForItem={cellsForItem}
             onSelect={(pick) => onChange({ bottom: pick })}
+            targetSize={size}
+            targetFit={fit}
           />
 
           {/* Stationery */}
@@ -660,7 +617,12 @@ function ChildBlock({
   );
 }
 
-// ─── Item picker (single-select from filtered cells) ────────────────
+// ─── Item picker: colour first, then size options ──────────────────
+// Two-step flow so parents aren't scanning a wall of colours+sleeves.
+//   1. Pick a colour (chip row of colours we have any stock in)
+//   2. See the sizes we have IN that colour, exact size first,
+//      nearby sizes below with their real numbers. Unisex options
+//      are marked with "(unisex)" so it's obvious.
 
 function ItemPicker({
   title,
@@ -668,17 +630,32 @@ function ItemPicker({
   cells,
   selected,
   onSelect,
-  axes,
+  targetSize,
+  targetFit,
 }: {
   title: string;
   hint: string;
-  cells: { primary: AvailableCell[]; alternatives: Array<AvailableCell & { badge: string }> };
+  cells: AvailableCell[];
   selected: SkuPick | null;
   onSelect: (pick: SkuPick | null) => void;
-  axes: Array<"colour" | "sleeve">;
+  targetSize: string;
+  targetFit: StockFit;
 }) {
-  const { primary, alternatives } = cells;
-  if (primary.length === 0 && alternatives.length === 0) {
+  const availableColours = Array.from(new Set(cells.map((c) => c.colour))).sort();
+  const [colour, setColour] = React.useState<StockColour | null>(null);
+
+  // If the parent's currently-selected pick is in this picker, keep
+  // the colour toggle synced so they can see what they chose.
+  React.useEffect(() => {
+    if (selected && cells.some((c) => c.colour === selected.colour)) {
+      setColour(selected.colour);
+    } else if (!colour && availableColours.length === 1) {
+      setColour(availableColours[0] as StockColour);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
+
+  if (cells.length === 0) {
     return (
       <div className="bg-gray-50 border border-dashed border-gray-200 rounded-lg px-3 py-2.5">
         <p className="text-sm font-heading font-bold text-brand-dark">
@@ -686,67 +663,36 @@ function ItemPicker({
         </p>
         <p className="text-xs text-gray-600 mt-0.5">
           Sorry, we don&rsquo;t currently have this item in your
-          child&rsquo;s size.
+          child&rsquo;s size (or anywhere close).
         </p>
       </div>
     );
   }
+
+  const filtered = colour ? cells.filter((c) => c.colour === colour) : [];
+  // Order: exact size first, then by proximity to the target
+  const sorted = filtered.slice().sort((a, b) => {
+    const ti = UNIFORM_SIZE_OPTIONS.indexOf(
+      targetSize as (typeof UNIFORM_SIZE_OPTIONS)[number],
+    );
+    const ai = UNIFORM_SIZE_OPTIONS.indexOf(
+      a.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
+    );
+    const bi = UNIFORM_SIZE_OPTIONS.indexOf(
+      b.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
+    );
+    return Math.abs(ai - ti) - Math.abs(bi - ti);
+  });
+
   const isSelected = (c: AvailableCell) =>
     selected &&
     selected.colour === c.colour &&
     (selected.sleeve ?? "") === (c.sleeve ?? "") &&
     selected.size === c.size;
 
-  const optionLabel = (c: AvailableCell) => {
-    const parts: string[] = [];
-    if (axes.includes("colour")) parts.push(COLOUR_LABEL[c.colour] ?? c.colour);
-    if (axes.includes("sleeve") && c.sleeve) parts.push(SLEEVE_LABEL[c.sleeve]);
-    return parts.join(", ") || `Size ${c.size}`;
-  };
-
-  const renderRow = (
-    c: AvailableCell,
-    badge?: string,
-    keyPrefix = "p",
-    idx = 0,
-  ) => {
-    const chosen = isSelected(c);
-    return (
-      <button
-        key={`${keyPrefix}-${idx}`}
-        type="button"
-        onClick={() =>
-          onSelect({
-            category: c.category,
-            colour: c.colour,
-            sleeve: c.sleeve,
-            size: c.size,
-          })
-        }
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm text-left ${
-          chosen
-            ? "bg-brand-blue/10 border-brand-blue"
-            : "bg-white border-gray-200 hover:border-brand-blue/60"
-        }`}
-      >
-        <span className="flex-1 min-w-0">
-          <span className="block truncate">{optionLabel(c)}</span>
-          {badge && (
-            <span className="block text-[10px] uppercase tracking-widest font-heading font-bold text-amber-700 mt-0.5">
-              {badge}
-            </span>
-          )}
-        </span>
-        <span className="text-xs text-gray-500 shrink-0">
-          {c.freeStock} left
-        </span>
-      </button>
-    );
-  };
-
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-heading font-bold text-brand-dark">
           {title}{" "}
           <span className="text-xs font-normal text-gray-500">({hint})</span>
@@ -762,44 +708,125 @@ function ItemPicker({
         )}
       </div>
 
-      {primary.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {primary.map((c, i) => renderRow(c, undefined, "p", i))}
+      {/* Step 1: colour chips */}
+      <div className="mb-3">
+        <p className="text-[10px] uppercase tracking-widest font-heading font-bold text-gray-500 mb-1.5">
+          Pick a colour
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {availableColours.map((col) => {
+            const active = colour === col;
+            return (
+              <button
+                key={col}
+                type="button"
+                onClick={() => setColour(col as StockColour)}
+                className={`px-3 py-1.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest ${
+                  active
+                    ? "bg-brand-blue text-white"
+                    : "bg-white border border-gray-200 text-brand-dark hover:border-brand-blue"
+                }`}
+              >
+                {COLOUR_LABEL[col] ?? col}
+              </button>
+            );
+          })}
         </div>
-      )}
+      </div>
 
-      {alternatives.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-[10px] uppercase tracking-widest font-heading font-bold text-gray-500 mb-2">
-            Alternatives available
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {alternatives.map((c, i) => renderRow(c, c.badge, "a", i))}
-          </div>
+      {/* Step 2: sizes for the chosen colour */}
+      {colour === null ? (
+        <p className="text-xs text-gray-500 italic">
+          Pick a colour to see the sizes we have.
+        </p>
+      ) : sorted.length === 0 ? (
+        <p className="text-xs text-gray-500 italic">
+          Nothing in stock in {COLOUR_LABEL[colour]} for this size or nearby.
+          Try another colour.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {sorted.map((c, i) => {
+            const chosen = isSelected(c);
+            const exact = c.size === targetSize && c.fit === targetFit;
+            const parts: string[] = [`Size ${c.size}`];
+            if (c.sleeve) parts.push(SLEEVE_LABEL[c.sleeve].toLowerCase());
+            if (c.fit === "unisex" && targetFit !== "unisex")
+              parts.push("unisex");
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() =>
+                  onSelect({
+                    category: c.category,
+                    colour: c.colour,
+                    sleeve: c.sleeve,
+                    size: c.size,
+                  })
+                }
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm text-left ${
+                  chosen
+                    ? "bg-brand-blue/10 border-brand-blue"
+                    : exact
+                      ? "bg-emerald-50/40 border-emerald-200 hover:border-brand-blue"
+                      : "bg-white border-gray-200 hover:border-brand-blue/60"
+                }`}
+              >
+                <span className="flex-1 min-w-0">
+                  <span className="block truncate">
+                    {parts.join(", ")}
+                  </span>
+                  {exact && (
+                    <span className="block text-[10px] uppercase tracking-widest font-heading font-bold text-emerald-700 mt-0.5">
+                      Your size
+                    </span>
+                  )}
+                </span>
+                <span className="text-xs text-gray-500 shrink-0">
+                  {c.freeStock} left
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-// ─── Bottom picker (type + colour) ──────────────────────────────────
+// ─── Bottom picker (type + colour first, then sizes) ────────────────
 
 function BottomPicker({
   child,
   cellsForItem,
   onSelect,
+  targetSize,
+  targetFit,
 }: {
   child: Child;
-  cellsForItem: (
-    category: StockCategory,
-  ) => { primary: AvailableCell[]; alternatives: Array<AvailableCell & { badge: string }> };
+  cellsForItem: (category: StockCategory) => AvailableCell[];
   onSelect: (pick: SkuPick | null) => void;
+  targetSize: string;
+  targetFit: StockFit;
 }) {
   const options = child.sex === "female" ? GIRLS_BOTTOM_TYPES : BOYS_BOTTOM_TYPES;
-  const grouped = options.map((type) => ({ type, ...cellsForItem(type) }));
-  const anyAvailable = grouped.some(
-    (g) => g.primary.length > 0 || g.alternatives.length > 0,
-  );
+  const grouped = options.map((type) => ({ type, cells: cellsForItem(type) }));
+  const anyAvailable = grouped.some((g) => g.cells.length > 0);
+
+  // For bottoms, the "type" is the first-level choice (trousers/skirt/
+  // dress/shorts). Within a type we still do colour-first then sizes,
+  // same as the top pickers.
+  const [openType, setOpenType] = React.useState<StockCategory | null>(null);
+  const [colour, setColour] = React.useState<StockColour | null>(null);
+
+  React.useEffect(() => {
+    if (child.bottom) {
+      setOpenType(child.bottom.category);
+      setColour(child.bottom.colour);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [child.bottom]);
 
   if (!anyAvailable) {
     return (
@@ -814,56 +841,33 @@ function BottomPicker({
     );
   }
 
-  const renderRow = (
-    type: StockCategory,
-    c: AvailableCell,
-    badge: string | undefined,
-    keyPrefix: string,
-    idx: number,
-  ) => {
-    const chosen =
-      child.bottom &&
-      child.bottom.category === type &&
-      child.bottom.colour === c.colour &&
-      child.bottom.size === c.size;
-    return (
-      <button
-        key={`${keyPrefix}-${idx}`}
-        type="button"
-        onClick={() =>
-          onSelect({
-            category: type,
-            colour: c.colour,
-            sleeve: null,
-            size: c.size,
-          })
-        }
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm text-left ${
-          chosen
-            ? "bg-brand-blue/10 border-brand-blue"
-            : "bg-white border-gray-200 hover:border-brand-blue/60"
-        }`}
-      >
-        <span className="flex-1 min-w-0">
-          <span className="block truncate">{COLOUR_LABEL[c.colour] ?? c.colour}</span>
-          {badge && (
-            <span className="block text-[10px] uppercase tracking-widest font-heading font-bold text-amber-700 mt-0.5">
-              {badge}
-            </span>
-          )}
-        </span>
-        <span className="text-xs text-gray-500 shrink-0">{c.freeStock} left</span>
-      </button>
+  const activeCells = openType
+    ? cellsForItem(openType).filter((c) => (colour ? c.colour === colour : true))
+    : [];
+  const sorted = activeCells.slice().sort((a, b) => {
+    const ti = UNIFORM_SIZE_OPTIONS.indexOf(
+      targetSize as (typeof UNIFORM_SIZE_OPTIONS)[number],
     );
-  };
+    const ai = UNIFORM_SIZE_OPTIONS.indexOf(
+      a.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
+    );
+    const bi = UNIFORM_SIZE_OPTIONS.indexOf(
+      b.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
+    );
+    return Math.abs(ai - ti) - Math.abs(bi - ti);
+  });
+
+  const availableColoursForType = openType
+    ? Array.from(new Set(cellsForItem(openType).map((c) => c.colour))).sort()
+    : [];
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-heading font-bold text-brand-dark">
           Bottom{" "}
           <span className="text-xs font-normal text-gray-500">
-            (pick one: {options.map((o) => BOTTOM_TYPE_LABEL[o]).join(", ")})
+            (pick one)
           </span>
         </p>
         {child.bottom && (
@@ -876,37 +880,131 @@ function BottomPicker({
           </button>
         )}
       </div>
-      <div className="space-y-3">
-        {grouped.map(({ type, primary, alternatives }) => {
-          if (primary.length === 0 && alternatives.length === 0) return null;
-          return (
-            <div key={type}>
-              <p className="text-xs font-heading font-bold uppercase tracking-widest text-gray-500 mb-1">
+
+      {/* Step 1: type */}
+      <div className="mb-3">
+        <p className="text-[10px] uppercase tracking-widest font-heading font-bold text-gray-500 mb-1.5">
+          Pick a type
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {grouped.map(({ type, cells }) => {
+            const active = openType === type;
+            const empty = cells.length === 0;
+            return (
+              <button
+                key={type}
+                type="button"
+                disabled={empty}
+                onClick={() => {
+                  setOpenType(type);
+                  setColour(null);
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest ${
+                  active
+                    ? "bg-brand-blue text-white"
+                    : empty
+                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      : "bg-white border border-gray-200 text-brand-dark hover:border-brand-blue"
+                }`}
+              >
                 {BOTTOM_TYPE_LABEL[type]}
-              </p>
-              {primary.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {primary.map((c, i) => renderRow(type, c, undefined, `p-${type}`, i))}
-                </div>
-              )}
-              {alternatives.length > 0 && (
-                <div className="mt-2">
-                  {primary.length > 0 && (
-                    <p className="text-[10px] uppercase tracking-widest font-heading font-bold text-gray-500 mb-1.5">
-                      Alternatives
-                    </p>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {alternatives.map((c, i) =>
-                      renderRow(type, c, c.badge, `a-${type}`, i),
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                {empty && (
+                  <span className="ml-1 opacity-70">(0)</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Step 2: colour */}
+      {openType && (
+        <div className="mb-3">
+          <p className="text-[10px] uppercase tracking-widest font-heading font-bold text-gray-500 mb-1.5">
+            Pick a colour
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {availableColoursForType.map((col) => {
+              const active = colour === col;
+              return (
+                <button
+                  key={col}
+                  type="button"
+                  onClick={() => setColour(col as StockColour)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-heading font-bold uppercase tracking-widest ${
+                    active
+                      ? "bg-brand-blue text-white"
+                      : "bg-white border border-gray-200 text-brand-dark hover:border-brand-blue"
+                  }`}
+                >
+                  {COLOUR_LABEL[col] ?? col}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: sizes for the chosen type + colour */}
+      {!openType ? (
+        <p className="text-xs text-gray-500 italic">Pick a type to continue.</p>
+      ) : !colour ? (
+        <p className="text-xs text-gray-500 italic">
+          Pick a colour to see the sizes we have.
+        </p>
+      ) : sorted.length === 0 ? (
+        <p className="text-xs text-gray-500 italic">
+          Nothing in stock in {COLOUR_LABEL[colour]} for this size or nearby.
+          Try another colour.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {sorted.map((c, i) => {
+            const chosen =
+              child.bottom &&
+              child.bottom.category === openType &&
+              child.bottom.colour === c.colour &&
+              child.bottom.size === c.size;
+            const exact = c.size === targetSize && c.fit === targetFit;
+            const parts: string[] = [`Size ${c.size}`];
+            if (c.fit === "unisex" && targetFit !== "unisex")
+              parts.push("unisex");
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() =>
+                  onSelect({
+                    category: openType,
+                    colour: c.colour,
+                    sleeve: null,
+                    size: c.size,
+                  })
+                }
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm text-left ${
+                  chosen
+                    ? "bg-brand-blue/10 border-brand-blue"
+                    : exact
+                      ? "bg-emerald-50/40 border-emerald-200 hover:border-brand-blue"
+                      : "bg-white border-gray-200 hover:border-brand-blue/60"
+                }`}
+              >
+                <span className="flex-1 min-w-0">
+                  <span className="block truncate">{parts.join(", ")}</span>
+                  {exact && (
+                    <span className="block text-[10px] uppercase tracking-widest font-heading font-bold text-emerald-700 mt-0.5">
+                      Your size
+                    </span>
+                  )}
+                </span>
+                <span className="text-xs text-gray-500 shrink-0">
+                  {c.freeStock} left
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
