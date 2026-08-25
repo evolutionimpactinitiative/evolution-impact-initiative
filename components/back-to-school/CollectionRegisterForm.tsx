@@ -430,24 +430,14 @@ function ChildBlock({
   const size = child.uniform_size || null;
 
   // Returns every viable SKU for a category — the child's fit OR
-  // unisex, and within 2 sizes of the child's size. The picker itself
-  // then lets the parent pick a COLOUR, and shows the size options
-  // within that colour with their real numbers ("Size 6", "Size 5-6")
-  // instead of vague "size up/down" labels.
+  // unisex, any size (we intentionally don't cap size distance so a
+  // parent still sees size-8 stock when their child is a 5-6, if
+  // that's all we have). The picker sorts by proximity to the target.
   const cellsForItem = (category: StockCategory): AvailableCell[] => {
     if (!size || !fit) return [];
-    const targetIdx = UNIFORM_SIZE_OPTIONS.indexOf(
-      size as (typeof UNIFORM_SIZE_OPTIONS)[number],
-    );
     return availableCells
       .filter((c) => c.category === category && c.freeStock > 0)
-      .filter((c) => c.fit === fit || c.fit === "unisex")
-      .filter((c) => {
-        const cIdx = UNIFORM_SIZE_OPTIONS.indexOf(
-          c.size as (typeof UNIFORM_SIZE_OPTIONS)[number],
-        );
-        return targetIdx < 0 || cIdx < 0 || Math.abs(cIdx - targetIdx) <= 2;
-      });
+      .filter((c) => c.fit === fit || c.fit === "unisex");
   };
 
   return (
