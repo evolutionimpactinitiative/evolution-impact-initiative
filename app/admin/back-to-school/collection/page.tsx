@@ -355,7 +355,7 @@ export default async function CollectionAdminPage() {
             className="inline-flex items-center gap-1.5 bg-brand-blue text-white px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-brand-dark"
           >
             <Mail className="h-3.5 w-3.5" />
-            Email all {augustNoShows.length}
+            Compose blast · {augustNoShows.length}
           </Link>
         </div>
         <p className="text-xs text-gray-600 mb-3">
