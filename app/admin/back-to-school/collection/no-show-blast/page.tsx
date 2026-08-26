@@ -3,7 +3,10 @@ import { ArrowLeft, Mail } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S_SLUG } from "@/lib/back-to-school";
 import { COLLECTION } from "@/lib/back-to-school/collection";
-import { NoShowBlastForm } from "@/components/admin/back-to-school/NoShowBlastForm";
+import {
+  NoShowBlastForm,
+  type NoShowRecipient,
+} from "@/components/admin/back-to-school/NoShowBlastForm";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -11,7 +14,6 @@ export const revalidate = 0;
 export default async function NoShowBlastPage() {
   const admin = createAdminClient();
 
-  // Find August registrations who never picked up.
   const { data: eventRow } = await admin
     .from("events")
     .select("id")
@@ -19,29 +21,24 @@ export default async function NoShowBlastPage() {
     .maybeSingle();
   const event = eventRow as { id: string } | null;
 
-  interface Row {
-    id: string;
-    parent_name: string;
-    parent_email: string;
-    parent_phone: string;
-    attended: string | null;
-    status: string;
-  }
-  let noShows: Row[] = [];
+  let noShows: NoShowRecipient[] = [];
   if (event) {
     // Uses the archive-set cancellation_reason so the count matches
     // the collection admin page (both surfaces read from the same
     // tagged set after the 26 Aug archive migration).
     const { data } = await admin
       .from("registrations")
-      .select("id, parent_name, parent_email, parent_phone, attended, status")
+      .select("id, parent_name, parent_email, parent_phone")
       .eq("event_id", event.id)
-      .eq("cancellation_reason", "august_no_show");
-    noShows = (data as Row[] | null) ?? [];
+      .eq("cancellation_reason", "august_no_show")
+      .order("parent_name", { ascending: true });
+    noShows = ((data as NoShowRecipient[] | null) ?? []).filter(
+      (r) => !!r.parent_email,
+    );
   }
 
   return (
-    <div className="space-y-6 pb-16 max-w-2xl mx-auto">
+    <div className="space-y-6 pb-16 max-w-3xl mx-auto">
       <Link
         href="/admin/back-to-school/collection"
         className="text-sm text-gray-600 hover:text-brand-dark inline-flex items-center gap-1 mb-3"
@@ -55,21 +52,12 @@ export default async function NoShowBlastPage() {
           Email August no-shows
         </h1>
         <p className="text-sm text-gray-600 mt-2">
-          Sends a personalised email to every parent who was approved for
-          the August drive and didn&rsquo;t collect. Message includes the
-          Collection Day booking link and a clear line about the
-          blacklist consequence if they don&rsquo;t show up this time.
+          Pick who to email (everyone is selected by default), tweak the
+          message, then send. Collection Day is {COLLECTION.dateLabel}.
         </p>
       </div>
 
-      <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-2xl p-4">
-        <p className="text-sm">
-          <b>{noShows.length}</b> parent{noShows.length === 1 ? "" : "s"} will
-          get this email. Collection Day is {COLLECTION.dateLabel}.
-        </p>
-      </div>
-
-      <NoShowBlastForm recipientCount={noShows.length} />
+      <NoShowBlastForm recipients={noShows} />
     </div>
   );
 }

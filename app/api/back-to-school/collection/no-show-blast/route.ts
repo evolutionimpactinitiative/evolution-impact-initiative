@@ -20,21 +20,29 @@ async function requireTeam() {
 }
 
 // POST /api/back-to-school/collection/no-show-blast
-// Body: { subject, body }
-// Loops through August drive registrations that did NOT collect, and
-// sends each a personalised email via Resend. `{{name}}` in the body
-// is replaced with the parent's first name.
+// Body: { subject, body, recipientIds: string[] }
+// Sends the same message (with {{name}} swapped per parent) to the
+// registration IDs the chair explicitly ticked. Any ID that isn't
+// in the August no-show set is dropped silently — guards against a
+// hand-crafted POST hitting parents from other events.
 export async function POST(request: NextRequest) {
   const auth = await requireTeam();
   if (!auth.ok) {
     return NextResponse.json({ error: "Not authorised" }, { status: auth.status });
   }
-  const { subject, body } = (await request.json()) as {
+  const { subject, body, recipientIds } = (await request.json()) as {
     subject?: string;
     body?: string;
+    recipientIds?: string[];
   };
   if (!subject?.trim() || !body?.trim()) {
     return NextResponse.json({ error: "Subject + body required" }, { status: 400 });
+  }
+  if (!Array.isArray(recipientIds) || recipientIds.length === 0) {
+    return NextResponse.json(
+      { error: "Pick at least one recipient." },
+      { status: 400 },
+    );
   }
 
   const admin = createAdminClient();
@@ -48,13 +56,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "August drive event not found" }, { status: 500 });
   }
 
-  // Recipients = the same set the collection admin + no-show-blast
-  // preview show, tagged by the 26 Aug archive migration.
+  // Scope recipients to the intersection of (chair's picks) AND
+  // (August no-show set) — a bad ID in the payload can't leak
+  // messages to unrelated registrations.
   const { data: regs } = await admin
     .from("registrations")
-    .select("parent_name, parent_email")
+    .select("id, parent_name, parent_email")
     .eq("event_id", event.id)
-    .eq("cancellation_reason", "august_no_show");
+    .eq("cancellation_reason", "august_no_show")
+    .in("id", recipientIds);
   const recipients = ((regs as { parent_name: string; parent_email: string }[] | null) ?? [])
     .filter((r) => !!r.parent_email);
 
