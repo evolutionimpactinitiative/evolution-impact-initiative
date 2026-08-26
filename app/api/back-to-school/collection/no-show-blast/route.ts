@@ -48,12 +48,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "August drive event not found" }, { status: 500 });
   }
 
+  // Recipients = the same set the collection admin + no-show-blast
+  // preview show, tagged by the 26 Aug archive migration.
   const { data: regs } = await admin
     .from("registrations")
     .select("parent_name, parent_email")
     .eq("event_id", event.id)
-    .in("status", ["approved", "walk_in"])
-    .neq("attended", "yes");
+    .eq("cancellation_reason", "august_no_show");
   const recipients = ((regs as { parent_name: string; parent_email: string }[] | null) ?? [])
     .filter((r) => !!r.parent_email);
 

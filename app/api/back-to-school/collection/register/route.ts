@@ -159,11 +159,13 @@ export async function POST(request: NextRequest) {
     .select("id, category, colour, sleeve, fit, size, quantity, notes, updated_at");
   const stockRows = (stockRaw as StockRow[] | null) ?? [];
 
-  // Pull ALL existing pending/approved regs across BOTH drives so
-  // demand + reservations reflect true remaining stock.
+  // Scope demand to THIS drive's active bookings only. The August
+  // drive is closed — its regs were archived on 26 Aug and shouldn't
+  // eat into collection stock. `event.id` is already resolved above.
   const { data: activeRegs } = await admin
     .from("registrations")
     .select("id")
+    .eq("event_id", event.id)
     .in("status", ["pending", "approved"]);
   const regIds = ((activeRegs as { id: string }[] | null) ?? []).map((r) => r.id);
   const allAsks: ChildAsk[] = [];

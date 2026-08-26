@@ -413,6 +413,24 @@ export default async function BackToSchoolAdminPage() {
         </Link>
 
         <Link
+          href="/admin/back-to-school/august-2026"
+          className="group bg-white rounded-2xl p-6 border-2 border-gray-200 hover:border-brand-blue transition-colors"
+        >
+          <ClipboardList className="h-6 w-6 text-gray-500 mb-3" />
+          <h3 className="font-heading font-bold text-lg text-brand-dark mb-1">
+            August drive archive
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Read-only snapshot of the 22 Aug drive: who came, who
+            didn&rsquo;t, and every substitution the team made.
+          </p>
+          <span className="inline-flex items-center gap-1 text-brand-blue font-heading font-bold text-sm uppercase tracking-widest">
+            Open
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </span>
+        </Link>
+
+        <Link
           href="/admin/back-to-school/registrations"
           className="group bg-white rounded-2xl p-6 border-2 border-brand-blue/10 hover:border-brand-blue transition-colors"
         >

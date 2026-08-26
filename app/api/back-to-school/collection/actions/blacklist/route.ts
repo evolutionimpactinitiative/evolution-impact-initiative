@@ -54,10 +54,13 @@ export async function POST() {
   }
 
   // Collect (email, phone, name) tuples of parents who no-showed each drive.
-  // "No-show" = registration exists on that event AND attended !== 'yes'.
+  //   August no-show = registration flagged with cancellation_reason
+  //     = 'august_no_show' by the 26 Aug archive migration.
+  //   Collection no-show = registration on the collection event that
+  //     is NOT attended='yes' and NOT cancelled (parent didn't opt out).
   const { data: noShowsRaw } = await admin
     .from("registrations")
-    .select("event_id, parent_name, parent_email, parent_phone, attended, status")
+    .select("event_id, parent_name, parent_email, parent_phone, attended, status, cancellation_reason")
     .in("event_id", [augustId, collectionId]);
   type Row = {
     event_id: string;
@@ -66,12 +69,10 @@ export async function POST() {
     parent_phone: string;
     attended: string | null;
     status: string;
+    cancellation_reason: string | null;
   };
   const rows = (noShowsRaw as Row[] | null) ?? [];
 
-  // Bucket by normalised (email|phone). A parent's key = "email|phone" so
-  // both drives' rows collapse if either matches. We treat "attended='yes'"
-  // as "did not no-show".
   interface Bucket {
     email: string | null;
     phone: string | null;
@@ -85,8 +86,10 @@ export async function POST() {
     const p = normPhone(r.parent_phone);
     const key = `${e ?? ""}|${p ?? ""}`;
     if (!key || key === "|") continue;
-    const isNoShow =
-      r.attended !== "yes" && r.status !== "cancelled";
+    const isAugust = r.event_id === augustId;
+    const isNoShow = isAugust
+      ? r.cancellation_reason === "august_no_show"
+      : r.attended !== "yes" && r.status !== "cancelled";
     const cur = buckets.get(key) ?? {
       email: e,
       phone: p,
@@ -95,8 +98,8 @@ export async function POST() {
       collectionNoShow: false,
     };
     if (isNoShow) {
-      if (r.event_id === augustId) cur.augustNoShow = true;
-      if (r.event_id === collectionId) cur.collectionNoShow = true;
+      if (isAugust) cur.augustNoShow = true;
+      else cur.collectionNoShow = true;
     }
     buckets.set(key, cur);
   }

@@ -29,12 +29,14 @@ export default async function NoShowBlastPage() {
   }
   let noShows: Row[] = [];
   if (event) {
+    // Uses the archive-set cancellation_reason so the count matches
+    // the collection admin page (both surfaces read from the same
+    // tagged set after the 26 Aug archive migration).
     const { data } = await admin
       .from("registrations")
       .select("id, parent_name, parent_email, parent_phone, attended, status")
       .eq("event_id", event.id)
-      .in("status", ["approved", "walk_in"])
-      .neq("attended", "yes");
+      .eq("cancellation_reason", "august_no_show");
     noShows = (data as Row[] | null) ?? [];
   }
 

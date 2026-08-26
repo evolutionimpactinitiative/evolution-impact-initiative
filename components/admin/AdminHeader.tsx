@@ -18,6 +18,7 @@ interface AdminHeaderProps {
 // routes (e.g. "/admin/back-to-school/stock") beat their parents.
 const TITLE_MAP: Array<{ prefix: string; title: string; exact?: boolean }> = [
   { prefix: "/admin/back-to-school/collection", title: "Collection Day" },
+  { prefix: "/admin/back-to-school/august-2026", title: "August archive" },
   { prefix: "/admin/back-to-school/registrations", title: "Registrations" },
   { prefix: "/admin/back-to-school/shopping-list", title: "Shopping list" },
   { prefix: "/admin/back-to-school/stock", title: "Stock" },

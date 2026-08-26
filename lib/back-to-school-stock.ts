@@ -223,6 +223,10 @@ export interface StockAllocation {
   note: string | null;
   created_by: string | null;
   created_at: string;
+  // Soft-archive flag — set on 26 Aug 2026 when the August drive
+  // closed. Archived allocations still exist for audit but no longer
+  // affect free-stock math.
+  archived_at: string | null;
 }
 
 // Aggregated allocation totals for a single cell — sums across all
@@ -240,6 +244,9 @@ export interface AllocationIndex {
 }
 
 export function indexAllocations(rows: StockAllocation[]): AllocationIndex {
+  // Archived allocations (e.g. everything from the closed August
+  // drive) still show up in the audit list but don't affect stock.
+  const active = rows.filter((a) => !a.archived_at);
   const byCell = new Map<string, CellAllocationSummary>();
   const bump = (key: string, patch: Partial<CellAllocationSummary>) => {
     const cur = byCell.get(key) ?? { outQty: 0, inQty: 0 };
@@ -248,7 +255,7 @@ export function indexAllocations(rows: StockAllocation[]): AllocationIndex {
       inQty: cur.inQty + (patch.inQty ?? 0),
     });
   };
-  for (const a of rows) {
+  for (const a of active) {
     const fromKey = skuCellKey({
       category: a.category,
       colour: a.from_colour,

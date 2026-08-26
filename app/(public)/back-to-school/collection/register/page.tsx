@@ -58,10 +58,14 @@ export default async function CollectionRegisterPage() {
     );
   const stockRows = (stockRaw as StockRow[] | null) ?? [];
 
-  // ── Global demand across BOTH drives (so free stock is accurate)
+  // ── Demand from THIS drive's active bookings only. August is
+  // closed (see the 26 Aug archive migration); its regs were
+  // cancelled so they don't eat into collection stock.
+  const collectionEventId = event?.id ?? "00000000-0000-0000-0000-000000000000";
   const { data: activeRegs } = await admin
     .from("registrations")
     .select("id")
+    .eq("event_id", collectionEventId)
     .in("status", ["pending", "approved"]);
   const regIds = ((activeRegs as { id: string }[] | null) ?? []).map(
     (r) => r.id,

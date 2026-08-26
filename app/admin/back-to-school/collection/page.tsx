@@ -102,21 +102,16 @@ export default async function CollectionAdminPage() {
   }
   let augustNoShows: AugustNoShow[] = [];
   if (augustEvent) {
+    // Post-archive: no-shows carry cancellation_reason = 'august_no_show'
+    // (set by the 26 Aug migration). Prior status-based query still
+    // works but this is more precise.
     const { data: aug } = await admin
       .from("registrations")
-      .select("id, parent_name, parent_email, parent_phone, created_at, attended, status")
+      .select("id, parent_name, parent_email, parent_phone, created_at")
       .eq("event_id", augustEvent.id)
-      .in("status", ["approved", "walk_in"])
-      .neq("attended", "yes")
+      .eq("cancellation_reason", "august_no_show")
       .order("parent_name", { ascending: true });
-    augustNoShows =
-      ((aug as Array<AugustNoShow & { attended: string | null; status: string }> | null) ?? []).map((r) => ({
-        id: r.id,
-        parent_name: r.parent_name,
-        parent_email: r.parent_email,
-        parent_phone: r.parent_phone,
-        created_at: r.created_at,
-      }));
+    augustNoShows = (aug as AugustNoShow[] | null) ?? [];
   }
 
   // Bucket registrations by slot for the top summary
