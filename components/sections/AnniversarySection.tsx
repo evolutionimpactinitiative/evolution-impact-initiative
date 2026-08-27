@@ -54,7 +54,7 @@ export async function AnniversarySection() {
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-10 lg:p-12 backdrop-blur-sm">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
               <div className="lg:col-span-7">
-                <div className="inline-flex items-center gap-2 bg-brand-accent/15 text-brand-accent px-3 py-1 rounded-full text-xs font-heading font-semibold uppercase tracking-wider mb-5">
+                <div className="inline-flex items-center gap-2 bg-brand-blue/30 text-brand-pale px-3 py-1 rounded-full text-xs font-heading font-semibold uppercase tracking-wider mb-5">
                   <Sparkles className="h-3.5 w-3.5" />
                   Collection Day, second round
                 </div>
@@ -62,7 +62,7 @@ export async function AnniversarySection() {
                 <h3 className="font-heading font-black text-2xl md:text-4xl lg:text-5xl leading-tight mb-4">
                   {COLLECTION.title}
                 </h3>
-                <p className="text-brand-accent font-heading font-semibold text-lg md:text-xl mb-5">
+                <p className="text-brand-pale font-heading font-semibold text-lg md:text-xl mb-5">
                   {collection.spacesLeft > 0
                     ? `${collection.spacesLeft} of ${collection.totalCapacity} slots still available.`
                     : "All slots are full — thank you Medway."}
@@ -77,17 +77,17 @@ export async function AnniversarySection() {
 
                 <div className="flex flex-col sm:flex-row gap-3 text-sm text-white/80 mb-8">
                   <span className="inline-flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-brand-accent" />
+                    <Calendar className="h-4 w-4 text-brand-pale" />
                     {COLLECTION.dateLabel}
                   </span>
                   <span className="hidden sm:inline text-white/30">·</span>
                   <span className="inline-flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-brand-accent" />
+                    <Clock className="h-4 w-4 text-brand-pale" />
                     {COLLECTION.timeLabel}
                   </span>
                   <span className="hidden sm:inline text-white/30">·</span>
                   <span className="inline-flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-brand-accent" />
+                    <MapPin className="h-4 w-4 text-brand-pale" />
                     {COLLECTION.venueName}, {COLLECTION.venueArea}
                   </span>
                 </div>
@@ -97,7 +97,7 @@ export async function AnniversarySection() {
                     asChild
                     size="lg"
                     disabled={collection.spacesLeft === 0}
-                    className="bg-brand-accent text-brand-dark hover:bg-brand-green hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="bg-brand-blue text-white hover:bg-brand-blue/90 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Link
                       href={
@@ -216,7 +216,7 @@ function CampaignCtaRow({
   return (
     <Link
       href={href}
-      className="group flex items-center justify-between gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-accent rounded-lg px-5 py-4 transition-colors"
+      className="group flex items-center justify-between gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-brand-pale rounded-lg px-5 py-4 transition-colors"
     >
       <div>
         <p className="font-heading font-bold text-white text-base md:text-lg">
@@ -224,7 +224,7 @@ function CampaignCtaRow({
         </p>
         <p className="text-xs text-white/60 mt-0.5">{subtitle}</p>
       </div>
-      <ArrowRight className="h-5 w-5 text-brand-accent group-hover:translate-x-1 transition-transform shrink-0" />
+      <ArrowRight className="h-5 w-5 text-brand-pale group-hover:translate-x-1 transition-transform shrink-0" />
     </Link>
   );
 }
