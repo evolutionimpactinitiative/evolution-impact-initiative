@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
 import { slotsForRegistration } from "@/lib/events";
 import { B2S_SLUG } from "@/lib/back-to-school";
+import { COLLECTION_SLUG } from "@/lib/back-to-school/collection";
 import { NotifyMeForm } from "@/components/shared/NotifyMeForm";
 import { CountdownTimer } from "@/components/shared/CountdownTimer";
 
@@ -477,7 +478,9 @@ export default async function EventPage({ params }: Props) {
                       href={
                         event.slug === B2S_SLUG
                           ? "/back-to-school/register"
-                          : `/events/${event.slug}/register`
+                          : event.slug === COLLECTION_SLUG
+                            ? "/back-to-school/collection/register"
+                            : `/events/${event.slug}/register`
                       }
                     >
                       Register Now
@@ -490,7 +493,9 @@ export default async function EventPage({ params }: Props) {
                       href={
                         event.slug === B2S_SLUG
                           ? "/back-to-school/register"
-                          : `/events/${event.slug}/register`
+                          : event.slug === COLLECTION_SLUG
+                            ? "/back-to-school/collection/register"
+                            : `/events/${event.slug}/register`
                       }
                     >
                       Join Waitlist
@@ -505,7 +510,11 @@ export default async function EventPage({ params }: Props) {
                 <Button asChild variant="outline" size="lg">
                   <Link
                     href={
-                      event.slug === B2S_SLUG ? "/back-to-school" : "/donate"
+                      event.slug === B2S_SLUG
+                        ? "/back-to-school"
+                        : event.slug === COLLECTION_SLUG
+                          ? "/donate?campaign=back-to-school-collection-2026"
+                          : "/donate"
                     }
                   >
                     Support This Event
@@ -583,12 +592,32 @@ export default async function EventPage({ params }: Props) {
             )}
             {isUpcoming && event.registrationStatus === "open" && (
               <Button asChild size="lg">
-                <Link href={`/events/${event.slug}/register`}>Register Now</Link>
+                <Link
+                  href={
+                    event.slug === B2S_SLUG
+                      ? "/back-to-school/register"
+                      : event.slug === COLLECTION_SLUG
+                        ? "/back-to-school/collection/register"
+                        : `/events/${event.slug}/register`
+                  }
+                >
+                  Register Now
+                </Link>
               </Button>
             )}
             {isUpcoming && event.registrationStatus === "waitlist" && (
               <Button asChild size="lg">
-                <Link href={`/events/${event.slug}/register`}>Join Waitlist</Link>
+                <Link
+                  href={
+                    event.slug === B2S_SLUG
+                      ? "/back-to-school/register"
+                      : event.slug === COLLECTION_SLUG
+                        ? "/back-to-school/collection/register"
+                        : `/events/${event.slug}/register`
+                  }
+                >
+                  Join Waitlist
+                </Link>
               </Button>
             )}
             {isUpcoming && (event.registrationStatus === "full" || event.registrationStatus === "closed") && (
