@@ -121,7 +121,9 @@ export function CollectionRegisterForm({
   const [parentPostcode, setParentPostcode] = React.useState("");
   const [slot, setSlot] = React.useState<CollectionSlot | "">("");
   const [children, setChildren] = React.useState<Child[]>([newChild()]);
-  const [website, setWebsite] = React.useState(""); // honeypot
+  // Honeypot — checkbox instead of text so browser autofill can't
+  // fill it with the user's name (that was blocking real bookings).
+  const [hpChecked, setHpChecked] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<{
@@ -172,7 +174,7 @@ export function CollectionRegisterForm({
       parent_phone: parentPhone,
       parent_postcode: parentPostcode,
       slot,
-      website,
+      hp_checked: hpChecked,
       children: children.map((c) => {
         // Build the uniform_choices payload loosely — the DB column is
         // JSONB, and the server-side stock check reads whatever shape
@@ -250,11 +252,15 @@ export function CollectionRegisterForm({
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      {/* Honeypot — hidden from real users */}
+      {/* Honeypot — checkbox, invisible to real users. Password
+          managers and browser autofill routinely fill hidden text
+          inputs with the user's name, which was tripping this check
+          and blocking real bookings. A checkbox can't be autofilled
+          with a string, so only a form-scraping bot ticks it. */}
       <input
-        type="text"
-        value={website}
-        onChange={(e) => setWebsite(e.target.value)}
+        type="checkbox"
+        checked={hpChecked}
+        onChange={(e) => setHpChecked(e.target.checked)}
         tabIndex={-1}
         autoComplete="off"
         aria-hidden

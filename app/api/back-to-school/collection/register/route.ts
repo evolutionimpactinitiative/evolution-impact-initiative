@@ -67,16 +67,31 @@ interface Body {
   parent_postcode?: string;
   slot?: CollectionSlot;
   children?: ChildInput[];
-  // Honeypot — public form leaves this empty; bots often fill it.
+  // Honeypot — checkbox on the public form, always false for humans.
+  hp_checked?: boolean;
+  // Legacy honeypot — older cached forms still POST this string.
+  // Kept for backwards compat; softened check below.
   website?: string;
 }
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as Body;
 
-  // Honeypot
-  if (body.website && body.website.trim()) {
+  // Honeypot — checkbox variant (current form).
+  if (body.hp_checked === true) {
     return NextResponse.json({ error: "Nope" }, { status: 400 });
+  }
+
+  // Legacy honeypot (older cached form still in the wild). Browser
+  // autofill fills hidden text inputs with the user's name, so a
+  // value that matches parent_name is autofill, not a bot — let it
+  // through. Any other non-empty value is treated as a bot.
+  if (body.website && body.website.trim()) {
+    const hp = body.website.trim().toLowerCase();
+    const pn = body.parent_name?.trim().toLowerCase() ?? "";
+    if (hp !== pn) {
+      return NextResponse.json({ error: "Nope" }, { status: 400 });
+    }
   }
 
   // ── Basic validation ────────────────────────────────────────────
