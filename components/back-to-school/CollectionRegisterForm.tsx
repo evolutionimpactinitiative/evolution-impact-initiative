@@ -64,6 +64,7 @@ interface SkuPick {
   category: StockCategory;
   colour: StockColour;
   sleeve: StockSleeve;
+  fit: StockFit;
   size: string;
 }
 
@@ -182,10 +183,32 @@ export function CollectionRegisterForm({
         // only, etc) don't map onto the wider collection-day picker.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const uc: any = {};
-        if (c.shirt) uc.shirt = { sleeve: c.shirt.sleeve };
-        if (c.polo) uc.polo = { colour: c.polo.colour, sleeve: c.polo.sleeve };
+        // Include the picked size + fit so the server reserves the
+        // exact SKU the parent chose, not the child's uniform_size
+        // in the child's own fit. The picker offers nearby-size and
+        // unisex options as fallbacks — reservations must honour them.
+        if (c.shirt) {
+          uc.shirt = {
+            sleeve: c.shirt.sleeve,
+            size: c.shirt.size,
+            fit: c.shirt.fit,
+          };
+        }
+        if (c.polo) {
+          uc.polo = {
+            colour: c.polo.colour,
+            sleeve: c.polo.sleeve,
+            size: c.polo.size,
+            fit: c.polo.fit,
+          };
+        }
         if (c.bottom) {
-          uc.bottom = { type: c.bottom.category, colour: c.bottom.colour };
+          uc.bottom = {
+            type: c.bottom.category,
+            colour: c.bottom.colour,
+            size: c.bottom.size,
+            fit: c.bottom.fit,
+          };
         }
         const needs: string[] = [];
         if (c.shirt || c.polo || c.bottom) needs.push("uniform");
@@ -684,6 +707,7 @@ function ItemPicker({
     selected &&
     selected.colour === c.colour &&
     (selected.sleeve ?? "") === (c.sleeve ?? "") &&
+    selected.fit === c.fit &&
     selected.size === c.size;
 
   return (
@@ -758,6 +782,7 @@ function ItemPicker({
                     category: c.category,
                     colour: c.colour,
                     sleeve: c.sleeve,
+                    fit: c.fit,
                     size: c.size,
                   })
                 }
@@ -960,6 +985,7 @@ function BottomPicker({
               child.bottom &&
               child.bottom.category === openType &&
               child.bottom.colour === c.colour &&
+              child.bottom.fit === c.fit &&
               child.bottom.size === c.size;
             const exact = c.size === targetSize && c.fit === targetFit;
             const parts: string[] = [`Size ${c.size}`];
@@ -974,6 +1000,7 @@ function BottomPicker({
                     category: openType,
                     colour: c.colour,
                     sleeve: null,
+                    fit: c.fit,
                     size: c.size,
                   })
                 }

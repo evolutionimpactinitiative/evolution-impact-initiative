@@ -49,13 +49,37 @@ import type {
 // same body arrives twice we'd double-book a slot, but that's the
 // browser's job to prevent for now.
 
+// The client sends `size` and `fit` on each pick so the server can
+// reserve the exact SKU the parent chose from the picker (nearby
+// sizes and unisex rows are offered as fallbacks). These fields are
+// optional to stay backwards-compatible with older cached clients.
+interface UniformChoicesInput {
+  polo?: {
+    colour: string;
+    sleeve: "short" | "long";
+    size?: string | null;
+    fit?: StockFit | null;
+  } | null;
+  shirt?: {
+    sleeve: "short" | "long";
+    size?: string | null;
+    fit?: StockFit | null;
+  } | null;
+  bottom?: {
+    type: string;
+    colour: string;
+    size?: string | null;
+    fit?: StockFit | null;
+  } | null;
+}
+
 interface ChildInput {
   child_name?: string;
   child_age?: number | null;
   sex?: ChildSex | null;
   school?: string | null;
   uniform_size?: UniformSize | null;
-  uniform_choices?: UniformChoices | null;
+  uniform_choices?: UniformChoicesInput | null;
   needs?: string[];
   notes?: string | null;
 }
@@ -245,7 +269,12 @@ export async function POST(request: NextRequest) {
     const uc = c.uniform_choices;
     if (!uc) continue;
 
-    const fit = fitFromSexLocal(c.sex);
+    // Fallback fit/size when the client didn't send them (legacy
+     // cached form). New form always sends the picked size + fit per
+     // item so we can reserve the exact SKU the parent chose — the
+     // picker may have offered a nearby size or a unisex row.
+    const childFit = fitFromSexLocal(c.sex);
+    const childSize = c.uniform_size!;
 
     const pushIfSelected = (sku: {
       category: StockCategory;
@@ -264,8 +293,8 @@ export async function POST(request: NextRequest) {
         category: "shirt",
         colour: "white",
         sleeve: uc.shirt.sleeve,
-        fit,
-        size: c.uniform_size!,
+        fit: (uc.shirt.fit as StockFit) ?? childFit,
+        size: uc.shirt.size ?? childSize,
       });
     }
     if (uc.polo) {
@@ -273,8 +302,8 @@ export async function POST(request: NextRequest) {
         category: "polo",
         colour: uc.polo.colour as StockColour,
         sleeve: uc.polo.sleeve,
-        fit,
-        size: c.uniform_size!,
+        fit: (uc.polo.fit as StockFit) ?? childFit,
+        size: uc.polo.size ?? childSize,
       });
     }
     if (uc.bottom) {
@@ -282,8 +311,8 @@ export async function POST(request: NextRequest) {
         category: uc.bottom.type as StockCategory,
         colour: uc.bottom.colour as StockColour,
         sleeve: null,
-        fit,
-        size: c.uniform_size!,
+        fit: (uc.bottom.fit as StockFit) ?? childFit,
+        size: uc.bottom.size ?? childSize,
       });
     }
   }
