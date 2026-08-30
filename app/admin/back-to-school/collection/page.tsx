@@ -5,12 +5,13 @@ import {
   CheckCircle2,
   Clock,
   Mail,
+  Printer,
   ShieldAlert,
   UserX,
   Users,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { B2S_SLUG } from "@/lib/back-to-school";
+import { B2S_SLUG, type UniformChoices } from "@/lib/back-to-school";
 import {
   COLLECTION,
   COLLECTION_SLOTS,
@@ -39,6 +40,10 @@ type CollectionRegistration = {
     child_age: number | null;
     uniform_size: string | null;
     sex: string | null;
+    school: string | null;
+    needs: string[] | null;
+    uniform_choices: UniformChoices | null;
+    notes: string | null;
     display_order: number;
   }>;
 };
@@ -70,7 +75,10 @@ export default async function CollectionAdminPage() {
     .select(
       `id, parent_name, parent_email, parent_phone, status,
        collection_slot, qr_token, attended, created_at,
-       registration_children ( id, child_name, child_age, uniform_size, sex, display_order )`,
+       registration_children (
+         id, child_name, child_age, uniform_size, sex, school,
+         needs, uniform_choices, notes, display_order
+       )`,
     )
     .eq("event_id", event.id)
     .order("collection_slot", { ascending: true })
@@ -114,14 +122,20 @@ export default async function CollectionAdminPage() {
     augustNoShows = (aug as AugustNoShow[] | null) ?? [];
   }
 
-  // Bucket registrations by slot for the top summary
-  const bySlot = new Map<string, CollectionRegistration[]>();
+  // Bucket registrations by slot for the top summary. Key on the
+  // instant (ms since epoch) rather than the ISO string — Postgres
+  // stores collection_slot as timestamptz and returns it normalised to
+  // UTC ("+00:00"), which never string-matches slotIso()'s "+01:00"
+  // even though they refer to the same moment.
+  const bySlot = new Map<number, CollectionRegistration[]>();
   for (const r of registrations) {
-    const key = r.collection_slot ?? "unslotted";
+    const key = r.collection_slot ? new Date(r.collection_slot).getTime() : -1;
     const arr = bySlot.get(key) ?? [];
     arr.push(r);
     bySlot.set(key, arr);
   }
+  const slotKey = (s: (typeof COLLECTION_SLOTS)[number]) =>
+    new Date(slotIso(s)).getTime();
 
   const totalBooked = registrations.filter(
     (r) => r.status === "approved" || r.status === "pending",
@@ -193,8 +207,7 @@ export default async function CollectionAdminPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {COLLECTION_SLOTS.map((s) => {
-            const iso = slotIso(s);
-            const regs = bySlot.get(iso) ?? [];
+            const regs = bySlot.get(slotKey(s)) ?? [];
             const active = regs.filter(
               (r) => r.status === "approved" || r.status === "pending",
             );
@@ -268,9 +281,22 @@ export default async function CollectionAdminPage() {
 
       {/* Registrations by slot */}
       <section>
-        <h2 className="font-heading font-bold text-brand-dark mb-3">
-          Bookings
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-heading font-bold text-brand-dark">
+            Bookings
+          </h2>
+          {registrations.length > 0 && (
+            <Link
+              href="/admin/back-to-school/collection/labels"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-brand-blue text-white px-3 py-1.5 rounded-md text-xs font-heading font-bold uppercase tracking-widest hover:bg-brand-dark print:hidden"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              Print all labels
+            </Link>
+          )}
+        </div>
         {registrations.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center text-sm text-gray-500">
             No bookings yet. Once parents submit the form, they&rsquo;ll
@@ -279,9 +305,12 @@ export default async function CollectionAdminPage() {
         ) : (
           <div className="space-y-4">
             {COLLECTION_SLOTS.map((s) => {
-              const iso = slotIso(s);
-              const regs = bySlot.get(iso) ?? [];
+              const regs = bySlot.get(slotKey(s)) ?? [];
               if (regs.length === 0) return null;
+              const totalKidsInSlot = regs.reduce(
+                (n, r) => n + (r.registration_children?.length ?? 0),
+                0,
+              );
               return (
                 <div key={s} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                   <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-baseline justify-between">
@@ -289,7 +318,9 @@ export default async function CollectionAdminPage() {
                       {slotLabel(s)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {regs.length} booking{regs.length === 1 ? "" : "s"}
+                      {regs.length} booking{regs.length === 1 ? "" : "s"} ·{" "}
+                      {totalKidsInSlot} child
+                      {totalKidsInSlot === 1 ? "" : "ren"}
                     </p>
                   </div>
                   <ul className="divide-y divide-gray-100">
@@ -313,22 +344,53 @@ export default async function CollectionAdminPage() {
                             )}
                           </div>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            {r.registration_children.length} child
-                            {r.registration_children.length === 1 ? "" : "ren"}{" "}
-                            — {r.registration_children.map((c) => c.child_name).join(", ")}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
                             {r.parent_email} · {r.parent_phone}
                           </p>
+                          <ul className="mt-2 space-y-1">
+                            {[...r.registration_children]
+                              .sort((a, b) => a.display_order - b.display_order)
+                              .map((c) => (
+                                <li
+                                  key={c.id}
+                                  className="text-xs bg-gray-50 rounded-md px-2 py-1.5"
+                                >
+                                  <span className="font-heading font-bold text-brand-dark">
+                                    {c.child_name}
+                                  </span>
+                                  <span className="text-gray-500">
+                                    {c.child_age != null && ` · age ${c.child_age}`}
+                                    {c.sex &&
+                                      ` · ${c.sex === "male" ? "boy" : c.sex === "female" ? "girl" : c.sex}`}
+                                    {c.uniform_size && ` · size ${c.uniform_size}`}
+                                  </span>
+                                  {summariseChoices(c.uniform_choices, c.needs) && (
+                                    <p className="text-gray-600 mt-0.5">
+                                      {summariseChoices(c.uniform_choices, c.needs)}
+                                    </p>
+                                  )}
+                                  {c.school && (
+                                    <p className="text-gray-500 italic mt-0.5">
+                                      {c.school}
+                                    </p>
+                                  )}
+                                  {c.notes && (
+                                    <p className="text-amber-700 mt-0.5">
+                                      Note: {c.notes}
+                                    </p>
+                                  )}
+                                </li>
+                              ))}
+                          </ul>
                         </div>
                         {r.qr_token && (
                           <Link
-                            href={`/b2s/print/${r.qr_token}`}
+                            href={`/admin/back-to-school/collection/labels?reg=${r.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="shrink-0 text-xs font-heading font-bold uppercase tracking-widest text-brand-blue hover:text-brand-dark inline-flex items-center gap-1"
+                            className="shrink-0 text-xs font-heading font-bold uppercase tracking-widest text-brand-blue hover:text-brand-dark inline-flex items-center gap-1 print:hidden"
                           >
-                            Print label
+                            <Printer className="h-3.5 w-3.5" />
+                            Print
                           </Link>
                         )}
                       </li>
@@ -386,6 +448,19 @@ export default async function CollectionAdminPage() {
       </section>
     </div>
   );
+}
+
+function summariseChoices(
+  uc: UniformChoices | null,
+  needs: string[] | null,
+): string {
+  const parts: string[] = [];
+  if (uc?.bottom) parts.push(`${uc.bottom.colour} ${uc.bottom.type}`);
+  if (uc?.polo) parts.push(`${uc.polo.colour} polo (${uc.polo.sleeve})`);
+  if (uc?.shirt) parts.push(`white shirt (${uc.shirt.sleeve})`);
+  if ((needs ?? []).includes("stationery")) parts.push("stationery");
+  if ((needs ?? []).includes("bag")) parts.push("bag");
+  return parts.join(" · ");
 }
 
 function StatTile({

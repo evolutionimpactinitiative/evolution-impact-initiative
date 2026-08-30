@@ -38,6 +38,9 @@ interface Props {
   family: PickLabelFamily;
   qrDataUrl: string | null;
   overrideItems?: PickLabelItem[];
+  // Eyebrow text (top-of-label drive header). Defaults to the August
+  // B2S drive for back-compat; Collection Day passes its own label.
+  driveLabel?: string;
 }
 
 const COLOUR_LABEL: Record<string, string> = {
@@ -61,7 +64,13 @@ const SEX_LABEL: Record<string, string> = {
   prefer_not_to_say: "—",
 };
 
-export function PickLabel({ child, family, qrDataUrl, overrideItems }: Props) {
+export function PickLabel({
+  child,
+  family,
+  qrDataUrl,
+  overrideItems,
+  driveLabel,
+}: Props) {
   const ref = family.id.slice(0, 8).toUpperCase();
   const isWalkIn = family.status === "walk_in";
   const sexLabel = child.sex ? SEX_LABEL[child.sex] ?? child.sex : null;
@@ -82,7 +91,7 @@ export function PickLabel({ child, family, qrDataUrl, overrideItems }: Props) {
     <article className="pick-label">
       <div>
         <p className="pl-eyebrow">
-          B2S Drive · {B2S.dateLabel}
+          {driveLabel ?? `B2S Drive · ${B2S.dateLabel}`}
         </p>
         <h1 className="pl-child-name">{child.child_name}</h1>
         <p className="pl-parent">
