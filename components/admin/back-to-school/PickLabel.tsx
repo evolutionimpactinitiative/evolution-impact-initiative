@@ -120,19 +120,19 @@ export function PickLabel({
                 <PickItem
                   label={`${COLOUR_LABEL[uc.bottom.colour] ?? uc.bottom.colour} ${
                     BOTTOM_LABEL[uc.bottom.type] ?? uc.bottom.type
-                  }`}
+                  }${sizeSuffix(uc.bottom, child.uniform_size)}`}
                   withSubstitution
                 />
               )}
               {wantsUniform && uc?.polo && (
                 <PickItem
-                  label={`${COLOUR_LABEL[uc.polo.colour] ?? uc.polo.colour} polo (${uc.polo.sleeve} sleeve)`}
+                  label={`${COLOUR_LABEL[uc.polo.colour] ?? uc.polo.colour} polo (${uc.polo.sleeve} sleeve)${sizeSuffix(uc.polo, child.uniform_size)}`}
                   withSubstitution
                 />
               )}
               {wantsUniform && uc?.shirt && (
                 <PickItem
-                  label={`White shirt (${uc.shirt.sleeve} sleeve)`}
+                  label={`White shirt (${uc.shirt.sleeve} sleeve)${sizeSuffix(uc.shirt, child.uniform_size)}`}
                   withSubstitution
                 />
               )}
@@ -179,6 +179,25 @@ export function PickLabel({
       </div>
     </article>
   );
+}
+
+// The parent's per-item size lives in the JSONB (added when the
+// picker started offering nearby-size fallbacks). Older bookings
+// don't carry it, so we fall back to the child's own uniform_size.
+// Also surfaces a "unisex" tag when the parent picked a unisex row.
+function sizeSuffix(item: unknown, childSize: string | null): string {
+  let size: string | null = null;
+  let fit: string | null = null;
+  if (item && typeof item === "object") {
+    const s = (item as { size?: unknown }).size;
+    if (typeof s === "string" && s.trim()) size = s;
+    const f = (item as { fit?: unknown }).fit;
+    if (typeof f === "string" && f.trim()) fit = f;
+  }
+  const s = size ?? childSize;
+  if (!s) return "";
+  const tag = fit === "unisex" ? " unisex" : "";
+  return ` · size ${s}${tag}`;
 }
 
 function PickItem({

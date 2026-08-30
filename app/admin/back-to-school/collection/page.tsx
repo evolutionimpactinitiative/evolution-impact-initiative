@@ -363,9 +363,17 @@ export default async function CollectionAdminPage() {
                                       ` · ${c.sex === "male" ? "boy" : c.sex === "female" ? "girl" : c.sex}`}
                                     {c.uniform_size && ` · size ${c.uniform_size}`}
                                   </span>
-                                  {summariseChoices(c.uniform_choices, c.needs) && (
+                                  {summariseChoices(
+                                    c.uniform_choices,
+                                    c.needs,
+                                    c.uniform_size,
+                                  ) && (
                                     <p className="text-gray-600 mt-0.5">
-                                      {summariseChoices(c.uniform_choices, c.needs)}
+                                      {summariseChoices(
+                                        c.uniform_choices,
+                                        c.needs,
+                                        c.uniform_size,
+                                      )}
                                     </p>
                                   )}
                                   {c.school && (
@@ -453,11 +461,46 @@ export default async function CollectionAdminPage() {
 function summariseChoices(
   uc: UniformChoices | null,
   needs: string[] | null,
+  childSize: string | null,
 ): string {
+  // The client stores an optional per-item picked size/fit in the JSONB
+  // (added after the picker started offering nearby-size fallbacks).
+  // Fall back to the child's own uniform_size for legacy bookings.
+  const pickedSize = (item: unknown): string | null => {
+    if (item && typeof item === "object" && "size" in item) {
+      const s = (item as { size?: unknown }).size;
+      if (typeof s === "string" && s.trim()) return s;
+    }
+    return null;
+  };
+  const pickedFit = (item: unknown): string | null => {
+    if (item && typeof item === "object" && "fit" in item) {
+      const f = (item as { fit?: unknown }).fit;
+      if (typeof f === "string" && f.trim()) return f;
+    }
+    return null;
+  };
+  const withSize = (label: string, item: unknown): string => {
+    const s = pickedSize(item) ?? childSize ?? "?";
+    const f = pickedFit(item);
+    const unisexTag = f === "unisex" ? " unisex" : "";
+    return `${label} · size ${s}${unisexTag}`;
+  };
+
   const parts: string[] = [];
-  if (uc?.bottom) parts.push(`${uc.bottom.colour} ${uc.bottom.type}`);
-  if (uc?.polo) parts.push(`${uc.polo.colour} polo (${uc.polo.sleeve})`);
-  if (uc?.shirt) parts.push(`white shirt (${uc.shirt.sleeve})`);
+  if (uc?.bottom) {
+    parts.push(
+      withSize(`${uc.bottom.colour} ${uc.bottom.type}`, uc.bottom),
+    );
+  }
+  if (uc?.polo) {
+    parts.push(
+      withSize(`${uc.polo.colour} polo (${uc.polo.sleeve})`, uc.polo),
+    );
+  }
+  if (uc?.shirt) {
+    parts.push(withSize(`white shirt (${uc.shirt.sleeve})`, uc.shirt));
+  }
   if ((needs ?? []).includes("stationery")) parts.push("stationery");
   if ((needs ?? []).includes("bag")) parts.push("bag");
   return parts.join(" · ");
