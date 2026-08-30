@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock,
   Mail,
+  Package,
   Printer,
   ShieldAlert,
   UserX,
@@ -45,6 +46,7 @@ type CollectionRegistration = {
     uniform_choices: UniformChoices | null;
     notes: string | null;
     display_order: number;
+    packed_at: string | null;
   }>;
 };
 
@@ -77,7 +79,7 @@ export default async function CollectionAdminPage() {
        collection_slot, qr_token, attended, created_at,
        registration_children (
          id, child_name, child_age, uniform_size, sex, school,
-         needs, uniform_choices, notes, display_order
+         needs, uniform_choices, notes, display_order, packed_at
        )`,
     )
     .eq("event_id", event.id)
@@ -145,6 +147,11 @@ export default async function CollectionAdminPage() {
     0,
   );
   const collectedCount = registrations.filter((r) => r.attended === "yes").length;
+  const packedKids = registrations.reduce(
+    (n, r) =>
+      n + (r.registration_children?.filter((c) => c.packed_at).length ?? 0),
+    0,
+  );
 
   return (
     <div className="space-y-6 pb-16">
@@ -171,7 +178,7 @@ export default async function CollectionAdminPage() {
       </div>
 
       {/* Stat tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <StatTile
           label="Bookings"
           value={totalBooked}
@@ -184,6 +191,13 @@ export default async function CollectionAdminPage() {
           value={totalKids}
           icon={<Users className="h-5 w-5" />}
           tone="green"
+        />
+        <StatTile
+          label="Packed"
+          value={packedKids}
+          subtitle={totalKids > 0 ? `of ${totalKids}` : undefined}
+          icon={<Package className="h-5 w-5" />}
+          tone={packedKids > 0 && packedKids === totalKids ? "emerald" : "amber"}
         />
         <StatTile
           label="Collected"
@@ -352,17 +366,39 @@ export default async function CollectionAdminPage() {
                               .map((c) => (
                                 <li
                                   key={c.id}
-                                  className="text-xs bg-gray-50 rounded-md px-2 py-1.5"
+                                  className={`text-xs rounded-md px-2 py-1.5 ${
+                                    c.packed_at
+                                      ? "bg-emerald-50 border border-emerald-200"
+                                      : "bg-gray-50"
+                                  }`}
                                 >
-                                  <span className="font-heading font-bold text-brand-dark">
-                                    {c.child_name}
-                                  </span>
-                                  <span className="text-gray-500">
-                                    {c.child_age != null && ` · age ${c.child_age}`}
-                                    {c.sex &&
-                                      ` · ${c.sex === "male" ? "boy" : c.sex === "female" ? "girl" : c.sex}`}
-                                    {c.uniform_size && ` · size ${c.uniform_size}`}
-                                  </span>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <span className="font-heading font-bold text-brand-dark">
+                                        {c.child_name}
+                                      </span>
+                                      <span className="text-gray-500">
+                                        {c.child_age != null && ` · age ${c.child_age}`}
+                                        {c.sex &&
+                                          ` · ${c.sex === "male" ? "boy" : c.sex === "female" ? "girl" : c.sex}`}
+                                        {c.uniform_size && ` · size ${c.uniform_size}`}
+                                      </span>
+                                    </div>
+                                    {c.packed_at ? (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-heading font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full shrink-0">
+                                        <Package className="h-3 w-3" />
+                                        Packed
+                                      </span>
+                                    ) : (
+                                      <Link
+                                        href={`/admin/back-to-school/collection/pack/${c.id}`}
+                                        className="shrink-0 inline-flex items-center gap-1 text-[10px] font-heading font-bold uppercase tracking-widest bg-brand-blue text-white px-2 py-0.5 rounded-full hover:bg-brand-dark"
+                                      >
+                                        <Package className="h-3 w-3" />
+                                        Pack
+                                      </Link>
+                                    )}
+                                  </div>
                                   {summariseChoices(
                                     c.uniform_choices,
                                     c.needs,
@@ -517,7 +553,7 @@ function StatTile({
   value: number;
   subtitle?: string;
   icon: React.ReactNode;
-  tone: "blue" | "green" | "emerald" | "red" | "gray";
+  tone: "blue" | "green" | "emerald" | "red" | "gray" | "amber";
 }) {
   const tones: Record<string, { bg: string; text: string }> = {
     blue: { bg: "bg-brand-blue/10", text: "text-brand-blue" },
@@ -525,6 +561,7 @@ function StatTile({
     emerald: { bg: "bg-emerald-100", text: "text-emerald-700" },
     red: { bg: "bg-red-100", text: "text-red-700" },
     gray: { bg: "bg-gray-100", text: "text-gray-600" },
+    amber: { bg: "bg-amber-100", text: "text-amber-700" },
   };
   const t = tones[tone];
   return (
