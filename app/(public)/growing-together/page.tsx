@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Sparkles, HeartHandshake, Users, ArrowRight } from "lucide-react";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { EventCard } from "@/components/shared/EventCard";
+import { FundedByCiN } from "@/components/shared/FundedByCiN";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -292,6 +293,13 @@ export default async function GrowingTogetherPage() {
               </Button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Funder credit */}
+      <section className="bg-brand-pale/30 py-14 md:py-16">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <FundedByCiN />
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
 const LOGO_URL = "https://evolutionimpactinitiative.co.uk/logos/evolution_full_logo_1.png";
+const CIN_LOGO_URL = "https://evolutionimpactinitiative.co.uk/logos/bbc-children-in-need.png";
 
 const BRAND = {
   blue: "#17559D",
@@ -38,6 +39,17 @@ function shell(inner: string) {
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
           <td style="padding:24px 20px;text-align:center;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto 12px;">
+              <tr>
+                <td style="padding-right:10px;vertical-align:middle;">
+                  <img src="${CIN_LOGO_URL}" alt="BBC Children in Need" width="72" style="display:block;height:auto;max-width:72px;" />
+                </td>
+                <td style="vertical-align:middle;font-size:11px;color:#888;text-align:left;">
+                  Funded by BBC Children in Need<br />
+                  <span style="color:#aaa;">We Move Fwd: Foundations</span>
+                </td>
+              </tr>
+            </table>
             <p style="margin:0 0 6px;font-size:13px;color:#555;font-weight:600;">Growing Together · Evolution Impact Initiative CIC</p>
             <p style="margin:0 0 8px;font-size:12px;color:#888;">86 King Street, Rochester, Kent, ME1 1YD</p>
             <p style="margin:0;font-size:11px;color:#aaa;">Company No. 16667870 · Registered in England &amp; Wales</p>

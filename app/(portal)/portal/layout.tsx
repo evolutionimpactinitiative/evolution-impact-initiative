@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { FundedByCiN } from "@/components/shared/FundedByCiN";
 import { PortalSignOutButton } from "./PortalSignOutButton";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
@@ -58,8 +59,11 @@ export default async function PortalLayout({ children }: { children: React.React
       <main className="flex-1">{children}</main>
 
       <footer className="border-t border-brand-dark/10 bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-6 text-center text-xs text-brand-dark/60">
-          <p className="mb-1">
+        <div className="max-w-4xl mx-auto px-4 py-6 text-center text-xs text-brand-dark/60 space-y-3">
+          <div className="flex justify-center">
+            <FundedByCiN variant="compact" />
+          </div>
+          <p>
             Growing Together · Evolution Impact Initiative CIC · Company No. 16667870
           </p>
           <p>
