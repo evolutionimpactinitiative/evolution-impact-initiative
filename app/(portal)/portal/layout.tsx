@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { FundedByCiN } from "@/components/shared/FundedByCiN";
 import { PortalSignOutButton } from "./PortalSignOutButton";
@@ -54,21 +53,12 @@ export default async function PortalLayout({ children }: { children: React.React
               <PortalSignOutButton />
             </div>
           ) : (
-            <div className="flex items-center gap-4">
-              <Link
-                href="/portal/login"
-                className="font-heading text-sm font-semibold text-brand-dark hover:text-brand-blue transition-colors"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/"
-                className="hidden sm:inline-flex items-center gap-1 text-xs text-brand-dark/60 hover:text-brand-blue"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                Back to Evolution
-              </Link>
-            </div>
+            <Link
+              href="/portal/login"
+              className="font-heading text-sm font-semibold text-brand-dark hover:text-brand-blue transition-colors"
+            >
+              Log in
+            </Link>
           )}
         </nav>
       </header>
