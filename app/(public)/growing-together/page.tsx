@@ -132,6 +132,12 @@ export default async function GrowingTogetherPage() {
                 <Link href="#upcoming">View Upcoming Sessions</Link>
               </Button>
             </div>
+            <p className="text-sm text-brand-dark/70 mt-4">
+              Already a member?{" "}
+              <Link href="/portal/login" className="text-brand-blue font-semibold hover:underline">
+                Log in to the Family Portal
+              </Link>
+            </p>
           </div>
         </div>
       </section>

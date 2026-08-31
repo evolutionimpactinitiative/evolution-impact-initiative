@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { FundedByCiN } from "@/components/shared/FundedByCiN";
 import { PortalSignOutButton } from "./PortalSignOutButton";
@@ -12,48 +13,64 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <div className="min-h-screen bg-brand-pale/40 flex flex-col">
-      <header className="bg-white border-b border-brand-dark/10 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/portal" className="flex items-center gap-3">
-            <Image
-              src="/logos/evolution_full_logo_1.svg"
-              alt="Evolution Impact Initiative"
-              width={140}
-              height={34}
-              priority
-            />
-            <span className="hidden sm:inline-block h-5 border-l border-brand-dark/20" />
-            <span className="hidden sm:inline-block font-heading font-black text-brand-blue text-sm uppercase tracking-wider">
+      {/* Header matches the main site Navbar shape so Growing Together
+          feels like a room inside Evolution, not a separate website. */}
+      <header className="sticky top-0 z-40 h-20 bg-white/95 backdrop-blur-md shadow-sm">
+        <nav className="container mx-auto px-4 h-full flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/" aria-label="Evolution Impact Initiative — Home" className="flex-shrink-0">
+              <Image
+                src="/logos/evolution_full_logo_1.svg"
+                alt="Evolution Impact Initiative"
+                width={200}
+                height={48}
+                className="w-[160px] sm:w-[200px] h-auto transition-all"
+                priority
+              />
+            </Link>
+            <span className="hidden md:inline-block h-6 border-l border-brand-dark/20" />
+            <Link
+              href="/growing-together"
+              className="hidden md:inline-block font-heading font-black text-brand-blue text-sm uppercase tracking-wider hover:text-brand-dark"
+            >
               Growing Together
-            </span>
-          </Link>
+            </Link>
+          </div>
+
           {user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 sm:gap-6">
               <Link
                 href="/portal"
-                className="hidden sm:inline-block text-sm font-heading font-semibold text-brand-dark hover:text-brand-blue"
+                className="hidden sm:inline-block font-heading text-sm font-semibold text-brand-dark hover:text-brand-blue transition-colors"
               >
                 Dashboard
               </Link>
               <Link
                 href="/portal/family"
-                className="hidden sm:inline-block text-sm font-heading font-semibold text-brand-dark hover:text-brand-blue"
+                className="hidden sm:inline-block font-heading text-sm font-semibold text-brand-dark hover:text-brand-blue transition-colors"
               >
                 My Family
               </Link>
               <PortalSignOutButton />
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Link
                 href="/portal/login"
-                className="text-sm font-heading font-semibold text-brand-dark hover:text-brand-blue"
+                className="font-heading text-sm font-semibold text-brand-dark hover:text-brand-blue transition-colors"
               >
                 Log in
               </Link>
+              <Link
+                href="/"
+                className="hidden sm:inline-flex items-center gap-1 text-xs text-brand-dark/60 hover:text-brand-blue"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                Back to Evolution
+              </Link>
             </div>
           )}
-        </div>
+        </nav>
       </header>
 
       <main className="flex-1">{children}</main>

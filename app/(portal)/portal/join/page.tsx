@@ -148,13 +148,25 @@ function JoinForm() {
           <label className="block text-sm font-medium text-brand-dark mb-1">
             How did you hear about Growing Together?
           </label>
-          <input
-            type="text"
+          <select
             value={form.how_heard_about_gt}
             onChange={(e) => setForm({ ...form, how_heard_about_gt: e.target.value })}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-            placeholder="A friend, Instagram, family hub…"
-          />
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-white"
+          >
+            <option value="">Prefer not to say</option>
+            <option value="friend_or_family">A friend or family</option>
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="family_hub">Family Hub</option>
+            <option value="nursery">Nursery or childminder</option>
+            <option value="school">School</option>
+            <option value="health_visitor">Health visitor</option>
+            <option value="library">Library</option>
+            <option value="community_centre">Community centre</option>
+            <option value="google_search">Google search</option>
+            <option value="other">Other</option>
+          </select>
         </div>
 
         {error && (

@@ -488,6 +488,7 @@ export const navLinks = [
   { href: "/events", label: "Events" },
   { href: "/growing-together", label: "Growing Together" },
   { href: "/gallery", label: "Gallery" },
+  { href: "/portal", label: "Family Portal" },
   { href: "/donate", label: "Donate" },
   { href: "/contact", label: "Contact" },
 ];
