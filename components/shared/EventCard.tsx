@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type RegistrationStatus = "open" | "waitlist" | "full" | "closed" | "scheduled";
+type DifferenceBadge = "confidence" | "connection" | "belonging";
 
 interface EventCardProps {
   title: string;
@@ -21,6 +22,8 @@ interface EventCardProps {
   registrationStatus?: RegistrationStatus;
   spotsRemaining?: number;
   waitlistRemaining?: number;
+  differenceBadge?: DifferenceBadge;
+  hrefOverride?: string;
 }
 
 export function EventCard({
@@ -38,7 +41,14 @@ export function EventCard({
   registrationStatus = "open",
   spotsRemaining,
   waitlistRemaining,
+  differenceBadge,
+  hrefOverride,
 }: EventCardProps) {
+  const differenceBadgeConfig: Record<DifferenceBadge, { label: string; bg: string }> = {
+    confidence: { label: "Confidence", bg: "bg-brand-blue" },
+    connection: { label: "Connection", bg: "bg-brand-green" },
+    belonging: { label: "Belonging", bg: "bg-brand-dark" },
+  };
   // Get status badge config
   const getStatusConfig = () => {
     if (isPast) {
@@ -152,6 +162,18 @@ export function EventCard({
           >
             {statusConfig.text}
           </div>
+
+          {/* Difference badge (Growing Together) */}
+          {differenceBadge && (
+            <div
+              className={cn(
+                "absolute top-2 right-2 text-xs px-2.5 py-1 rounded-full font-semibold text-white shadow-sm",
+                differenceBadgeConfig[differenceBadge].bg
+              )}
+            >
+              {differenceBadgeConfig[differenceBadge].label}
+            </div>
+          )}
         </div>
 
         {/* Caption area - polaroid style */}
@@ -204,7 +226,7 @@ export function EventCard({
             {isButtonDisabled ? (
               <span>{getButtonText()}</span>
             ) : (
-              <Link href={`/events/${slug}`}>{getButtonText()}</Link>
+              <Link href={hrefOverride ?? `/events/${slug}`}>{getButtonText()}</Link>
             )}
           </Button>
         </div>

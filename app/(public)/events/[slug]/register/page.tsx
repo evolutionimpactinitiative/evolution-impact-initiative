@@ -43,6 +43,12 @@ export default async function RegisterPage({ params }: Props) {
     notFound();
   }
 
+  // Growing Together sessions are registration-based via the parent
+  // portal — bounce anonymous form hits to the portal flow.
+  if (event.programme === "growing_together") {
+    redirect(`/events/${slug}/register-portal`);
+  }
+
   // Check if event date has passed
   const eventDate = new Date(event.date);
   const now = new Date();

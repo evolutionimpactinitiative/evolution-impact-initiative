@@ -66,6 +66,10 @@ export function EventForm({ event }: EventFormProps) {
     custom_fields: event?.custom_fields || [],
     photo_album_url: event?.photo_album_url || "",
     publish_at: event?.publish_at ? event.publish_at.slice(0, 16) : "", // Format for datetime-local input
+    programme: event?.programme || "",
+    primary_difference: event?.primary_difference || "",
+    cycle_number: event?.cycle_number ?? "",
+    what_to_expect: event?.what_to_expect || "",
   });
 
   const [customFields, setCustomFields] = useState<CustomField[]>(event?.custom_fields || []);
@@ -96,6 +100,14 @@ export function EventForm({ event }: EventFormProps) {
         arrival_time: formData.arrival_time || null,
         custom_fields: customFields.length > 0 ? customFields : null,
         publish_at: formData.publish_at ? new Date(formData.publish_at).toISOString() : null,
+        programme: formData.programme || null,
+        primary_difference: formData.programme
+          ? ((formData.primary_difference || null) as "confidence" | "connection" | "belonging" | null)
+          : null,
+        cycle_number: formData.programme && formData.cycle_number !== ""
+          ? Number(formData.cycle_number)
+          : null,
+        what_to_expect: formData.programme ? (formData.what_to_expect || null) : null,
       };
 
       let savedEventId = isEditing ? event.id : null;
@@ -249,6 +261,104 @@ export function EventForm({ event }: EventFormProps) {
             </select>
           </div>
         </div>
+      </div>
+
+      {/* Programme */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="font-heading font-bold text-lg text-gray-900 mb-4">Programme</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Optional. Tag this event as part of a named programme (e.g. Growing Together) so it
+          appears on that programme&apos;s public page and admin dashboard.
+        </p>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Programme</label>
+          <select
+            value={formData.programme}
+            onChange={(e) => setFormData({ ...formData, programme: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+          >
+            <option value="">None (standalone event)</option>
+            <option value="growing_together">Growing Together (Early Years, 0–5)</option>
+          </select>
+        </div>
+
+        {formData.programme === "growing_together" && (
+          <div className="mt-4 space-y-4 pl-4 border-l-4 border-brand-green">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Primary difference <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Which of Growing Together&apos;s three outcomes does this session primarily support?
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {(
+                  [
+                    { value: "confidence", label: "Confidence", hint: "Emotional wellbeing" },
+                    { value: "connection", label: "Connection", hint: "Parent–child relationships" },
+                    { value: "belonging", label: "Belonging", hint: "Inclusion & culture" },
+                  ] as const
+                ).map((diff) => (
+                  <label
+                    key={diff.value}
+                    className="flex items-start gap-2 p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-brand-green"
+                  >
+                    <input
+                      type="radio"
+                      name="primary_difference"
+                      value={diff.value}
+                      checked={formData.primary_difference === diff.value}
+                      onChange={(e) =>
+                        setFormData({ ...formData, primary_difference: e.target.value })
+                      }
+                      className="mt-1"
+                    />
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">{diff.label}</div>
+                      <div className="text-xs text-gray-500">{diff.hint}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cycle
+                </label>
+                <select
+                  value={formData.cycle_number}
+                  onChange={(e) => setFormData({ ...formData, cycle_number: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                >
+                  <option value="">Not part of a cycle</option>
+                  <option value="1">Cycle 1 (months 1–3)</option>
+                  <option value="2">Cycle 2 (months 4–6)</option>
+                  <option value="3">Cycle 3 (months 7–9)</option>
+                  <option value="4">Cycle 4 (months 10–12)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                What to expect
+              </label>
+              <p className="text-xs text-gray-500 mb-1">
+                Short summary of the session shape — shown on the parent-facing session page.
+              </p>
+              <textarea
+                value={formData.what_to_expect}
+                onChange={(e) => setFormData({ ...formData, what_to_expect: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                placeholder="Welcome and free play, circle time, main activity, parent–child challenge, celebration."
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Date & Location */}

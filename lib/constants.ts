@@ -486,6 +486,7 @@ export const navLinks = [
   { href: "/about", label: "About Us" },
   { href: "/our-work", label: "Our Work" },
   { href: "/events", label: "Events" },
+  { href: "/growing-together", label: "Growing Together" },
   { href: "/gallery", label: "Gallery" },
   { href: "/donate", label: "Donate" },
   { href: "/contact", label: "Contact" },

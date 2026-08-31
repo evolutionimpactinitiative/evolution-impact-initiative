@@ -480,7 +480,9 @@ export default async function EventPage({ params }: Props) {
                           ? "/back-to-school/register"
                           : event.slug === COLLECTION_SLUG
                             ? "/back-to-school/collection/register"
-                            : `/events/${event.slug}/register`
+                            : event.programme === "growing_together"
+                              ? `/events/${event.slug}/register-portal`
+                              : `/events/${event.slug}/register`
                       }
                     >
                       Register Now
@@ -495,7 +497,9 @@ export default async function EventPage({ params }: Props) {
                           ? "/back-to-school/register"
                           : event.slug === COLLECTION_SLUG
                             ? "/back-to-school/collection/register"
-                            : `/events/${event.slug}/register`
+                            : event.programme === "growing_together"
+                              ? `/events/${event.slug}/register-portal`
+                              : `/events/${event.slug}/register`
                       }
                     >
                       Join Waitlist

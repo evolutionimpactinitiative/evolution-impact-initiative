@@ -54,5 +54,34 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // Protect parent portal routes. Public pages inside /portal (join,
+  // login, verify-email, forgot-password, reset-password) let unauthed
+  // visitors through; everything else requires an authenticated,
+  // email-verified parent.
+  if (request.nextUrl.pathname.startsWith("/portal")) {
+    const publicPortalPaths = [
+      "/portal/join",
+      "/portal/login",
+      "/portal/verify-email",
+      "/portal/forgot-password",
+      "/portal/reset-password",
+    ];
+    const isPublic = publicPortalPaths.some((p) => request.nextUrl.pathname.startsWith(p));
+
+    if (!isPublic) {
+      if (!user) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/portal/login";
+        return NextResponse.redirect(url);
+      }
+      if (!user.email_confirmed_at) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/portal/verify-email";
+        if (user.email) url.searchParams.set("email", user.email);
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
   return supabaseResponse;
 }

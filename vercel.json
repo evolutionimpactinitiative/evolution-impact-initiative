@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/send-festival-reminders",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/growing-together-feedback",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/growing-together-baseline",
+      "schedule": "10 8 * * *"
     }
   ]
 }

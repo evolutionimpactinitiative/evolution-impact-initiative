@@ -83,7 +83,7 @@ export interface Database {
           id: string;
           email: string;
           name: string;
-          role: "admin" | "editor" | "treasurer";
+          role: "admin" | "editor" | "treasurer" | "safeguarding_lead";
           is_treasurer: boolean;
           avatar_url: string | null;
           created_at: string;
@@ -93,7 +93,7 @@ export interface Database {
           id?: string;
           email: string;
           name: string;
-          role?: "admin" | "editor" | "treasurer";
+          role?: "admin" | "editor" | "treasurer" | "safeguarding_lead";
           is_treasurer?: boolean;
           avatar_url?: string | null;
           created_at?: string;
@@ -103,7 +103,7 @@ export interface Database {
           id?: string;
           email?: string;
           name?: string;
-          role?: "admin" | "editor" | "treasurer";
+          role?: "admin" | "editor" | "treasurer" | "safeguarding_lead";
           is_treasurer?: boolean;
           avatar_url?: string | null;
           created_at?: string;
@@ -145,6 +145,10 @@ export interface Database {
           final_release: boolean;
           social_image_url: string | null;
           playbook_state: PlaybookState;
+          programme: string | null;
+          primary_difference: "confidence" | "connection" | "belonging" | null;
+          cycle_number: number | null;
+          what_to_expect: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -183,6 +187,10 @@ export interface Database {
           final_release?: boolean;
           social_image_url?: string | null;
           playbook_state?: PlaybookState;
+          programme?: string | null;
+          primary_difference?: "confidence" | "connection" | "belonging" | null;
+          cycle_number?: number | null;
+          what_to_expect?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -221,6 +229,10 @@ export interface Database {
           final_release?: boolean;
           social_image_url?: string | null;
           playbook_state?: PlaybookState;
+          programme?: string | null;
+          primary_difference?: "confidence" | "connection" | "belonging" | null;
+          cycle_number?: number | null;
+          what_to_expect?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -246,6 +258,9 @@ export interface Database {
           terms_accepted_at: string | null;
           custom_responses: Record<string, string | boolean | number> | null;
           admin_notes: string | null;
+          family_id: string | null;
+          registered_by_parent_carer_id: string | null;
+          feedback_email_sent_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -268,6 +283,9 @@ export interface Database {
           terms_accepted_at?: string | null;
           custom_responses?: Record<string, string | boolean | number> | null;
           admin_notes?: string | null;
+          family_id?: string | null;
+          registered_by_parent_carer_id?: string | null;
+          feedback_email_sent_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -290,6 +308,9 @@ export interface Database {
           terms_accepted_at?: string | null;
           custom_responses?: Record<string, string | boolean | number> | null;
           admin_notes?: string | null;
+          family_id?: string | null;
+          registered_by_parent_carer_id?: string | null;
+          feedback_email_sent_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -303,6 +324,7 @@ export interface Database {
           display_order: number;
           attended: boolean | null;
           check_in_time: string | null;
+          child_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -313,6 +335,7 @@ export interface Database {
           display_order?: number;
           attended?: boolean | null;
           check_in_time?: string | null;
+          child_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -323,6 +346,7 @@ export interface Database {
           display_order?: number;
           attended?: boolean | null;
           check_in_time?: string | null;
+          child_id?: string | null;
           created_at?: string;
         };
       };
@@ -1052,6 +1076,135 @@ export interface Database {
           updated_at?: string;
         };
       };
+      families: {
+        Row: {
+          id: string;
+          postcode: string | null;
+          preferred_contact_method: "email" | "phone" | "sms" | "whatsapp" | null;
+          preferred_language: string | null;
+          how_heard_about_gt: string | null;
+          accessibility_requirements: string | null;
+          interests: string[];
+          support_areas: string[];
+          photo_video_consent: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          postcode?: string | null;
+          preferred_contact_method?: "email" | "phone" | "sms" | "whatsapp" | null;
+          preferred_language?: string | null;
+          how_heard_about_gt?: string | null;
+          accessibility_requirements?: string | null;
+          interests?: string[];
+          support_areas?: string[];
+          photo_video_consent?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          postcode?: string | null;
+          preferred_contact_method?: "email" | "phone" | "sms" | "whatsapp" | null;
+          preferred_language?: string | null;
+          how_heard_about_gt?: string | null;
+          accessibility_requirements?: string | null;
+          interests?: string[];
+          support_areas?: string[];
+          photo_video_consent?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      parent_carers: {
+        Row: {
+          id: string;
+          family_id: string;
+          user_id: string | null;
+          name: string;
+          email: string;
+          phone: string | null;
+          relationship_to_child: string | null;
+          is_primary: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          family_id: string;
+          user_id?: string | null;
+          name: string;
+          email: string;
+          phone?: string | null;
+          relationship_to_child?: string | null;
+          is_primary?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          family_id?: string;
+          user_id?: string | null;
+          name?: string;
+          email?: string;
+          phone?: string | null;
+          relationship_to_child?: string | null;
+          is_primary?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      children: {
+        Row: {
+          id: string;
+          family_id: string;
+          first_name: string;
+          date_of_birth: string;
+          sex_at_birth: "male" | "female" | "other" | "prefer_not_to_say" | null;
+          interests: string[];
+          accessibility_requirements: string | null;
+          communication_notes: string | null;
+          allergies: string | null;
+          support_areas: string[];
+          parent_notes: string | null;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          family_id: string;
+          first_name: string;
+          date_of_birth: string;
+          sex_at_birth?: "male" | "female" | "other" | "prefer_not_to_say" | null;
+          interests?: string[];
+          accessibility_requirements?: string | null;
+          communication_notes?: string | null;
+          allergies?: string | null;
+          support_areas?: string[];
+          parent_notes?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          family_id?: string;
+          first_name?: string;
+          date_of_birth?: string;
+          sex_at_birth?: "male" | "female" | "other" | "prefer_not_to_say" | null;
+          interests?: string[];
+          accessibility_requirements?: string | null;
+          communication_notes?: string | null;
+          allergies?: string | null;
+          support_areas?: string[];
+          parent_notes?: string | null;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Functions: {
       get_event_registration_count: {
@@ -1121,6 +1274,14 @@ export type SurveyResponseInsert = Database["public"]["Tables"]["survey_response
 // Event notification types (for scheduled publishing)
 export type EventNotification = Database["public"]["Tables"]["event_notifications"]["Row"];
 export type EventNotificationInsert = Database["public"]["Tables"]["event_notifications"]["Insert"];
+
+// Parent portal (Growing Together)
+export type Family = Database["public"]["Tables"]["families"]["Row"];
+export type FamilyInsert = Database["public"]["Tables"]["families"]["Insert"];
+export type ParentCarer = Database["public"]["Tables"]["parent_carers"]["Row"];
+export type ParentCarerInsert = Database["public"]["Tables"]["parent_carers"]["Insert"];
+export type Child = Database["public"]["Tables"]["children"]["Row"];
+export type ChildInsert = Database["public"]["Tables"]["children"]["Insert"];
 
 // Festival 2026 types
 export type FestivalTicket = Database["public"]["Tables"]["festival_tickets"]["Row"];

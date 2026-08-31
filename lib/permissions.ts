@@ -37,6 +37,7 @@ const PATH_SECTIONS: Array<{ prefix: string; section: SectionKey }> = [
 export interface Hats {
   isChair: boolean;
   isTreasurer: boolean;
+  isSafeguardingLead: boolean;
   isTeam: boolean; // signed-in team member of any stripe
 }
 
@@ -44,7 +45,8 @@ export function hatsFor(member: Pick<TeamMember, "role" | "is_treasurer"> | null
   const isTeam = !!member;
   const isChair = member?.role === "admin";
   const isTreasurer = !!member?.is_treasurer;
-  return { isChair, isTreasurer, isTeam };
+  const isSafeguardingLead = member?.role === "safeguarding_lead";
+  return { isChair, isTreasurer, isSafeguardingLead, isTeam };
 }
 
 export function canSeeSection(hats: Hats, section: SectionKey): boolean {
