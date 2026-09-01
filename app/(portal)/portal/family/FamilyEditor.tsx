@@ -12,6 +12,23 @@ interface Props {
   children: Child[];
 }
 
+const FAMILY_SUPPORT_OPTIONS = [
+  "💛 Parenting support",
+  "🌱 Child development",
+  "🗣 Speech & language",
+  "🧘 Emotional wellbeing",
+  "🥗 Nutrition",
+  "🎒 School readiness",
+  "🤝 Social connection",
+  "💷 Financial wellbeing",
+  "🏃 Physical activity",
+  "🎨 Creative activities",
+  "🌍 Cultural & community activities",
+  "👩🏾‍⚕️ Professional advice",
+  "🏡 Housing & benefits",
+  "🕊 Bereavement or grief",
+];
+
 const INTEREST_OPTIONS = [
   "🎨 Art & drawing",
   "🎵 Music & singing",
@@ -108,6 +125,19 @@ export function FamilyEditor({ family, carer, children }: Props) {
   const [addingChild, setAddingChild] = useState(children.length === 0);
   const [savingFamily, startSavingFamily] = useTransition();
   const [savingChild, startSavingChild] = useTransition();
+  const [familySupport, setFamilySupport] = useState<string[]>(family?.support_areas ?? []);
+  const [familySupportCustom, setFamilySupportCustom] = useState("");
+
+  const addCustomSupport = () => {
+    const v = familySupportCustom.trim();
+    if (!v || familySupport.includes(v)) {
+      setFamilySupportCustom("");
+      return;
+    }
+    setFamilySupport([...familySupport, v]);
+    setFamilySupportCustom("");
+  };
+  const familyExtras = familySupport.filter((v) => !FAMILY_SUPPORT_OPTIONS.includes(v));
 
   return (
     <div className="space-y-8">
@@ -178,6 +208,90 @@ export function FamilyEditor({ family, carer, children }: Props) {
             defaultValue={family?.accessibility_requirements ?? ""}
             placeholder="Anything we should know to make sessions accessible for your family?"
           />
+
+          {/* Family support needs — shapes what we offer */}
+          <div className="bg-brand-pale/30 rounded-xl border border-brand-blue/20 p-4 space-y-3">
+            <div>
+              <h3 className="font-heading font-bold text-brand-dark">
+                What support would be useful for your family?
+              </h3>
+              <p className="text-xs text-brand-dark/60 mt-1 flex items-start gap-1.5">
+                <Info className="h-3 w-3 mt-0.5 shrink-0" />
+                <span>
+                  <span className="font-medium">Why we ask:</span> so we can plan future
+                  sessions, workshops and partner referrals around what your community
+                  actually needs. Tick as many as apply.
+                </span>
+              </p>
+            </div>
+
+            {familySupport.map((v) => (
+              <input key={`fs-${v}`} type="hidden" name="family_support_areas" value={v} />
+            ))}
+
+            <div className="flex flex-wrap gap-2">
+              {FAMILY_SUPPORT_OPTIONS.map((opt) => {
+                const active = familySupport.includes(opt);
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() =>
+                      setFamilySupport(
+                        active
+                          ? familySupport.filter((v) => v !== opt)
+                          : [...familySupport, opt],
+                      )
+                    }
+                    className={`text-sm rounded-full px-3 py-1.5 border transition ${
+                      active
+                        ? "bg-brand-blue text-white border-brand-blue"
+                        : "bg-white text-brand-dark border-brand-dark/20 hover:border-brand-blue"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+              {familyExtras.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => setFamilySupport(familySupport.filter((v) => v !== e))}
+                  className="text-sm rounded-full px-3 py-1.5 border bg-brand-blue text-white border-brand-blue"
+                  title="Tap to remove"
+                >
+                  {e} <span className="opacity-75 ml-1">×</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={familySupportCustom}
+                onChange={(e) => setFamilySupportCustom(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomSupport();
+                  }
+                }}
+                placeholder="Anything else? (e.g. legal advice, ESOL)"
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={addCustomSupport}
+                disabled={!familySupportCustom.trim()}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
+            </div>
+          </div>
 
           <label className="flex items-start gap-2 text-sm text-brand-dark cursor-pointer">
             <input

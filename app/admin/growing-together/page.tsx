@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Users, Baby, Calendar, CheckCircle, Clock, ListChecks, Star, ClipboardList } from "lucide-react";
+import { ArrowRight, Users, Baby, Calendar, CheckCircle, Clock, ListChecks, Star, ClipboardList, Heart } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { StatCard } from "@/components/admin/StatCard";
 
@@ -32,6 +32,7 @@ export default async function GrowingTogetherAdminPage() {
     regsRes,
     baselineRes,
     survey,
+    supportRes,
   ] = await Promise.all([
     supa.from("families").select("id", { count: "exact", head: true }),
     supa
@@ -71,6 +72,7 @@ export default async function GrowingTogetherAdminPage() {
       .select("id")
       .eq("title", "Growing Together — Post-session feedback")
       .maybeSingle(),
+    supa.from("families").select("support_areas"),
   ]);
 
   const familiesCount = familiesRes.count ?? 0;
@@ -176,6 +178,22 @@ export default async function GrowingTogetherAdminPage() {
       feedbackAvg = Number((ratings.reduce((s, n) => s + n, 0) / ratings.length).toFixed(2));
     }
   }
+
+  // Community support requests — aggregate families.support_areas
+  const supportRows = (supportRes.data as { support_areas: string[] | null }[] | null) ?? [];
+  const supportCounts = new Map<string, number>();
+  let familiesWhoAnswered = 0;
+  for (const row of supportRows) {
+    const areas = row.support_areas ?? [];
+    if (areas.length > 0) familiesWhoAnswered++;
+    for (const a of areas) {
+      supportCounts.set(a, (supportCounts.get(a) ?? 0) + 1);
+    }
+  }
+  const topSupport = [...supportCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+  const totalFamilies = supportRows.length;
 
   // Recent registrations (last 8)
   const recentRegs = [...regs]
@@ -284,6 +302,52 @@ export default async function GrowingTogetherAdminPage() {
             Of {familiesWithAttendance} families that have attended
           </p>
         </div>
+      </div>
+
+      {/* Community support requests */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Heart className="h-4 w-4 text-brand-blue" />
+            <h2 className="font-heading font-bold text-lg text-brand-dark">
+              What families are asking for
+            </h2>
+          </div>
+          <span className="text-xs text-gray-500">
+            {familiesWhoAnswered} of {totalFamilies}{" "}
+            {totalFamilies === 1 ? "family" : "families"} answered
+          </span>
+        </div>
+        {topSupport.length === 0 ? (
+          <p className="p-6 text-sm text-gray-500">
+            No families have shared support needs yet. The prompt appears on their dashboard.
+          </p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {topSupport.map(([area, count]) => {
+              const pct =
+                familiesWhoAnswered > 0
+                  ? Math.round((count / familiesWhoAnswered) * 100)
+                  : 0;
+              return (
+                <li key={area} className="p-4">
+                  <div className="flex items-center justify-between gap-4 mb-1.5">
+                    <span className="text-sm text-brand-dark">{area}</span>
+                    <span className="text-sm font-heading font-bold text-brand-dark whitespace-nowrap">
+                      {count} · {pct}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-brand-blue rounded-full transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       {/* Two-column details */}

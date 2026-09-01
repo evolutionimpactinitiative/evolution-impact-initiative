@@ -28,6 +28,10 @@ export async function updateFamilyAction(formData: FormData) {
   const preferred_language = (formData.get("preferred_language") as string | null)?.trim() || null;
   const accessibility_requirements = (formData.get("accessibility_requirements") as string | null)?.trim() || null;
   const photo_video_consent = formData.get("photo_video_consent") === "on";
+  const support_areas = formData
+    .getAll("family_support_areas")
+    .map((v) => (typeof v === "string" ? v.trim() : ""))
+    .filter(Boolean);
 
   const name = (formData.get("name") as string | null)?.trim();
   const phone = (formData.get("phone") as string | null)?.trim() || null;
@@ -42,6 +46,7 @@ export async function updateFamilyAction(formData: FormData) {
       preferred_language,
       accessibility_requirements,
       photo_video_consent,
+      support_areas,
     })
     .eq("id", carer.family_id);
   if (familyErr) throw familyErr;

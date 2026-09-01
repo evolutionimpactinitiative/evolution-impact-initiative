@@ -9,6 +9,7 @@ import {
   Users,
   CheckCircle2,
   Plus,
+  Heart,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -77,6 +78,15 @@ export default async function DashboardPage() {
     .is("archived_at", null);
   const childrenCount = childrenRows?.length ?? 0;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: familyRow } = await (admin as any)
+    .from("families")
+    .select("support_areas")
+    .eq("id", carer.family_id)
+    .maybeSingle();
+  const familySupport: string[] = familyRow?.support_areas ?? [];
+  const showSupportNudge = familySupport.length === 0;
+
   // All non-cancelled registrations for this family, with their event.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: regsData } = await (admin as any)
@@ -134,6 +144,9 @@ export default async function DashboardPage() {
       ) : (
         <NoAdventureCard />
       )}
+
+      {/* Support nudge — only if family hasn't told us what they need yet */}
+      {showSupportNudge && <SupportNudgeCard />}
 
       {/* Family summary */}
       <FamilySummaryCard carer={carer as ParentCarer} childrenCount={childrenCount} />
@@ -246,6 +259,35 @@ function NextAdventureCard({ reg }: { reg: SessionRegistration }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function SupportNudgeCard() {
+  return (
+    <Link
+      href="/portal/family"
+      className="group block bg-gradient-to-br from-brand-blue/10 to-brand-green/10 rounded-2xl border border-brand-blue/20 p-5 md:p-6 hover:border-brand-blue/50 transition"
+    >
+      <div className="flex items-start gap-4">
+        <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white text-brand-blue flex-shrink-0">
+          <Heart className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-heading font-black text-lg text-brand-dark">
+            Help us shape what we offer
+          </h3>
+          <p className="text-sm text-brand-dark/70 mt-1">
+            Tell us what support would be useful for your family — parenting, speech,
+            school readiness, cultural activities. It takes a minute and helps us plan
+            what to run next.
+          </p>
+          <span className="inline-flex items-center gap-1 text-sm font-heading font-bold text-brand-blue mt-3 group-hover:text-brand-dark">
+            Tell us what would help
+            <ArrowRight className="h-4 w-4" />
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
