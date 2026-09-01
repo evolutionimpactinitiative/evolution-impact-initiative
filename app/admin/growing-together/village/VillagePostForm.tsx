@@ -296,7 +296,7 @@ export function VillagePostForm({ post }: Props) {
                 type="text"
                 name="venue"
                 defaultValue={post?.venue ?? ""}
-                placeholder="e.g. Ashburton Library, Croydon"
+                placeholder="e.g. Gillingham Hub, Medway"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
               />
             </div>
@@ -316,7 +316,7 @@ export function VillagePostForm({ post }: Props) {
                 type="text"
                 name="provider_name"
                 defaultValue={post?.provider_name ?? ""}
-                placeholder="e.g. Croydon Health Visitors"
+                placeholder="e.g. Medway Health Visitors"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
               />
             </div>
