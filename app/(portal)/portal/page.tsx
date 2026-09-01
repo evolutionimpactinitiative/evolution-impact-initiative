@@ -14,7 +14,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
-import type { Event, Registration, RegistrationChild, ParentCarer } from "@/lib/supabase/types";
+import type { Event, Registration, RegistrationChild, ParentCarer, VillagePost } from "@/lib/supabase/types";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
 
 type SessionRegistration = Registration & {
@@ -87,6 +87,23 @@ export default async function DashboardPage() {
   const familySupport: string[] = familyRow?.support_areas ?? [];
   const showSupportNudge = familySupport.length === 0;
 
+  // Latest Our Village posts — preview on dashboard
+  const nowIso = new Date().toISOString();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: villageRows } = await (admin as any)
+    .from("village_posts")
+    .select("id, category, title, published_at, pinned, cover_image_url")
+    .eq("status", "published")
+    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+    .order("pinned", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(3);
+  const villagePreviews =
+    (villageRows as Pick<
+      VillagePost,
+      "id" | "category" | "title" | "published_at" | "pinned" | "cover_image_url"
+    >[] | null) ?? [];
+
   // All non-cancelled registrations for this family, with their event.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: regsData } = await (admin as any)
@@ -147,6 +164,9 @@ export default async function DashboardPage() {
 
       {/* Support nudge — only if family hasn't told us what they need yet */}
       {showSupportNudge && <SupportNudgeCard />}
+
+      {/* Our Village preview */}
+      {villagePreviews.length > 0 && <VillagePreview posts={villagePreviews} />}
 
       {/* Family summary */}
       <FamilySummaryCard carer={carer as ParentCarer} childrenCount={childrenCount} />
@@ -257,6 +277,77 @@ function NextAdventureCard({ reg }: { reg: SessionRegistration }) {
             variant="ghost"
           />
         </div>
+      </div>
+    </section>
+  );
+}
+
+const VILLAGE_CATEGORY_ICON: Record<VillagePost["category"], string> = {
+  activity: "🎉",
+  announcement: "📣",
+  local_service: "🏥",
+  programme_update: "📢",
+  resource: "📚",
+};
+
+function VillagePreview({
+  posts,
+}: {
+  posts: Pick<VillagePost, "id" | "category" | "title" | "published_at" | "pinned" | "cover_image_url">[];
+}) {
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-brand-blue" />
+          <h2 className="font-heading font-black text-xl text-brand-dark">
+            From Our Village
+          </h2>
+        </div>
+        <Link
+          href="/portal/our-village"
+          className="text-sm font-heading font-bold text-brand-blue hover:text-brand-dark inline-flex items-center gap-1"
+        >
+          See all
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      <div className="space-y-3">
+        {posts.map((p) => (
+          <Link
+            key={p.id}
+            href="/portal/our-village"
+            className="block bg-white rounded-xl border border-brand-dark/10 p-4 hover:border-brand-blue/50 transition"
+          >
+            <div className="flex items-start gap-3">
+              {p.cover_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={p.cover_image_url}
+                  alt=""
+                  className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-brand-pale/60 text-xl flex items-center justify-center flex-shrink-0">
+                  {VILLAGE_CATEGORY_ICON[p.category]}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-heading font-bold text-brand-dark text-sm truncate">
+                  {p.title}
+                </p>
+                {p.published_at && (
+                  <p className="text-xs text-brand-dark/50 mt-0.5">
+                    {new Date(p.published_at).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </p>
+                )}
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   );

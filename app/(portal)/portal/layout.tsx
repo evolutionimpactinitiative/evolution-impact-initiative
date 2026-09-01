@@ -50,6 +50,12 @@ export default async function PortalLayout({ children }: { children: React.React
               >
                 My Family
               </Link>
+              <Link
+                href="/portal/our-village"
+                className="hidden sm:inline-block font-heading text-sm font-semibold text-brand-dark hover:text-brand-blue transition-colors"
+              >
+                Our Village
+              </Link>
               <PortalSignOutButton />
             </div>
           ) : (

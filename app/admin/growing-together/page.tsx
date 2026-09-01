@@ -214,13 +214,22 @@ export default async function GrowingTogetherAdminPage() {
             Early Years programme for children aged 0–5. Live impact snapshot.
           </p>
         </div>
-        <Link
-          href="/admin/growing-together/families"
-          className="hidden sm:inline-flex items-center gap-1.5 text-sm text-brand-blue hover:text-brand-dark font-medium"
-        >
-          Manage families
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="hidden sm:flex items-center gap-4">
+          <Link
+            href="/admin/growing-together/village"
+            className="inline-flex items-center gap-1.5 text-sm text-brand-blue hover:text-brand-dark font-medium"
+          >
+            Our Village
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/admin/growing-together/families"
+            className="inline-flex items-center gap-1.5 text-sm text-brand-blue hover:text-brand-dark font-medium"
+          >
+            Manage families
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       {/* Stats grid */}

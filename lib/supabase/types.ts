@@ -1155,6 +1155,74 @@ export interface Database {
           updated_at?: string;
         };
       };
+      village_posts: {
+        Row: {
+          id: string;
+          category: "activity" | "announcement" | "local_service" | "programme_update" | "resource";
+          title: string;
+          body: string | null;
+          cover_image_url: string | null;
+          link_url: string | null;
+          link_label: string | null;
+          event_date: string | null;
+          event_time: string | null;
+          venue: string | null;
+          provider_name: string | null;
+          provider_contact: string | null;
+          author_name: string | null;
+          pinned: boolean;
+          status: "draft" | "published" | "archived";
+          published_at: string | null;
+          expires_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          category: "activity" | "announcement" | "local_service" | "programme_update" | "resource";
+          title: string;
+          body?: string | null;
+          cover_image_url?: string | null;
+          link_url?: string | null;
+          link_label?: string | null;
+          event_date?: string | null;
+          event_time?: string | null;
+          venue?: string | null;
+          provider_name?: string | null;
+          provider_contact?: string | null;
+          author_name?: string | null;
+          pinned?: boolean;
+          status?: "draft" | "published" | "archived";
+          published_at?: string | null;
+          expires_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          category?: "activity" | "announcement" | "local_service" | "programme_update" | "resource";
+          title?: string;
+          body?: string | null;
+          cover_image_url?: string | null;
+          link_url?: string | null;
+          link_label?: string | null;
+          event_date?: string | null;
+          event_time?: string | null;
+          venue?: string | null;
+          provider_name?: string | null;
+          provider_contact?: string | null;
+          author_name?: string | null;
+          pinned?: boolean;
+          status?: "draft" | "published" | "archived";
+          published_at?: string | null;
+          expires_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       children: {
         Row: {
           id: string;
@@ -1293,6 +1361,8 @@ export type Donor = Database["public"]["Tables"]["donors"]["Row"];
 export type Donation = Database["public"]["Tables"]["donations"]["Row"];
 export type DonationSubscription = Database["public"]["Tables"]["donation_subscriptions"]["Row"];
 export type EmailLog = Database["public"]["Tables"]["email_logs"]["Row"];
+export type VillagePost = Database["public"]["Tables"]["village_posts"]["Row"];
+export type VillagePostInsert = Database["public"]["Tables"]["village_posts"]["Insert"];
 
 // Insert types
 export type EventInsert = Database["public"]["Tables"]["events"]["Insert"];
