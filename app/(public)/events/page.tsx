@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHero } from "@/components/shared/PageHero";
 import { SectionLabel } from "@/components/shared/SectionLabel";
 import { EventCard } from "@/components/shared/EventCard";
@@ -8,6 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Event } from "@/lib/supabase/types";
 import { slotsForRegistration } from "@/lib/events";
+
+const PAST_EVENTS_PER_PAGE = 10;
 
 // Helper to format time (remove seconds if present)
 function formatTime(time: string | null | undefined): string {
@@ -29,7 +32,11 @@ interface EventWithStatus extends Event {
   waitlistRemaining: number;
 }
 
-export default async function EventsPage() {
+type EventsPageProps = {
+  searchParams: Promise<{ page?: string }>;
+};
+
+export default async function EventsPage({ searchParams }: EventsPageProps) {
   const supabase = await createClient();
   const today = new Date().toISOString().split("T")[0];
 
@@ -43,15 +50,25 @@ export default async function EventsPage() {
 
   const upcomingEventsRaw = (upcomingData as Event[] | null) || [];
 
-  // Fetch past events (published, date < today)
-  const { data: pastData } = await supabase
+  // Past events — paginated
+  const { page: pageParam } = await searchParams;
+  const parsedPage = Number.parseInt(pageParam ?? "1", 10);
+  const requestedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const from = (requestedPage - 1) * PAST_EVENTS_PER_PAGE;
+  const to = from + PAST_EVENTS_PER_PAGE - 1;
+
+  const { data: pastData, count: pastCountRaw } = await supabase
     .from("events")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("status", "published")
     .lt("date", today)
-    .order("date", { ascending: false });
+    .order("date", { ascending: false })
+    .range(from, to);
 
   const pastEvents = (pastData as Event[] | null) || [];
+  const pastEventsTotal = pastCountRaw ?? 0;
+  const totalPages = Math.max(1, Math.ceil(pastEventsTotal / PAST_EVENTS_PER_PAGE));
+  const currentPage = Math.min(requestedPage, totalPages);
 
   // Fetch registration counts for upcoming events using admin client to bypass RLS
   const adminClient = createAdminClient();
@@ -178,35 +195,112 @@ export default async function EventsPage() {
       </section>
 
       {/* Past Events */}
-      <section className="bg-brand-pale/30 py-16 md:py-24">
+      <section id="past-events" className="bg-brand-pale/30 py-16 md:py-24 scroll-mt-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <SectionLabel text="Looking Back" color="brand-blue" className="mb-6 mx-auto" />
             <h2 className="font-heading font-black text-3xl md:text-4xl text-brand-dark">
               Previous Events
             </h2>
+            {pastEventsTotal > 0 && (
+              <p className="mt-4 text-brand-dark/70">
+                {pastEventsTotal === 1
+                  ? "1 event in our archive"
+                  : `${pastEventsTotal} events in our archive`}
+                {totalPages > 1 && (
+                  <>
+                    {" · "}
+                    <span>
+                      Page {currentPage} of {totalPages}
+                    </span>
+                  </>
+                )}
+              </p>
+            )}
           </div>
 
           {pastEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {pastEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  title={event.title}
-                  date={new Date(event.date).toLocaleDateString("en-GB", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {pastEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    title={event.title}
+                    date={new Date(event.date).toLocaleDateString("en-GB", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                    location={event.venue_name}
+                    description={event.short_description}
+                    image={event.card_image_url || "/placeholder-event.jpg"}
+                    slug={event.slug}
+                    isPast
+                  />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav
+                  aria-label="Previous events pagination"
+                  className="mt-12 flex flex-wrap items-center justify-center gap-2"
+                >
+                  {currentPage > 1 ? (
+                    <Link
+                      href={
+                        currentPage - 1 === 1
+                          ? "/events#past-events"
+                          : `/events?page=${currentPage - 1}#past-events`
+                      }
+                      className="px-4 py-2 rounded-md border border-brand-dark/20 bg-white text-brand-dark font-heading font-bold hover:bg-brand-dark hover:text-white transition-colors"
+                    >
+                      ← Previous
+                    </Link>
+                  ) : (
+                    <span className="px-4 py-2 rounded-md border border-brand-dark/10 bg-white/50 text-brand-dark/40 font-heading font-bold cursor-not-allowed">
+                      ← Previous
+                    </span>
+                  )}
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                    const isCurrent = pageNum === currentPage;
+                    const href =
+                      pageNum === 1 ? "/events#past-events" : `/events?page=${pageNum}#past-events`;
+                    return isCurrent ? (
+                      <span
+                        key={pageNum}
+                        aria-current="page"
+                        className="min-w-10 px-3 py-2 rounded-md bg-brand-dark text-white font-heading font-bold text-center"
+                      >
+                        {pageNum}
+                      </span>
+                    ) : (
+                      <Link
+                        key={pageNum}
+                        href={href}
+                        className="min-w-10 px-3 py-2 rounded-md border border-brand-dark/20 bg-white text-brand-dark font-heading font-bold text-center hover:bg-brand-dark hover:text-white transition-colors"
+                      >
+                        {pageNum}
+                      </Link>
+                    );
                   })}
-                  location={event.venue_name}
-                  description={event.short_description}
-                  image={event.card_image_url || "/placeholder-event.jpg"}
-                  slug={event.slug}
-                  isPast
-                />
-              ))}
-            </div>
+
+                  {currentPage < totalPages ? (
+                    <Link
+                      href={`/events?page=${currentPage + 1}#past-events`}
+                      className="px-4 py-2 rounded-md border border-brand-dark/20 bg-white text-brand-dark font-heading font-bold hover:bg-brand-dark hover:text-white transition-colors"
+                    >
+                      Next →
+                    </Link>
+                  ) : (
+                    <span className="px-4 py-2 rounded-md border border-brand-dark/10 bg-white/50 text-brand-dark/40 font-heading font-bold cursor-not-allowed">
+                      Next →
+                    </span>
+                  )}
+                </nav>
+              )}
+            </>
           ) : (
             <div className="text-center py-12 bg-white/50 rounded-lg">
               <p className="text-brand-dark/70 text-lg">
