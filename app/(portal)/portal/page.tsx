@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import type { Event, Registration, RegistrationChild, ParentCarer, VillagePost } from "@/lib/supabase/types";
+import { resolvePortalIdentity } from "@/lib/portal/current-carer";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
 
 type SessionRegistration = Registration & {
@@ -55,19 +56,19 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/portal/login");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: carer } = await (supabase as any)
-    .from("parent_carers")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const identity = await resolvePortalIdentity(supabase, user);
 
-  if (!carer) {
-    // Family record missing — bounce them to /portal/family which shows
-    // the contact-us fallback.
+  if (identity.kind === "stale_session") {
+    redirect("/api/portal/session-end?reason=session_expired&next=/portal");
+  }
+
+  if (identity.kind !== "carer") {
+    // Admin or no-record — both are handled on /portal/family so we have
+    // a single surface for the explanation message.
     redirect("/portal/family");
   }
 
+  const carer = identity.carer;
   const admin = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

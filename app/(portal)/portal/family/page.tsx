@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Child, Family, ParentCarer } from "@/lib/supabase/types";
+import { resolvePortalIdentity } from "@/lib/portal/current-carer";
 import { FamilyEditor } from "./FamilyEditor";
 
 export default async function FamilyPage() {
@@ -11,16 +13,42 @@ export default async function FamilyPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/portal/login");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: carer } = await (supabase as any)
-    .from("parent_carers")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const identity = await resolvePortalIdentity(supabase, user);
 
-  if (!carer) {
-    // A rare state — auth user exists but no parent_carer row. Ask them
-    // to finish sign-up. In practice signup creates both atomically.
+  if (identity.kind === "stale_session") {
+    redirect("/api/portal/session-end?reason=session_expired&next=/portal/family");
+  }
+
+  if (identity.kind === "admin") {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <h1 className="font-heading font-black text-2xl text-brand-dark mb-3">
+          You&rsquo;re signed in as EII staff
+        </h1>
+        <p className="text-brand-dark/70 mb-6">
+          The Growing Together parent portal is for family accounts. Head to the admin
+          dashboard, or sign out and log in with a family account.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/admin"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-md bg-brand-blue text-white font-heading font-bold hover:bg-brand-dark transition-colors"
+          >
+            Go to admin dashboard
+          </Link>
+          <Link
+            href="/api/portal/session-end"
+            prefetch={false}
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-md border border-brand-dark/20 bg-white text-brand-dark font-heading font-bold hover:bg-brand-pale transition-colors"
+          >
+            Sign out
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (identity.kind === "no_record") {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <h1 className="font-heading font-black text-2xl text-brand-dark mb-3">
@@ -36,15 +64,22 @@ export default async function FamilyPage() {
     );
   }
 
+  const carer = identity.carer;
+
+  // Use admin client for related reads — RLS is already proven good by
+  // the session-scoped carer lookup above, and this keeps a single data
+  // source regardless of other RLS quirks.
+  const admin = createAdminClient();
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: family } = await (supabase as any)
+  const { data: family } = await (admin as any)
     .from("families")
     .select("*")
     .eq("id", carer.family_id)
     .maybeSingle();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: children } = await (supabase as any)
+  const { data: children } = await (admin as any)
     .from("children")
     .select("*")
     .eq("family_id", carer.family_id)

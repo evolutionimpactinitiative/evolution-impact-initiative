@@ -11,6 +11,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialError = searchParams.get("error");
+  const reason = searchParams.get("reason");
   const nextParam = searchParams.get("next");
   const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
 
@@ -22,6 +23,10 @@ function LoginForm() {
       ? "That verification link didn't work. Try logging in or ask for a fresh link."
       : null,
   );
+  const sessionExpiredNotice =
+    reason === "session_expired"
+      ? "You were signed out because your session expired. Please log in again."
+      : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +62,12 @@ function LoginForm() {
         </h1>
         <p className="text-brand-dark/70">Log in to your Growing Together account.</p>
       </div>
+
+      {sessionExpiredNotice && (
+        <div className="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+          {sessionExpiredNotice}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-brand-dark/10 p-6 md:p-8 space-y-5">
         <div>

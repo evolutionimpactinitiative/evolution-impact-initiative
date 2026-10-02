@@ -12,6 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { VillagePost } from "@/lib/supabase/types";
+import { resolvePortalIdentity } from "@/lib/portal/current-carer";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -63,6 +64,16 @@ export default async function OurVillagePage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/portal/login");
+
+  const identity = await resolvePortalIdentity(supabase, user);
+  if (identity.kind === "stale_session") {
+    redirect("/api/portal/session-end?reason=session_expired&next=/portal/our-village");
+  }
+  if (identity.kind !== "carer") {
+    // Admin or no-record users don't get a parent feed — route them to
+    // /portal/family which carries the explanation.
+    redirect("/portal/family");
+  }
 
   const { category = "all" } = await searchParams;
 
