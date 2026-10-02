@@ -49,8 +49,7 @@ export default async function EventsPage() {
     .select("*")
     .eq("status", "published")
     .lt("date", today)
-    .order("date", { ascending: false })
-    .limit(12);
+    .order("date", { ascending: false });
 
   const pastEvents = (pastData as Event[] | null) || [];
 
