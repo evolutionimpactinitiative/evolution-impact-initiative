@@ -38,9 +38,8 @@ export function Navbar() {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled
-          ? "h-16 bg-white/95 backdrop-blur-md shadow-sm"
-          : "h-20 bg-white/95 backdrop-blur-md"
+        "h-16 bg-white/95 backdrop-blur-md",
+        scrolled && "shadow-sm"
       )}
     >
       <nav className="container mx-auto px-4 h-full flex items-center justify-between">
@@ -49,8 +48,8 @@ export function Navbar() {
           <Image
             src="/logos/evolution_full_logo_1.svg"
             alt="Evolution Impact Initiative"
-            width={scrolled ? 200 : 250}
-            height={scrolled ? 48 : 60}
+            width={200}
+            height={48}
             className="transition-all duration-300"
             priority
           />
