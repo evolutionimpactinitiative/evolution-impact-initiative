@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import { SurveyResponsesView } from "@/components/admin/SurveyResponsesView";
 import { QrShareCard } from "@/components/admin/QrShareCard";
+import { EmailAttendeesButton } from "./EmailAttendeesButton";
 import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
 import type { Survey, SurveyResponse, SurveyQuestion } from "@/lib/supabase/types";
 
@@ -44,6 +45,49 @@ export default async function SurveyDetailPage({ params }: Props) {
 
   const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
   const surveyLink = `${BASE_URL}/feedback/${id}`;
+
+  // "Email attendees" stats — only relevant when a survey is linked to
+  // an event. Count distinct attendee registrations (either per-reg
+  // attended='yes' OR any attended child) and prior broadcast sends.
+  let attendeeCount = 0;
+  let previousBroadcastCount = 0;
+  if (survey.event_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: regs } = await (supabase as any)
+      .from("registrations")
+      .select(
+        `id, parent_email, attended, status,
+         registration_children (attended)`,
+      )
+      .eq("event_id", survey.event_id)
+      .neq("status", "cancelled");
+    type Row = {
+      id: string;
+      parent_email: string;
+      attended: string | null;
+      status: string;
+      registration_children: { attended: boolean | null }[] | null;
+    };
+    const seen = new Set<string>();
+    for (const r of (regs as Row[] | null) ?? []) {
+      const yes =
+        r.attended === "yes" ||
+        (r.registration_children ?? []).some((c) => c.attended === true);
+      if (!yes) continue;
+      const key = (r.parent_email || "").toLowerCase().trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+    }
+    attendeeCount = seen.size;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count: priorSends } = await (supabase as any)
+      .from("email_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("email_type", "survey_broadcast")
+      .eq("survey_id", id);
+    previousBroadcastCount = priorSends ?? 0;
+  }
 
   const qrSrc = await QRCode.toDataURL(surveyLink, {
     width: 480,
@@ -116,6 +160,23 @@ export default async function SurveyDetailPage({ params }: Props) {
         posterSubtitle="Scan to share your feedback"
         description="Print or display this so attendees can scan and open the survey on their phone."
       />
+
+      {/* Email broadcast — only when the survey is linked to an event */}
+      {survey.event_id && survey.events && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-5">
+          <h2 className="font-semibold text-gray-900 mb-1">Email attendees</h2>
+          <p className="text-sm text-gray-500 mb-3">
+            Send this survey directly to everyone who was checked in at{" "}
+            <strong>{survey.events.title}</strong>.
+          </p>
+          <EmailAttendeesButton
+            surveyId={id}
+            attendeeCount={attendeeCount}
+            previousSendCount={previousBroadcastCount}
+            eventTitle={survey.events.title}
+          />
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

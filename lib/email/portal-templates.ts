@@ -294,6 +294,56 @@ export function villagePostEmail(params: {
 }
 
 // ============================================
+// Survey invite — "please answer this survey" to event attendees
+// ============================================
+
+export function surveyInviteEmail(params: {
+  parentName: string;
+  surveyTitle: string;
+  eventTitle: string | null;
+  surveyUrl: string;
+}): { subject: string; html: string } {
+  const { parentName, surveyTitle, eventTitle, surveyUrl } = params;
+  const subject = eventTitle
+    ? `Your thoughts on ${eventTitle}?`
+    : surveyTitle;
+  const context = eventTitle
+    ? `Thanks for coming to <strong>${eventTitle}</strong>. We'd love your thoughts to help us shape the next one.`
+    : `We'd love your feedback on <strong>${surveyTitle}</strong>.`;
+  const html = shell(`
+    <p style="margin:0 0 8px;font-size:11px;color:${BRAND.blue};font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+      Quick feedback
+    </p>
+    <h1 style="margin:0 0 16px;font-family:'Montserrat',sans-serif;font-size:22px;color:${BRAND.dark};font-weight:800;">
+      Hi ${parentName}
+    </h1>
+    <p style="margin:0 0 16px;font-size:15px;line-height:24px;color:#444;">
+      ${context}
+    </p>
+    <p style="margin:0 0 24px;font-size:15px;line-height:24px;color:#444;">
+      It takes about two minutes.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 24px;">
+      <tr>
+        <td style="background-color:${BRAND.blue};border-radius:8px;">
+          <a href="${surveyUrl}" style="display:inline-block;padding:14px 28px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">
+            Share your feedback
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0 0 8px;font-size:13px;color:#777;">
+      Or paste this link into your browser:
+    </p>
+    <p style="margin:0;font-size:12px;color:${BRAND.blue};word-break:break-all;">
+      ${surveyUrl}
+    </p>
+  `);
+  return { subject, html };
+}
+
+
+// ============================================
 // External note — team shared something with the family
 // ============================================
 
