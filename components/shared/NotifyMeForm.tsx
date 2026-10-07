@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Check, Mail } from "lucide-react";
+import { Loader2, Check, Mail, Bell } from "lucide-react";
 
 interface NotifyMeFormProps {
   eventId: string;
   eventTitle: string;
+  // When set (user is a logged-in parent carer), the form collapses
+  // into a one-click button that uses the carer's name + email directly.
+  viewer?: { name: string; email: string } | null;
 }
 
-export function NotifyMeForm({ eventId, eventTitle }: NotifyMeFormProps) {
+export function NotifyMeForm({ eventId, eventTitle, viewer }: NotifyMeFormProps) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [subscribeToNewsletter, setSubscribeToNewsletter] = useState(false);
@@ -17,38 +20,48 @@ export function NotifyMeForm({ eventId, eventTitle }: NotifyMeFormProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function signUp(payload: {
+    email: string;
+    name: string | null;
+    subscribeToNewsletter: boolean;
+  }) {
     setIsSubmitting(true);
     setError(null);
-
     try {
       const response = await fetch("/api/notifications/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           eventId,
-          email: email.trim().toLowerCase(),
-          name: name.trim() || null,
-          subscribeToNewsletter,
+          email: payload.email.trim().toLowerCase(),
+          name: payload.name?.trim() || null,
+          subscribeToNewsletter: payload.subscribeToNewsletter,
         }),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.error || "Failed to sign up for notifications");
       }
-
       setIsSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await signUp({ email, name, subscribeToNewsletter });
+  };
+
+  const handleOneClick = async () => {
+    if (!viewer) return;
+    await signUp({ email: viewer.email, name: viewer.name, subscribeToNewsletter: false });
   };
 
   if (isSuccess) {
+    const shownEmail = viewer?.email || email;
     return (
       <div className="text-center py-4" id="notify-form">
         <div className="inline-flex items-center justify-center w-12 h-12 bg-brand-green/10 rounded-full mb-3">
@@ -56,8 +69,45 @@ export function NotifyMeForm({ eventId, eventTitle }: NotifyMeFormProps) {
         </div>
         <p className="font-heading font-bold text-brand-dark mb-1">You&apos;re on the list!</p>
         <p className="text-sm text-brand-dark/70">
-          We&apos;ll email you at <strong>{email}</strong> when registration opens for {eventTitle}.
+          We&apos;ll email you at <strong>{shownEmail}</strong> when registration opens for {eventTitle}.
         </p>
+      </div>
+    );
+  }
+
+  // Logged-in parent: single-click sign-up. No name/email form, no newsletter opt-in
+  // (they're already in our records).
+  if (viewer) {
+    return (
+      <div className="space-y-3" id="notify-form">
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+        <p className="text-sm text-brand-dark/70">
+          Signed in as <strong>{viewer.name}</strong>. We&apos;ll email{" "}
+          <strong>{viewer.email}</strong> the moment registration opens — and the alert
+          will appear on your dashboard too.
+        </p>
+        <Button
+          type="button"
+          onClick={handleOneClick}
+          className="w-full"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Adding you to the list…
+            </>
+          ) : (
+            <>
+              <Bell className="w-4 h-4 mr-2" />
+              Notify me when registration opens
+            </>
+          )}
+        </Button>
       </div>
     );
   }

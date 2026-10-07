@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -52,25 +53,23 @@ export default function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-brand-dark/10 p-6 md:p-8 space-y-5">
         <div>
           <label className="block text-sm font-medium text-brand-dark mb-1">New password</label>
-          <input
-            type="password"
+          <PasswordInput
             required
             minLength={8}
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-brand-dark mb-1">Confirm password</label>
-          <input
-            type="password"
+          <PasswordInput
             required
             minLength={8}
+            autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
           />
         </div>
 

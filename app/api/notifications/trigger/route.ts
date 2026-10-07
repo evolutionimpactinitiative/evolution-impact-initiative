@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, FROM_EMAIL, REPLY_TO_EMAIL } from "@/lib/email/resend";
 import { registrationOpenEmail } from "@/lib/email/templates";
+import { notifyParentOnEventLaunch } from "@/lib/notifications/event-launch";
 import type { Event, EventNotification } from "@/lib/supabase/types";
 
 // Clear all notifications for an event (for admin use)
@@ -165,6 +166,17 @@ export async function POST(request: NextRequest) {
               subject: emailData.subject,
               sent_at: now.toISOString(),
               status: "sent",
+            });
+
+            // Also drop an in-app notification if this email matches a
+            // parent-carer account — so the dashboard bell lights up.
+            await notifyParentOnEventLaunch({
+              email: notification.email,
+              event: {
+                id: event.id,
+                slug: event.slug,
+                title: event.title,
+              },
             });
 
             totalNotified++;

@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   family_id UUID REFERENCES families(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('village_post')),
+  type TEXT NOT NULL CHECK (type IN ('village_post', 'event_launch')),
   title TEXT NOT NULL,
   body TEXT,
   link_url TEXT NOT NULL,

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 function JoinForm() {
   const router = useRouter();
@@ -92,13 +93,12 @@ function JoinForm() {
           <label className="block text-sm font-medium text-brand-dark mb-1">
             Password <span className="text-red-500">*</span>
           </label>
-          <input
-            type="password"
+          <PasswordInput
             required
             minLength={8}
+            autoComplete="new-password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
           />
           <p className="text-xs text-brand-dark/50 mt-1">At least 8 characters.</p>
         </div>

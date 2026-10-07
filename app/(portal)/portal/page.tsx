@@ -466,16 +466,15 @@ function SmallSessionRow({
   const attended = reg.attended;
 
   return (
-    <Link
-      href={`/portal/registrations/${reg.id}`}
-      className="block bg-white rounded-xl border border-brand-dark/10 p-4 hover:border-brand-blue/50 transition"
-    >
+    <div className="bg-white rounded-xl border border-brand-dark/10 p-4 hover:border-brand-blue/50 transition">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-heading font-bold text-brand-dark truncate">{event.title}</p>
+        <Link href={`/portal/registrations/${reg.id}`} className="min-w-0 flex-1">
+          <p className="font-heading font-bold text-brand-dark truncate hover:text-brand-blue">
+            {event.title}
+          </p>
           <p className="text-sm text-brand-dark/70">{formatEventDate(event.date)}</p>
-        </div>
-        <div className="flex-shrink-0">
+        </Link>
+        <div className="flex-shrink-0 flex items-center gap-2">
           {kind === "upcoming" ? (
             <span
               className={`text-xs px-2 py-1 rounded-full font-heading font-bold ${
@@ -501,7 +500,16 @@ function SmallSessionRow({
           )}
         </div>
       </div>
-    </Link>
+      {kind === "upcoming" && (
+        <div className="mt-3 pt-3 border-t border-brand-dark/5 flex justify-end">
+          <CancelRegistrationButton
+            registrationId={reg.id}
+            label="Can't make it? Cancel"
+            variant="ghost"
+          />
+        </div>
+      )}
+    </div>
   );
 }
 

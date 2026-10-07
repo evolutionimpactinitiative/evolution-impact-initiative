@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 function LoginForm() {
   const router = useRouter();
@@ -83,12 +84,11 @@ function LoginForm() {
 
         <div>
           <label className="block text-sm font-medium text-brand-dark mb-1">Password</label>
-          <input
-            type="password"
+          <PasswordInput
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
           />
           <div className="text-right mt-2">
             <Link href="/portal/forgot-password" className="text-sm text-brand-blue hover:underline">

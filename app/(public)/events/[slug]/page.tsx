@@ -249,6 +249,23 @@ export default async function EventPage({ params }: Props) {
     notFound();
   }
 
+  // Logged-in parent? Prefill the Notify Me form so they can one-click.
+  const supabaseAuth = await createClient();
+  const {
+    data: { user: viewerUser },
+  } = await supabaseAuth.auth.getUser();
+  let viewerCarer: { name: string; email: string } | null = null;
+  if (viewerUser) {
+    const admin = createAdminClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: carer } = await (admin as any)
+      .from("parent_carers")
+      .select("name, email")
+      .eq("user_id", viewerUser.id)
+      .maybeSingle();
+    if (carer) viewerCarer = carer;
+  }
+
   const today = new Date().toISOString().split("T")[0];
   const isUpcoming = event.date >= today;
   const isPast = event.date < today;
@@ -445,7 +462,11 @@ export default async function EventPage({ params }: Props) {
                   <p className="text-sm text-brand-dark/70 mb-4">
                     Enter your email and we&apos;ll notify you as soon as registration opens.
                   </p>
-                  <NotifyMeForm eventId={event.id} eventTitle={event.title} />
+                  <NotifyMeForm
+                    eventId={event.id}
+                    eventTitle={event.title}
+                    viewer={viewerCarer}
+                  />
                 </div>
               </div>
             )}
