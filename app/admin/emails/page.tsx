@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import { EmailsView } from "@/components/admin/EmailsView";
 import { UpcomingEventsReminders } from "@/components/admin/UpcomingEventsReminders";
 import { Bell } from "lucide-react";
@@ -62,28 +62,28 @@ export default async function EmailsPage() {
 
       {/* Stats - 2x2 grid on mobile, 4 cols on desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <StatCard
+        <GlanceCard
           title="Total"
           value={emails.length}
           icon="Mail"
           iconColor="text-brand-blue"
           iconBgColor="bg-brand-blue/10"
         />
-        <StatCard
+        <GlanceCard
           title="Sent"
           value={totalSent}
           icon="CheckCircle"
           iconColor="text-green-600"
           iconBgColor="bg-green-100"
         />
-        <StatCard
+        <GlanceCard
           title="Pending"
           value={totalPending}
           icon="Clock"
           iconColor="text-yellow-600"
           iconBgColor="bg-yellow-100"
         />
-        <StatCard
+        <GlanceCard
           title="Failed"
           value={totalFailed}
           icon="XCircle"

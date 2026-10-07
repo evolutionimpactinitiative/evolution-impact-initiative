@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import { DonationsView } from "@/components/admin/DonationsView";
 import { FestivalAdminTabs } from "@/components/admin/festival/FestivalAdminTabs";
 import { FESTIVAL, FIRST_YEAR_STATS } from "@/lib/festival";
@@ -124,7 +124,7 @@ export default async function FestivalDonationsAdminPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
-        <StatCard
+        <GlanceCard
           title="Raised so far"
           value={`£${totalRaised.toFixed(2)}`}
           subtitle={`${goalPercent}% of £${targetPounds.toLocaleString("en-GB")}`}
@@ -132,14 +132,14 @@ export default async function FestivalDonationsAdminPage() {
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
         />
-        <StatCard
+        <GlanceCard
           title="This week"
           value={`£${weekTotal.toFixed(2)}`}
           icon="Calendar"
           iconColor="text-brand-blue"
           iconBgColor="bg-brand-blue/10"
         />
-        <StatCard
+        <GlanceCard
           title="Monthly recurring"
           value={`£${monthlyRecurring.toFixed(2)}`}
           subtitle="Active subs"
@@ -147,7 +147,7 @@ export default async function FestivalDonationsAdminPage() {
           iconColor="text-purple-600"
           iconBgColor="bg-purple-100"
         />
-        <StatCard
+        <GlanceCard
           title="Gift Aid"
           value={`£${giftAidTotal.toFixed(2)}`}
           subtitle="+25% bonus"
@@ -155,7 +155,7 @@ export default async function FestivalDonationsAdminPage() {
           iconColor="text-brand-accent"
           iconBgColor="bg-brand-accent/10"
         />
-        <StatCard
+        <GlanceCard
           title="Donors"
           value={donorCount}
           icon="Users"

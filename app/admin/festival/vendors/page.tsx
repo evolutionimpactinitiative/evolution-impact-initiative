@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FESTIVAL_SLUG, VENDOR_CATEGORIES } from "@/lib/festival";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import { VendorAdminRow } from "@/components/admin/festival/VendorAdminRow";
 import { FestivalAdminTabs } from "@/components/admin/festival/FestivalAdminTabs";
 import type { FestivalVendor } from "@/lib/supabase/types";
@@ -102,35 +102,35 @@ export default async function FestivalVendorsAdminPage({
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
-        <StatCard
+        <GlanceCard
           title="Pending review"
           value={pendingReview}
           icon="ClipboardList"
           iconColor="text-orange-600"
           iconBgColor="bg-orange-100"
         />
-        <StatCard
+        <GlanceCard
           title="Approved"
           value={approved}
           icon="Heart"
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
         />
-        <StatCard
+        <GlanceCard
           title="Awaiting payment"
           value={pendingPayment}
           icon="TrendingUp"
           iconColor="text-purple-600"
           iconBgColor="bg-purple-100"
         />
-        <StatCard
+        <GlanceCard
           title="Rejected"
           value={rejected}
           icon="Users"
           iconColor="text-gray-600"
           iconBgColor="bg-gray-100"
         />
-        <StatCard
+        <GlanceCard
           title="Contributions"
           value={`£${(totalContribution / 100).toFixed(0)}`}
           subtitle="Approved + queued"

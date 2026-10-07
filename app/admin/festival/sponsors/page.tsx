@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FESTIVAL_SLUG } from "@/lib/festival";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import { SponsorAdminRow } from "@/components/admin/festival/SponsorAdminRow";
 import { FestivalAdminTabs } from "@/components/admin/festival/FestivalAdminTabs";
 import type { FestivalSponsor } from "@/lib/supabase/types";
@@ -104,28 +104,28 @@ export default async function FestivalSponsorsAdminPage({
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <StatCard
+        <GlanceCard
           title="Pending review"
           value={pendingReview}
           icon="ClipboardList"
           iconColor="text-orange-600"
           iconBgColor="bg-orange-100"
         />
-        <StatCard
+        <GlanceCard
           title="Awaiting payment"
           value={pendingPayment}
           icon="TrendingUp"
           iconColor="text-purple-600"
           iconBgColor="bg-purple-100"
         />
-        <StatCard
+        <GlanceCard
           title="Confirmed"
           value={confirmed}
           icon="Heart"
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
         />
-        <StatCard
+        <GlanceCard
           title="Pledged total"
           value={`£${(confirmedPledges / 100).toFixed(0)}`}
           subtitle="Confirmed only"

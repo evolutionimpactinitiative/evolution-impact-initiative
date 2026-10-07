@@ -15,7 +15,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { B2S, B2S_SLUG } from "@/lib/back-to-school";
 import { FESTIVAL } from "@/lib/festival";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import { QrShareCard } from "@/components/admin/QrShareCard";
 import { RegistrationModeToggle } from "@/components/admin/back-to-school/RegistrationModeToggle";
 
@@ -288,24 +288,24 @@ export default async function BackToSchoolAdminPage() {
 
       {/* STATS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <StatCard title="Pending" value={pending} icon="ClipboardList" />
-        <StatCard title="Approved" value={approved} icon="UserCheck" />
-        <StatCard
+        <GlanceCard title="Pending" value={pending} icon="ClipboardList" />
+        <GlanceCard title="Approved" value={approved} icon="UserCheck" />
+        <GlanceCard
           title="Approval emails sent"
           value={approvalEmailsSent}
           icon="Mail"
         />
-        <StatCard title="Collected on day" value={collected} icon="Gift" />
+        <GlanceCard title="Collected on day" value={collected} icon="Gift" />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <StatCard
+        <GlanceCard
           title="Families registered"
           value={familiesRegistered}
           icon="Users"
         />
-        <StatCard title="Declined" value={declined} icon="XCircle" />
-        <StatCard
+        <GlanceCard title="Declined" value={declined} icon="XCircle" />
+        <GlanceCard
           title="Supply pledges pending"
           value={pledgesPending ?? 0}
           icon="Gift"

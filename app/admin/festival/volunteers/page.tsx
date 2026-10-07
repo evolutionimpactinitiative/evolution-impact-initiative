@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FESTIVAL_SLUG } from "@/lib/festival";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import { VolunteerAdminRow } from "@/components/admin/festival/VolunteerAdminRow";
 import { FestivalAdminTabs } from "@/components/admin/festival/FestivalAdminTabs";
 import type { FestivalVolunteer } from "@/lib/supabase/types";
@@ -108,28 +108,28 @@ export default async function FestivalVolunteersAdminPage({
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <StatCard
+        <GlanceCard
           title="Pending"
           value={pending}
           icon="ClipboardList"
           iconColor="text-orange-600"
           iconBgColor="bg-orange-100"
         />
-        <StatCard
+        <GlanceCard
           title="Approved"
           value={approved}
           icon="Users"
           iconColor="text-brand-blue"
           iconBgColor="bg-brand-blue/10"
         />
-        <StatCard
+        <GlanceCard
           title="Assigned"
           value={assigned}
           icon="Heart"
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
         />
-        <StatCard
+        <GlanceCard
           title="Declined"
           value={declined}
           icon="Mail"

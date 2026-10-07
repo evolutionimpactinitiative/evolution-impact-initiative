@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import { DonationsView } from "@/components/admin/DonationsView";
 
 type Donation = {
@@ -84,21 +84,21 @@ export default async function DonationsPage() {
 
       {/* Stats - 2x3 grid on mobile, 5 cols on desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
-        <StatCard
+        <GlanceCard
           title="Total Raised"
           value={`£${totalDonations.toFixed(2)}`}
           icon="Heart"
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
         />
-        <StatCard
+        <GlanceCard
           title="This Month"
           value={`£${thisMonthTotal.toFixed(2)}`}
           icon="Calendar"
           iconColor="text-brand-blue"
           iconBgColor="bg-brand-blue/10"
         />
-        <StatCard
+        <GlanceCard
           title="Monthly"
           value={`£${monthlyRecurring.toFixed(2)}`}
           subtitle="Recurring"
@@ -106,7 +106,7 @@ export default async function DonationsPage() {
           iconColor="text-purple-600"
           iconBgColor="bg-purple-100"
         />
-        <StatCard
+        <GlanceCard
           title="Gift Aid"
           value={`£${giftAidTotal.toFixed(2)}`}
           subtitle="+25% bonus"
@@ -114,7 +114,7 @@ export default async function DonationsPage() {
           iconColor="text-brand-accent"
           iconBgColor="bg-brand-accent/10"
         />
-        <StatCard
+        <GlanceCard
           title="Donors"
           value={donorCount}
           icon="Users"

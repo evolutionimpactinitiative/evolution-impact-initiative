@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 import { Plus, ClipboardList, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 
 type Survey = {
   id: string;
@@ -99,21 +99,21 @@ export default async function SurveysPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-        <StatCard
+        <GlanceCard
           title="Total Surveys"
           value={totalSurveys}
           icon="ClipboardList"
           iconColor="text-brand-blue"
           iconBgColor="bg-brand-blue/10"
         />
-        <StatCard
+        <GlanceCard
           title="Active"
           value={activeSurveys}
           icon="CheckCircle"
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
         />
-        <StatCard
+        <GlanceCard
           title="Total Responses"
           value={totalResponses}
           icon="Users"

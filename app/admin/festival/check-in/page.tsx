@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FESTIVAL_SLUG } from "@/lib/festival";
 import { stewardScanUrl } from "@/lib/festival/check-in";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import { FestivalAdminTabs } from "@/components/admin/festival/FestivalAdminTabs";
 import { StewardTokensView } from "@/components/admin/festival/StewardTokensView";
 import { ManualCheckInForm } from "@/components/admin/festival/ManualCheckInForm";
@@ -129,28 +129,28 @@ export default async function FestivalCheckInAdminPage() {
 
       {/* Live stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <StatCard
+        <GlanceCard
           title="Tickets issued"
           value={totalTickets}
           icon="Users"
           iconColor="text-brand-blue"
           iconBgColor="bg-brand-blue/10"
         />
-        <StatCard
+        <GlanceCard
           title="Checked in"
           value={checkedIn}
           icon="Heart"
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
         />
-        <StatCard
+        <GlanceCard
           title="Still to arrive"
           value={pending}
           icon="ClipboardList"
           iconColor="text-orange-600"
           iconBgColor="bg-orange-100"
         />
-        <StatCard
+        <GlanceCard
           title="% checked in"
           value={`${checkedInPercent}%`}
           icon="TrendingUp"
