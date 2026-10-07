@@ -2,18 +2,24 @@
 
 import { useState, useTransition } from "react";
 import { Loader2, Mail, Check, AlertTriangle } from "lucide-react";
-import { emailSurveyToAttendees } from "./actions";
+import { emailSurveyToAttendees, type BroadcastAudience } from "./actions";
 
 export function EmailAttendeesButton({
   surveyId,
-  attendeeCount,
+  audience,
+  audienceLabel,
+  audienceCount,
   previousSendCount,
-  eventTitle,
 }: {
   surveyId: string;
-  attendeeCount: number;
+  /** "event" = attendees of this survey's linked event.
+   *  "gt_all" = everyone who's ever attended any Growing Together session. */
+  audience: BroadcastAudience;
+  /** Short human label used in the confirm dialog, e.g. "who attended Slime Lab"
+   *  or "who've attended any Growing Together session". */
+  audienceLabel: string;
+  audienceCount: number;
   previousSendCount: number;
-  eventTitle: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<
@@ -22,17 +28,17 @@ export function EmailAttendeesButton({
     | null
   >(null);
 
-  const disabled = attendeeCount === 0;
+  const disabled = audienceCount === 0;
 
   function send() {
     const confirmLines = [
-      `Email this survey to ${attendeeCount} ${attendeeCount === 1 ? "person" : "people"} who attended ${eventTitle}?`,
+      `Email this survey to ${audienceCount} ${audienceCount === 1 ? "person" : "people"} ${audienceLabel}?`,
     ];
     if (previousSendCount > 0) {
       confirmLines.push(
         `\n⚠️ This survey has already been broadcast ${previousSendCount} ${
           previousSendCount === 1 ? "time" : "times"
-        } before — this will send again to everyone who attended, including people already emailed.`,
+        } before — this will send again to the full list, including people already emailed.`,
       );
     }
     if (!confirm(confirmLines.join("\n"))) return;
@@ -40,7 +46,7 @@ export function EmailAttendeesButton({
     setResult(null);
     startTransition(async () => {
       try {
-        const r = await emailSurveyToAttendees(surveyId);
+        const r = await emailSurveyToAttendees(surveyId, audience);
         setResult({ kind: "ok", ...r });
       } catch (err) {
         setResult({
@@ -64,18 +70,19 @@ export function EmailAttendeesButton({
         ) : (
           <Mail className="w-4 h-4" />
         )}
-        Email survey to attendees
-        {attendeeCount > 0 && (
+        Email survey
+        {audienceCount > 0 && (
           <span className="bg-white/20 text-white text-xs font-bold rounded-full px-2 py-0.5">
-            {attendeeCount}
+            {audienceCount}
           </span>
         )}
       </button>
 
       {disabled && (
         <p className="text-xs text-gray-500">
-          No attendees recorded for this event yet. Check in people on the
-          event&apos;s check-in page first.
+          {audience === "event"
+            ? "No attendees recorded for this event yet. Check in people on the event's check-in page first."
+            : "No Growing Together attendees recorded yet. Once families start checking in to sessions, they'll appear here."}
         </p>
       )}
 

@@ -20,6 +20,8 @@ type Attendee = {
   email: string;
 };
 
+export type BroadcastAudience = "event" | "gt_all";
+
 async function requireTeamMember() {
   const supabase = await createClient();
   const {
@@ -90,6 +92,55 @@ async function fetchAttendees(eventId: string): Promise<Attendee[]> {
   return out;
 }
 
+// Everyone who has ever attended a Growing Together session, deduped
+// by lowercased parent_email. Used by surveys not tied to a specific
+// event (programme-wide check-ins, annual retrospectives, etc.).
+async function fetchGtAttendees(): Promise<Attendee[]> {
+  const admin = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (admin as any)
+    .from("registrations")
+    .select(
+      `id, parent_name, parent_email, attended, status,
+       events!inner (id, programme),
+       registration_children (id, attended)`,
+    )
+    .eq("events.programme", "growing_together")
+    .neq("status", "cancelled");
+
+  type Row = {
+    id: string;
+    parent_name: string;
+    parent_email: string;
+    attended: string | null;
+    status: string;
+    events: { id: string; programme: string | null };
+    registration_children: { id: string; attended: boolean | null }[] | null;
+  };
+  const rows = (data as Row[] | null) ?? [];
+  const out: Attendee[] = [];
+  const seen = new Set<string>();
+
+  for (const r of rows) {
+    const regYes = r.attended === "yes";
+    const anyChild = (r.registration_children ?? []).some(
+      (c) => c.attended === true,
+    );
+    if (!regYes && !anyChild) continue;
+    const emailKey = (r.parent_email || "").toLowerCase().trim();
+    if (!emailKey) continue;
+    if (seen.has(emailKey)) continue;
+    seen.add(emailKey);
+    out.push({
+      registrationId: r.id,
+      name: r.parent_name,
+      email: r.parent_email,
+    });
+  }
+  return out;
+}
+
 // Preview numbers for the UI — attendee count + how many times this
 // survey has previously been broadcast (via email_logs).
 export async function surveyBroadcastStats(surveyId: string): Promise<{
@@ -123,7 +174,10 @@ export async function surveyBroadcastStats(surveyId: string): Promise<{
   };
 }
 
-export async function emailSurveyToAttendees(surveyId: string): Promise<{
+export async function emailSurveyToAttendees(
+  surveyId: string,
+  audience: BroadcastAudience = "event",
+): Promise<{
   sent: number;
   failed: number;
   skipped: number;
@@ -140,20 +194,32 @@ export async function emailSurveyToAttendees(surveyId: string): Promise<{
     .maybeSingle();
 
   if (!survey) throw new Error("Survey not found");
-  if (!survey.event_id) {
-    throw new Error("This survey isn't linked to an event — no attendees to email.");
-  }
   if (!survey.is_active) {
     throw new Error("Survey is inactive — activate it first so the public link works.");
   }
 
-  const attendees = await fetchAttendees(survey.event_id);
+  let attendees: Attendee[] = [];
+  let eventTitle: string | null = null;
+  let logEventId: string | null = null;
+
+  if (audience === "event") {
+    if (!survey.event_id) {
+      throw new Error("This survey isn't linked to an event — no attendees to email.");
+    }
+    attendees = await fetchAttendees(survey.event_id);
+    eventTitle = survey.events?.title ?? null;
+    logEventId = survey.event_id;
+  } else {
+    // gt_all — everyone who has attended any Growing Together session.
+    attendees = await fetchGtAttendees();
+    eventTitle = null; // keep the subject generic for a programme-wide blast
+  }
+
   if (attendees.length === 0) {
     return { sent: 0, failed: 0, skipped: 0, attempted: 0 };
   }
 
   const surveyUrl = `${BASE_URL}/feedback/${surveyId}`;
-  const eventTitle = survey.events?.title ?? null;
   const resend = getResendClient();
 
   let sent = 0;
@@ -191,7 +257,7 @@ export async function emailSurveyToAttendees(surveyId: string): Promise<{
         subject,
         status: "sent",
         survey_id: surveyId,
-        event_id: survey.event_id,
+        event_id: logEventId,
       });
       sent++;
     } catch (err) {
@@ -202,4 +268,10 @@ export async function emailSurveyToAttendees(surveyId: string): Promise<{
 
   revalidatePath(`/admin/surveys/${surveyId}`);
   return { sent, failed, skipped: 0, attempted: attendees.length };
+}
+
+// Count distinct GT attendees for the UI preview on unlinked surveys.
+export async function gtAttendeeCount(): Promise<number> {
+  await requireTeamMember();
+  return (await fetchGtAttendees()).length;
 }

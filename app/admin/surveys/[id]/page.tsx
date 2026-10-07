@@ -46,11 +46,32 @@ export default async function SurveyDetailPage({ params }: Props) {
   const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://evolutionimpactinitiative.co.uk";
   const surveyLink = `${BASE_URL}/feedback/${id}`;
 
-  // "Email attendees" stats — only relevant when a survey is linked to
-  // an event. Count distinct attendee registrations (either per-reg
-  // attended='yes' OR any attended child) and prior broadcast sends.
-  let attendeeCount = 0;
-  let previousBroadcastCount = 0;
+  // "Email attendees" stats — resolves either event attendees (when the
+  // survey is linked to an event) or all Growing Together attendees
+  // (when it isn't). Dedupes by lowercased parent_email. The prior-send
+  // count is survey-wide — audience choice doesn't affect it.
+  type RegRow = {
+    id: string;
+    parent_email: string;
+    attended: string | null;
+    status: string;
+    registration_children: { attended: boolean | null }[] | null;
+  };
+  function dedupeAttendees(rows: RegRow[]): number {
+    const seen = new Set<string>();
+    for (const r of rows) {
+      const yes =
+        r.attended === "yes" ||
+        (r.registration_children ?? []).some((c) => c.attended === true);
+      if (!yes) continue;
+      const key = (r.parent_email || "").toLowerCase().trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+    }
+    return seen.size;
+  }
+
+  let audienceCount = 0;
   if (survey.event_id) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: regs } = await (supabase as any)
@@ -61,33 +82,29 @@ export default async function SurveyDetailPage({ params }: Props) {
       )
       .eq("event_id", survey.event_id)
       .neq("status", "cancelled");
-    type Row = {
-      id: string;
-      parent_email: string;
-      attended: string | null;
-      status: string;
-      registration_children: { attended: boolean | null }[] | null;
-    };
-    const seen = new Set<string>();
-    for (const r of (regs as Row[] | null) ?? []) {
-      const yes =
-        r.attended === "yes" ||
-        (r.registration_children ?? []).some((c) => c.attended === true);
-      if (!yes) continue;
-      const key = (r.parent_email || "").toLowerCase().trim();
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-    }
-    attendeeCount = seen.size;
-
+    audienceCount = dedupeAttendees((regs as RegRow[] | null) ?? []);
+  } else {
+    // Programme-wide: everyone who's ever attended any GT session.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { count: priorSends } = await (supabase as any)
-      .from("email_logs")
-      .select("id", { count: "exact", head: true })
-      .eq("email_type", "survey_broadcast")
-      .eq("survey_id", id);
-    previousBroadcastCount = priorSends ?? 0;
+    const { data: regs } = await (supabase as any)
+      .from("registrations")
+      .select(
+        `id, parent_email, attended, status,
+         events!inner (programme),
+         registration_children (attended)`,
+      )
+      .eq("events.programme", "growing_together")
+      .neq("status", "cancelled");
+    audienceCount = dedupeAttendees((regs as RegRow[] | null) ?? []);
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { count: priorSends } = await (supabase as any)
+    .from("email_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("email_type", "survey_broadcast")
+    .eq("survey_id", id);
+  const previousBroadcastCount = priorSends ?? 0;
 
   const qrSrc = await QRCode.toDataURL(surveyLink, {
     width: 480,
@@ -161,22 +178,44 @@ export default async function SurveyDetailPage({ params }: Props) {
         description="Print or display this so attendees can scan and open the survey on their phone."
       />
 
-      {/* Email broadcast — only when the survey is linked to an event */}
-      {survey.event_id && survey.events && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-5">
-          <h2 className="font-semibold text-gray-900 mb-1">Email attendees</h2>
-          <p className="text-sm text-gray-500 mb-3">
-            Send this survey directly to everyone who was checked in at{" "}
-            <strong>{survey.events.title}</strong>.
-          </p>
-          <EmailAttendeesButton
-            surveyId={id}
-            attendeeCount={attendeeCount}
-            previousSendCount={previousBroadcastCount}
-            eventTitle={survey.events.title}
-          />
-        </div>
-      )}
+      {/* Email broadcast — audience depends on whether this survey is
+          linked to a specific event or lives programme-wide. */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-5">
+        {survey.event_id && survey.events ? (
+          <>
+            <h2 className="font-semibold text-gray-900 mb-1">Email attendees</h2>
+            <p className="text-sm text-gray-500 mb-3">
+              Send this survey directly to everyone who was checked in at{" "}
+              <strong>{survey.events.title}</strong>.
+            </p>
+            <EmailAttendeesButton
+              surveyId={id}
+              audience="event"
+              audienceLabel={`who attended ${survey.events.title}`}
+              audienceCount={audienceCount}
+              previousSendCount={previousBroadcastCount}
+            />
+          </>
+        ) : (
+          <>
+            <h2 className="font-semibold text-gray-900 mb-1">
+              Email Growing Together families
+            </h2>
+            <p className="text-sm text-gray-500 mb-3">
+              This survey isn&apos;t tied to a specific event, so there&apos;s
+              nobody checked in. You can still send it to{" "}
+              <strong>everyone who&apos;s attended any Growing Together session</strong>.
+            </p>
+            <EmailAttendeesButton
+              surveyId={id}
+              audience="gt_all"
+              audienceLabel="who've attended any Growing Together session"
+              audienceCount={audienceCount}
+              previousSendCount={previousBroadcastCount}
+            />
+          </>
+        )}
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
