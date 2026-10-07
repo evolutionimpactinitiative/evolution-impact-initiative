@@ -286,48 +286,35 @@ export default async function GrowingTogetherAdminPage() {
 
       {/* Outcomes + feedback strip */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 lg:p-6">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-sm font-medium text-gray-500">Post-session feedback</p>
-            <Star className="h-4 w-4 text-yellow-500" />
-          </div>
-          <p className="text-2xl lg:text-3xl font-bold text-brand-dark">
-            {feedbackAvg !== null ? `${feedbackAvg} / 5` : "—"}
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            {feedbackCount === 0
+        <GlanceCard
+          label="Post-session feedback"
+          value={feedbackAvg !== null ? `${feedbackAvg} / 5` : "—"}
+          icon={<Star className="w-4 h-4" />}
+          iconTint="bg-yellow-100 text-yellow-600"
+          subtitle={
+            feedbackCount === 0
               ? "No responses yet"
-              : `${feedbackCount} ${feedbackCount === 1 ? "response" : "responses"}`}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 lg:p-6">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-sm font-medium text-gray-500">Baseline check-ins</p>
-            <ClipboardList className="h-4 w-4 text-brand-green" />
-          </div>
-          <p className="text-2xl lg:text-3xl font-bold text-brand-dark">
-            {baselineCount}
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            {baselineAvg !== null ? `Avg score ${baselineAvg} / 5` : "No responses yet"}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 lg:p-6">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-sm font-medium text-gray-500">Reach mix</p>
-            <ListChecks className="h-4 w-4 text-brand-blue" />
-          </div>
-          <p className="text-sm text-brand-dark">
-            <span className="font-bold">{newFamilies}</span> new
-            <span className="text-gray-400"> · </span>
-            <span className="font-bold">{returningFamilies}</span> returning
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            Of {familiesWithAttendance} families that have attended
-          </p>
-        </div>
+              : `${feedbackCount} ${feedbackCount === 1 ? "response" : "responses"}`
+          }
+        />
+        <GlanceCard
+          label="Baseline check-ins"
+          value={baselineCount}
+          icon={<ClipboardList className="w-4 h-4" />}
+          iconTint="bg-brand-green/10 text-brand-green"
+          subtitle={
+            baselineAvg !== null
+              ? `Avg score ${baselineAvg} / 5`
+              : "No responses yet"
+          }
+        />
+        <GlanceCard
+          label="Reach mix"
+          value={`${newFamilies} new · ${returningFamilies} returning`}
+          icon={<ListChecks className="w-4 h-4" />}
+          iconTint="bg-brand-blue/10 text-brand-blue"
+          subtitle={`Of ${familiesWithAttendance} ${familiesWithAttendance === 1 ? "family" : "families"} that have attended`}
+        />
       </div>
 
       {/* Community support requests */}
