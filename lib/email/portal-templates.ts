@@ -294,6 +294,57 @@ export function villagePostEmail(params: {
 }
 
 // ============================================
+// External note — team shared something with the family
+// ============================================
+
+export function externalNoteEmail(params: {
+  parentName: string;
+  authorName: string;
+  about: string;
+  body: string;
+  viewUrl: string;
+}): { subject: string; html: string } {
+  const { parentName, authorName, about, body, viewUrl } = params;
+  const subject = `A note from ${authorName} at EII`;
+  const html = shell(`
+    <p style="margin:0 0 8px;font-size:11px;color:${BRAND.blue};font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+      A note from the EII team
+    </p>
+    <h1 style="margin:0 0 16px;font-family:'Montserrat',sans-serif;font-size:20px;color:${BRAND.dark};font-weight:800;">
+      Hi ${parentName}
+    </h1>
+    <p style="margin:0 0 16px;font-size:14px;color:#666;">
+      ${authorName} shared a note about <strong>${about}</strong>:
+    </p>
+    <div style="padding:16px;background-color:#f6f9fd;border-left:3px solid ${BRAND.blue};border-radius:6px;margin:0 0 20px;font-size:15px;line-height:22px;color:#333;white-space:pre-wrap;">${escapeNoteBody(body)}</div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 8px;">
+      <tr>
+        <td style="background-color:${BRAND.blue};border-radius:8px;">
+          <a href="${viewUrl}" style="display:inline-block;padding:14px 28px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">
+            Open My Family
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:16px 0 0;font-size:12px;color:#888;text-align:center;">
+      To reply, head to Messages inside your Growing Together portal.
+    </p>
+  `);
+  return { subject, html };
+}
+
+function escapeNoteBody(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/\n/g, "<br/>");
+}
+
+
+// ============================================
 // Chat — team reply + new family message
 // ============================================
 

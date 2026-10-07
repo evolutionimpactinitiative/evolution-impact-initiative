@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Mail, Phone, MapPin, MessageCircle, CheckCircle2, Star } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { NotesSection, type NoteRow } from "./NotesSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -163,6 +164,59 @@ export default async function AdminGtFamilyDetailPage({ params }: Props) {
 
   const primary = carers.find((c) => c.is_primary) ?? carers[0];
   const attendedCount = regs.filter((r) => r.attended === "yes").length;
+
+  // ---- Notes (family + per child) ----
+  const childIds = children.map((c) => c.id);
+  const noteFilters: string[] = [`and(target_type.eq.family,target_id.eq.${familyId})`];
+  if (childIds.length > 0) {
+    noteFilters.push(
+      `and(target_type.eq.child,target_id.in.(${childIds.join(",")}))`,
+    );
+  }
+  const { data: rawNotes } = await supa
+    .from("notes")
+    .select("id, target_type, target_id, body, visibility, created_at, author_team_id")
+    .or(noteFilters.join(","))
+    .order("created_at", { ascending: false });
+  type RawNote = {
+    id: string;
+    target_type: "family" | "child";
+    target_id: string;
+    body: string;
+    visibility: "internal" | "external";
+    created_at: string;
+    author_team_id: string | null;
+  };
+  const notesRaw = (rawNotes as RawNote[] | null) ?? [];
+  const authorIds = Array.from(
+    new Set(notesRaw.map((n) => n.author_team_id).filter(Boolean) as string[]),
+  );
+  const authorNames: Record<string, string> = {};
+  if (authorIds.length > 0) {
+    const { data: authors } = await supa
+      .from("team_members")
+      .select("id, name")
+      .in("id", authorIds);
+    for (const a of (authors as { id: string; name: string }[] | null) ?? []) {
+      authorNames[a.id] = a.name;
+    }
+  }
+  const notes: NoteRow[] = notesRaw.map((n) => ({
+    id: n.id,
+    target_type: n.target_type,
+    target_id: n.target_id,
+    body: n.body,
+    visibility: n.visibility,
+    author_name: n.author_team_id ? authorNames[n.author_team_id] ?? null : null,
+    created_at: n.created_at,
+  }));
+  const familyNotes = notes.filter(
+    (n) => n.target_type === "family" && n.target_id === familyId,
+  );
+  const notesByChildId: Record<string, NoteRow[]> = {};
+  for (const n of notes.filter((n) => n.target_type === "child")) {
+    (notesByChildId[n.target_id] = notesByChildId[n.target_id] || []).push(n);
+  }
 
   return (
     <div className="p-4 lg:p-6 max-w-5xl mx-auto space-y-6">
@@ -392,6 +446,23 @@ export default async function AdminGtFamilyDetailPage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {/* Notes — family-level */}
+      <NotesSection
+        familyId={familyId}
+        target={{ type: "family", id: familyId, label: "Family" }}
+        notes={familyNotes}
+      />
+
+      {/* Notes — per child */}
+      {children.map((c) => (
+        <NotesSection
+          key={`notes-${c.id}`}
+          familyId={familyId}
+          target={{ type: "child", id: c.id, label: c.first_name }}
+          notes={notesByChildId[c.id] ?? []}
+        />
+      ))}
     </div>
   );
 }

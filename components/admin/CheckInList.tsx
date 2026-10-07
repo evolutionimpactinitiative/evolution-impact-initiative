@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import type { Registration, RegistrationChild } from "@/lib/supabase/types";
 import { Search, Check, Clock, Users, ChevronDown, ChevronUp } from "lucide-react";
 import { checkInChild, checkInAllChildren } from "@/app/admin/actions";
+import { ChildFeedbackPanel } from "@/app/admin/events/[id]/check-in/ChildFeedbackPanel";
+import type { FeedbackPayload } from "@/app/admin/events/[id]/check-in/feedback-actions";
 
 type RegistrationWithChildren = Registration & {
   registration_children: RegistrationChild[];
@@ -13,9 +15,16 @@ type RegistrationWithChildren = Registration & {
 interface CheckInListProps {
   registrations: RegistrationWithChildren[];
   eventId: string;
+  isGrowingTogether?: boolean;
+  feedbackByChildId?: Record<string, FeedbackPayload | undefined>;
 }
 
-export function CheckInList({ registrations, eventId }: CheckInListProps) {
+export function CheckInList({
+  registrations,
+  eventId,
+  isGrowingTogether = false,
+  feedbackByChildId = {},
+}: CheckInListProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
@@ -243,6 +252,22 @@ export function CheckInList({ registrations, eventId }: CheckInListProps) {
                         );
                       })}
                     </div>
+
+                    {/* Per-child session feedback — Growing Together only, and
+                        only for children with a real child_id (portal
+                        registrations). */}
+                    {isGrowingTogether &&
+                      children.map((child) =>
+                        child.child_id ? (
+                          <ChildFeedbackPanel
+                            key={`fb-${child.id}`}
+                            childId={child.child_id}
+                            eventId={eventId}
+                            childName={child.child_name}
+                            initial={feedbackByChildId[child.child_id] ?? null}
+                          />
+                        ) : null,
+                      )}
 
                     {/* Check-in times */}
                     {checkedInChildren.length > 0 && (

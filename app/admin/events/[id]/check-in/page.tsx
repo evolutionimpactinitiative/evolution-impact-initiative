@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckInList } from "@/components/admin/CheckInList";
 import type { Event, Registration, RegistrationChild } from "@/lib/supabase/types";
+import type { FeedbackPayload } from "./feedback-actions";
 import { ArrowLeft } from "lucide-react";
 
 type Props = {
@@ -47,6 +49,43 @@ export default async function CheckInPage({ params }: Props) {
   const allChildren = registrations.flatMap((r) => r.registration_children || []);
   const totalChildren = allChildren.length;
   const checkedInChildren = allChildren.filter((c) => c.attended === true).length;
+
+  // Pull existing session feedback for Growing Together events so the
+  // check-in panel pre-fills with saved ratings instead of blank forms.
+  const feedbackByChildId: Record<string, FeedbackPayload | undefined> = {};
+  if (event.programme === "growing_together") {
+    const childIds = Array.from(
+      new Set(
+        allChildren
+          .map((c) => c.child_id)
+          .filter((v): v is string => typeof v === "string"),
+      ),
+    );
+    if (childIds.length > 0) {
+      const admin = createAdminClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: feedbackRows } = await (admin as any)
+        .from("child_session_feedback")
+        .select(
+          `child_id, settling_in, engagement, confidence, social_connection,
+           communication, emotional_regulation, parent_child_connection, notable`,
+        )
+        .eq("event_id", id)
+        .in("child_id", childIds);
+      for (const row of (feedbackRows as Array<{ child_id: string } & FeedbackPayload> | null) ?? []) {
+        feedbackByChildId[row.child_id] = {
+          settling_in: row.settling_in,
+          engagement: row.engagement,
+          confidence: row.confidence,
+          social_connection: row.social_connection,
+          communication: row.communication,
+          emotional_regulation: row.emotional_regulation,
+          parent_child_connection: row.parent_child_connection,
+          notable: row.notable,
+        };
+      }
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -97,7 +136,12 @@ export default async function CheckInPage({ params }: Props) {
       </div>
 
       {/* Check-in List */}
-      <CheckInList registrations={registrations} eventId={id} />
+      <CheckInList
+        registrations={registrations}
+        eventId={id}
+        isGrowingTogether={event.programme === "growing_together"}
+        feedbackByChildId={feedbackByChildId}
+      />
     </div>
   );
 }

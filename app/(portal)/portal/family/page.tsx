@@ -6,6 +6,7 @@ import type { Child, Family, ParentCarer } from "@/lib/supabase/types";
 import { resolvePortalIdentity } from "@/lib/portal/current-carer";
 import { FamilyEditor } from "./FamilyEditor";
 import { NotificationPreferences } from "./NotificationPreferences";
+import { ParentNotesSection, type ParentVisibleNote } from "./ParentNotes";
 
 export default async function FamilyPage() {
   const supabase = await createClient();
@@ -87,6 +88,66 @@ export default async function FamilyPage() {
     .is("archived_at", null)
     .order("date_of_birth", { ascending: true });
 
+  // External notes (family + per child) shared by the team.
+  const childIds = ((children as { id: string }[] | null) ?? []).map((c) => c.id);
+  const noteFilters: string[] = [
+    `and(target_type.eq.family,target_id.eq.${carer.family_id})`,
+  ];
+  if (childIds.length > 0) {
+    noteFilters.push(
+      `and(target_type.eq.child,target_id.in.(${childIds.join(",")}))`,
+    );
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: externalNotesRaw } = await (admin as any)
+    .from("notes")
+    .select("id, target_type, target_id, body, created_at, author_team_id")
+    .eq("visibility", "external")
+    .or(noteFilters.join(","))
+    .order("created_at", { ascending: false });
+  type RawExtNote = {
+    id: string;
+    target_type: "family" | "child";
+    target_id: string;
+    body: string;
+    created_at: string;
+    author_team_id: string | null;
+  };
+  const extRaw = (externalNotesRaw as RawExtNote[] | null) ?? [];
+  const extAuthorIds = Array.from(
+    new Set(extRaw.map((n) => n.author_team_id).filter(Boolean) as string[]),
+  );
+  const extAuthors: Record<string, string> = {};
+  if (extAuthorIds.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: a } = await (admin as any)
+      .from("team_members")
+      .select("id, name")
+      .in("id", extAuthorIds);
+    for (const row of (a as { id: string; name: string }[] | null) ?? []) {
+      extAuthors[row.id] = row.name;
+    }
+  }
+  const familyExtNotes: ParentVisibleNote[] = extRaw
+    .filter((n) => n.target_type === "family" && n.target_id === carer.family_id)
+    .map((n) => ({
+      id: n.id,
+      body: n.body,
+      author_name: n.author_team_id ? extAuthors[n.author_team_id] ?? null : null,
+      created_at: n.created_at,
+    }));
+  const childExtNotesById: Record<string, ParentVisibleNote[]> = {};
+  for (const n of extRaw.filter((n) => n.target_type === "child")) {
+    (childExtNotesById[n.target_id] = childExtNotesById[n.target_id] || []).push({
+      id: n.id,
+      body: n.body,
+      author_name: n.author_team_id ? extAuthors[n.author_team_id] ?? null : null,
+      created_at: n.created_at,
+    });
+  }
+
+  const childRows = (children as Child[] | null) ?? [];
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 md:py-14">
       <div className="mb-8">
@@ -101,10 +162,22 @@ export default async function FamilyPage() {
         </p>
       </div>
 
+      {/* Team notes about the family */}
+      <ParentNotesSection label="Family" notes={familyExtNotes} />
+
+      {/* Team notes per child */}
+      {childRows.map((c) => (
+        <ParentNotesSection
+          key={`notes-${c.id}`}
+          label={c.first_name}
+          notes={childExtNotesById[c.id] ?? []}
+        />
+      ))}
+
       <FamilyEditor
         family={family as Family}
         carer={carer as ParentCarer}
-        children={(children as Child[] | null) ?? []}
+        children={childRows}
       />
 
       <NotificationPreferences
