@@ -115,74 +115,87 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      {/* Hero stats — the four metrics worth a daily glance */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          size="hero"
-          title="Upcoming Events"
-          value={upcomingEventsCount || 0}
-          subtitle="Published and in the future"
-          icon="Calendar"
-          iconColor="text-brand-blue"
-          iconBgColor="bg-brand-blue/10"
-          href="/admin/events"
-        />
-        <StatCard
-          size="hero"
-          title="Registrations"
-          value={registrationsThisMonth || 0}
-          subtitle="This month"
-          icon="Users"
-          iconColor="text-brand-green"
-          iconBgColor="bg-brand-green/10"
-          href="/admin/registrations"
-        />
-        {canSeeMoney && (
+      {/* Programme */}
+      <section>
+        <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500 mb-3">
+          Programme
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard
-            size="hero"
-            title="Donations"
-            value={`£${(totalDonationsThisMonth / 100).toFixed(0)}`}
+            title="Upcoming Events"
+            value={upcomingEventsCount || 0}
+            subtitle="Published and in the future"
+            icon="Calendar"
+            iconColor="text-brand-blue"
+            iconBgColor="bg-brand-blue/10"
+            href="/admin/events"
+          />
+          <StatCard
+            title="Registrations"
+            value={registrationsThisMonth || 0}
             subtitle="This month"
-            icon="Heart"
-            iconColor="text-red-500"
-            iconBgColor="bg-red-100"
-            href="/admin/donations"
+            icon="Users"
+            iconColor="text-brand-green"
+            iconBgColor="bg-brand-green/10"
+            href="/admin/registrations"
           />
-        )}
-        <StatCard
-          size="hero"
-          title="Subscribers"
-          value={activeSubscribersCount || 0}
-          subtitle="Active"
-          icon="Mail"
-          iconColor="text-indigo-500"
-          iconBgColor="bg-indigo-100"
-          href="/admin/subscribers"
-        />
-      </div>
-
-      {/* Secondary strip — smaller, same visual language */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <StatCard
-          title="Survey responses"
-          value={surveyResponsesThisMonth || 0}
-          subtitle="This month"
-          icon="ClipboardList"
-          iconColor="text-orange-500"
-          iconBgColor="bg-orange-100"
-          href="/admin/surveys"
-        />
-        {canSeeMoney && (
           <StatCard
-            title="Recurring donations"
-            value="£0"
-            subtitle="Monthly"
-            icon="TrendingUp"
-            iconColor="text-purple-500"
-            iconBgColor="bg-purple-100"
+            title="Survey responses"
+            value={surveyResponsesThisMonth || 0}
+            subtitle="This month"
+            icon="ClipboardList"
+            iconColor="text-orange-500"
+            iconBgColor="bg-orange-100"
+            href="/admin/surveys"
           />
-        )}
-      </div>
+        </div>
+      </section>
+
+      {/* Community */}
+      <section>
+        <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500 mb-3">
+          Community
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StatCard
+            title="Subscribers"
+            value={activeSubscribersCount || 0}
+            subtitle="Active"
+            icon="Mail"
+            iconColor="text-indigo-500"
+            iconBgColor="bg-indigo-100"
+            href="/admin/subscribers"
+          />
+        </div>
+      </section>
+
+      {/* Money */}
+      {canSeeMoney && (
+        <section>
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500 mb-3">
+            Money
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard
+              title="Donations"
+              value={`£${(totalDonationsThisMonth / 100).toFixed(0)}`}
+              subtitle="This month"
+              icon="Heart"
+              iconColor="text-red-500"
+              iconBgColor="bg-red-100"
+              href="/admin/donations"
+            />
+            <StatCard
+              title="Recurring donations"
+              value="£0"
+              subtitle="Monthly"
+              icon="TrendingUp"
+              iconColor="text-purple-500"
+              iconBgColor="bg-purple-100"
+            />
+          </div>
+        </section>
+      )}
 
       {/* Quick actions - Full width buttons on mobile */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-3">
