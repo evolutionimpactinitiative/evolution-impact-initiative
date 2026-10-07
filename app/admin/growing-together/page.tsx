@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Users, Baby, Calendar, CheckCircle, Clock, ListChecks, Star, ClipboardList, Heart } from "lucide-react";
+import { ArrowRight, Users, Baby, Calendar, CheckCircle, Clock, ListChecks, Star, ClipboardList, Heart, UserCheck } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { StatCard } from "@/components/admin/StatCard";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 
 // Live counts — this dashboard is the source of truth for GT reporting.
 export const dynamic = "force-dynamic";
@@ -234,36 +234,53 @@ export default async function GrowingTogetherAdminPage() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
-        <StatCard
-          title="Families"
+        <GlanceCard
+          label="Families"
           value={familiesCount}
-          icon="Users"
+          icon={<Users className="w-4 h-4" />}
+          iconTint="bg-brand-blue/10 text-brand-blue"
           href="/admin/growing-together/families"
-          linkText="View list"
         />
-        <StatCardBaby title="Children" value={childrenCount} />
-        <StatCard
-          title="Sessions delivered"
+        <GlanceCard
+          label="Children"
+          value={childrenCount}
+          icon={<Baby className="w-4 h-4" />}
+          iconTint="bg-brand-green/10 text-brand-green"
+        />
+        <GlanceCard
+          label="Sessions delivered"
           value={sessionsWithAttendance}
-          icon="Calendar"
-          subtitle={pastEvents.length !== sessionsWithAttendance ? `${pastEvents.length} total past` : undefined}
+          icon={<Calendar className="w-4 h-4" />}
+          iconTint="bg-brand-blue/10 text-brand-blue"
+          subtitle={
+            pastEvents.length !== sessionsWithAttendance
+              ? `${pastEvents.length} total past`
+              : undefined
+          }
         />
-        <StatCard
-          title="Total attendance"
+        <GlanceCard
+          label="Total attendance"
           value={attendedCount}
-          icon="CheckCircle"
-          subtitle={sessionsWithAttendance > 0 ? `Avg ${avgAttendancePerSession}/session` : undefined}
+          icon={<CheckCircle className="w-4 h-4" />}
+          iconTint="bg-emerald-100 text-emerald-600"
+          subtitle={
+            sessionsWithAttendance > 0
+              ? `Avg ${avgAttendancePerSession}/session`
+              : undefined
+          }
         />
-        <StatCard
-          title="Upcoming registered"
+        <GlanceCard
+          label="Upcoming registered"
           value={upcomingConfirmed}
-          icon="UserCheck"
+          icon={<UserCheck className="w-4 h-4" />}
+          iconTint="bg-indigo-100 text-indigo-500"
           subtitle={`${upcomingEvents.length} upcoming ${upcomingEvents.length === 1 ? "session" : "sessions"}`}
         />
-        <StatCard
-          title="Waitlist"
+        <GlanceCard
+          label="Waitlist"
           value={upcomingWaitlisted}
-          icon="Clock"
+          icon={<Clock className="w-4 h-4" />}
+          iconTint="bg-amber-100 text-amber-600"
         />
       </div>
 
@@ -460,21 +477,3 @@ export default async function GrowingTogetherAdminPage() {
   );
 }
 
-// Small dedicated card for the Children stat — StatCard's iconMap doesn't
-// include Baby, and we don't want to churn its shared allowlist for one
-// programme-scoped tile.
-function StatCardBaby({ title, value }: { title: string; value: number }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 lg:p-6">
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-500 truncate">{title}</p>
-          <p className="text-2xl lg:text-3xl font-bold text-brand-dark mt-1">{value}</p>
-        </div>
-        <div className="flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex-shrink-0 bg-brand-green/10">
-          <Baby className="w-5 h-5 lg:w-6 lg:h-6 text-brand-green" />
-        </div>
-      </div>
-    </div>
-  );
-}

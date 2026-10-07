@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GlanceCard } from "@/components/admin/GlanceCard";
 import {
   DataCard,
   DataCardHeader,
@@ -313,50 +314,3 @@ export default async function AdminDashboard() {
   );
 }
 
-// Dashboard glance card — slim card with an uppercase caption, a big
-// bold number, and a colored icon chip in the top-right corner. The
-// whole card is clickable when href is set.
-function GlanceCard({
-  label,
-  value,
-  icon,
-  iconTint,
-  href,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  iconTint: string; // tailwind classes for bg + text colour of the icon chip
-  href?: string;
-}) {
-  const base =
-    "block bg-white rounded-xl border border-gray-100 shadow-sm p-4 transition hover:border-brand-blue/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/60";
-  const body = (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[10px] uppercase tracking-wider font-bold text-gray-500 leading-snug">
-          {label}
-        </p>
-        <span
-          className={
-            "flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 " +
-            iconTint
-          }
-        >
-          {icon}
-        </span>
-      </div>
-      <p className="text-2xl lg:text-3xl font-black text-brand-dark mt-3">
-        {value}
-      </p>
-    </>
-  );
-  if (href) {
-    return (
-      <Link href={href} className={base}>
-        {body}
-      </Link>
-    );
-  }
-  return <div className={base + " cursor-default"}>{body}</div>;
-}
