@@ -115,18 +115,20 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      {/* Stats - 2x2 grid on mobile, 3 cols on tablet, 6 cols on desktop */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
+      {/* Hero stats — the four metrics worth a daily glance */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
+          size="hero"
           title="Upcoming Events"
           value={upcomingEventsCount || 0}
+          subtitle="Published and in the future"
           icon="Calendar"
           iconColor="text-brand-blue"
           iconBgColor="bg-brand-blue/10"
           href="/admin/events"
-          linkText="View"
         />
         <StatCard
+          size="hero"
           title="Registrations"
           value={registrationsThisMonth || 0}
           subtitle="This month"
@@ -134,10 +136,10 @@ export default async function AdminDashboard() {
           iconColor="text-brand-green"
           iconBgColor="bg-brand-green/10"
           href="/admin/registrations"
-          linkText="View"
         />
         {canSeeMoney && (
           <StatCard
+            size="hero"
             title="Donations"
             value={`£${(totalDonationsThisMonth / 100).toFixed(0)}`}
             subtitle="This month"
@@ -145,10 +147,10 @@ export default async function AdminDashboard() {
             iconColor="text-red-500"
             iconBgColor="bg-red-100"
             href="/admin/donations"
-            linkText="View"
           />
         )}
         <StatCard
+          size="hero"
           title="Subscribers"
           value={activeSubscribersCount || 0}
           subtitle="Active"
@@ -156,21 +158,23 @@ export default async function AdminDashboard() {
           iconColor="text-indigo-500"
           iconBgColor="bg-indigo-100"
           href="/admin/subscribers"
-          linkText="View"
         />
+      </div>
+
+      {/* Secondary strip — smaller, same visual language */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard
-          title="Surveys"
+          title="Survey responses"
           value={surveyResponsesThisMonth || 0}
-          subtitle="Responses"
+          subtitle="This month"
           icon="ClipboardList"
           iconColor="text-orange-500"
           iconBgColor="bg-orange-100"
           href="/admin/surveys"
-          linkText="View"
         />
         {canSeeMoney && (
           <StatCard
-            title="Recurring"
+            title="Recurring donations"
             value="£0"
             subtitle="Monthly"
             icon="TrendingUp"
