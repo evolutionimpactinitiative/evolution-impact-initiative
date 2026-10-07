@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { SurveyResponsesView } from "@/components/admin/SurveyResponsesView";
 import { QrShareCard } from "@/components/admin/QrShareCard";
 import { EmailAttendeesButton } from "./EmailAttendeesButton";
-import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
+import { CloneSurveyButton } from "./CloneSurveyButton";
+import { ArrowLeft, Edit, ExternalLink, Download } from "lucide-react";
 import type { Survey, SurveyResponse, SurveyQuestion } from "@/lib/supabase/types";
 
 type Props = {
@@ -71,7 +72,24 @@ export default async function SurveyDetailPage({ params }: Props) {
     return seen.size;
   }
 
-  let audienceCount = 0;
+  // Build the attendee email set so we can compute both the full
+  // audience count and the "non-responders only" count against the
+  // same source of truth.
+  function attendeeEmails(rows: RegRow[]): Set<string> {
+    const set = new Set<string>();
+    for (const r of rows) {
+      const yes =
+        r.attended === "yes" ||
+        (r.registration_children ?? []).some((c) => c.attended === true);
+      if (!yes) continue;
+      const key = (r.parent_email || "").toLowerCase().trim();
+      if (!key) continue;
+      set.add(key);
+    }
+    return set;
+  }
+
+  let audienceEmails = new Set<string>();
   if (survey.event_id) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: regs } = await (supabase as any)
@@ -82,7 +100,7 @@ export default async function SurveyDetailPage({ params }: Props) {
       )
       .eq("event_id", survey.event_id)
       .neq("status", "cancelled");
-    audienceCount = dedupeAttendees((regs as RegRow[] | null) ?? []);
+    audienceEmails = attendeeEmails((regs as RegRow[] | null) ?? []);
   } else {
     // Programme-wide: everyone who's ever attended any GT session.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,8 +113,21 @@ export default async function SurveyDetailPage({ params }: Props) {
       )
       .eq("events.programme", "growing_together")
       .neq("status", "cancelled");
-    audienceCount = dedupeAttendees((regs as RegRow[] | null) ?? []);
+    audienceEmails = attendeeEmails((regs as RegRow[] | null) ?? []);
   }
+  const audienceCount = audienceEmails.size;
+
+  const responderEmails = new Set(
+    responses.map((r) => (r.respondent_email || "").toLowerCase().trim()),
+  );
+  const audienceResponderCount = Array.from(audienceEmails).filter((e) =>
+    responderEmails.has(e),
+  ).length;
+  const nonResponderCount = audienceCount - audienceResponderCount;
+  const responseRatePct =
+    audienceCount > 0
+      ? Math.round((audienceResponderCount / audienceCount) * 100)
+      : null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { count: priorSends } = await (supabase as any)
@@ -164,6 +195,13 @@ export default async function SurveyDetailPage({ params }: Props) {
                 Preview
               </a>
             </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/admin/surveys/${id}/export`}>
+                <Download className="w-4 h-4 mr-1" />
+                Download CSV
+              </a>
+            </Button>
+            <CloneSurveyButton surveyId={id} />
           </div>
         </div>
       </div>
@@ -187,12 +225,20 @@ export default async function SurveyDetailPage({ params }: Props) {
             <p className="text-sm text-gray-500 mb-3">
               Send this survey directly to everyone who was checked in at{" "}
               <strong>{survey.events.title}</strong>.
+              {responseRatePct !== null && (
+                <>
+                  {" "}
+                  So far <strong>{audienceResponderCount} of {audienceCount}</strong>{" "}
+                  attendees have responded ({responseRatePct}%).
+                </>
+              )}
             </p>
             <EmailAttendeesButton
               surveyId={id}
               audience="event"
               audienceLabel={`who attended ${survey.events.title}`}
               audienceCount={audienceCount}
+              nonResponderCount={nonResponderCount}
               previousSendCount={previousBroadcastCount}
             />
           </>
@@ -202,15 +248,22 @@ export default async function SurveyDetailPage({ params }: Props) {
               Email Growing Together families
             </h2>
             <p className="text-sm text-gray-500 mb-3">
-              This survey isn&apos;t tied to a specific event, so there&apos;s
-              nobody checked in. You can still send it to{" "}
+              This survey isn&apos;t tied to a specific event. You can send it to{" "}
               <strong>everyone who&apos;s attended any Growing Together session</strong>.
+              {responseRatePct !== null && (
+                <>
+                  {" "}
+                  So far <strong>{audienceResponderCount} of {audienceCount}</strong>{" "}
+                  families have responded ({responseRatePct}%).
+                </>
+              )}
             </p>
             <EmailAttendeesButton
               surveyId={id}
               audience="gt_all"
               audienceLabel="who've attended any Growing Together session"
               audienceCount={audienceCount}
+              nonResponderCount={nonResponderCount}
               previousSendCount={previousBroadcastCount}
             />
           </>

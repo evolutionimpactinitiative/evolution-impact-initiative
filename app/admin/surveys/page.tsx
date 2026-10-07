@@ -35,18 +35,70 @@ export default async function SurveysPage() {
 
   const surveys = (surveysData as Survey[] | null) || [];
 
-  // Get response counts
+  // Get response rows (survey_id + respondent_email) so we can count
+  // both total responses AND responses per attendee audience.
   const { data: responsesData } = await supabase
     .from("survey_responses")
-    .select("survey_id");
+    .select("survey_id, respondent_email");
 
-  const responses = (responsesData as SurveyResponse[] | null) || [];
+  type ResponseRow = { survey_id: string; respondent_email: string };
+  const responses = (responsesData as ResponseRow[] | null) || [];
 
-  // Count responses per survey
+  // Count responses per survey.
   const responseCounts = responses.reduce((acc, r) => {
     acc[r.survey_id] = (acc[r.survey_id] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+  const respondersBySurvey = responses.reduce((acc, r) => {
+    const key = (r.respondent_email || "").toLowerCase().trim();
+    if (!key) return acc;
+    (acc[r.survey_id] = acc[r.survey_id] || new Set<string>()).add(key);
+    return acc;
+  }, {} as Record<string, Set<string>>);
+
+  // --- Attendee audiences, pre-computed once per batch ---
+  // Pull every non-cancelled registration with programme + attendance
+  // signals, then slice per event_id and build the "all GT" set.
+  type AttRow = {
+    event_id: string;
+    parent_email: string;
+    attended: string | null;
+    status: string;
+    events: { programme: string | null };
+    registration_children: { attended: boolean | null }[] | null;
+  };
+  const { data: attRaw } = await supabase
+    .from("registrations")
+    .select(
+      `event_id, parent_email, attended, status,
+       events (programme),
+       registration_children (attended)`,
+    )
+    .neq("status", "cancelled");
+  const attAll = (attRaw as unknown as AttRow[] | null) ?? [];
+
+  const attendeeEmailsByEventId: Record<string, Set<string>> = {};
+  const gtAttendeeEmails = new Set<string>();
+  for (const r of attAll) {
+    const yes =
+      r.attended === "yes" ||
+      (r.registration_children ?? []).some((c) => c.attended === true);
+    if (!yes) continue;
+    const key = (r.parent_email || "").toLowerCase().trim();
+    if (!key) continue;
+    (attendeeEmailsByEventId[r.event_id] =
+      attendeeEmailsByEventId[r.event_id] || new Set()).add(key);
+    if (r.events?.programme === "growing_together") {
+      gtAttendeeEmails.add(key);
+    }
+  }
+
+  function audienceFor(survey: Survey): Set<string> {
+    if (survey.event_id) {
+      return attendeeEmailsByEventId[survey.event_id] ?? new Set();
+    }
+    return gtAttendeeEmails;
+  }
 
   // Calculate stats
   const totalSurveys = surveys.length;
@@ -128,6 +180,16 @@ export default async function SurveysPage() {
         <div className="space-y-3">
           {surveys.map((survey) => {
             const responseCount = responseCounts[survey.id] || 0;
+            const audience = audienceFor(survey);
+            const audienceCount = audience.size;
+            const responders = respondersBySurvey[survey.id] ?? new Set<string>();
+            const audienceResponded = Array.from(audience).filter((e) =>
+              responders.has(e),
+            ).length;
+            const rate =
+              audienceCount > 0
+                ? Math.round((audienceResponded / audienceCount) * 100)
+                : null;
             return (
               <div
                 key={survey.id}
@@ -173,6 +235,12 @@ export default async function SurveysPage() {
                       <div className="flex items-center gap-1">
                         <BarChart2 className="w-4 h-4" />
                         {responseCount} response{responseCount !== 1 ? "s" : ""}
+                        {rate !== null && (
+                          <span className="text-gray-400">
+                            {" · "}
+                            {audienceResponded}/{audienceCount} ({rate}%)
+                          </span>
+                        )}
                       </div>
                       <span>
                         Created{" "}

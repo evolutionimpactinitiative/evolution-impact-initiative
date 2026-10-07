@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -177,6 +178,7 @@ export async function surveyBroadcastStats(surveyId: string): Promise<{
 export async function emailSurveyToAttendees(
   surveyId: string,
   audience: BroadcastAudience = "event",
+  excludeResponders: boolean = false,
 ): Promise<{
   sent: number;
   failed: number;
@@ -213,6 +215,23 @@ export async function emailSurveyToAttendees(
     // gt_all — everyone who has attended any Growing Together session.
     attendees = await fetchGtAttendees();
     eventTitle = null; // keep the subject generic for a programme-wide blast
+  }
+
+  // Filter out people who have already submitted a response if asked.
+  if (excludeResponders) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: responderRows } = await (admin as any)
+      .from("survey_responses")
+      .select("respondent_email")
+      .eq("survey_id", surveyId);
+    const respondedEmails = new Set(
+      ((responderRows as { respondent_email: string }[] | null) ?? [])
+        .map((r) => (r.respondent_email || "").toLowerCase().trim())
+        .filter(Boolean),
+    );
+    attendees = attendees.filter(
+      (a) => !respondedEmails.has(a.email.toLowerCase().trim()),
+    );
   }
 
   if (attendees.length === 0) {
@@ -274,4 +293,40 @@ export async function emailSurveyToAttendees(
 export async function gtAttendeeCount(): Promise<number> {
   await requireTeamMember();
   return (await fetchGtAttendees()).length;
+}
+
+// Duplicate a survey — copy all fields except id/timestamps/responses.
+// The clone is created inactive so the admin can tweak before going
+// live, and we land them on the edit page.
+export async function cloneSurveyAction(surveyId: string): Promise<void> {
+  await requireTeamMember();
+  const admin = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: src } = await (admin as any)
+    .from("surveys")
+    .select("title, description, survey_type, event_id, questions")
+    .eq("id", surveyId)
+    .maybeSingle();
+  if (!src) throw new Error("Survey not found");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: inserted, error } = await (admin as any)
+    .from("surveys")
+    .insert({
+      title: `Copy of ${src.title}`,
+      description: src.description,
+      survey_type: src.survey_type,
+      // Don't carry over the event link — most clones are for a
+      // different session. Admin can re-link on the edit screen.
+      event_id: null,
+      questions: src.questions ?? [],
+      is_active: false,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  revalidatePath("/admin/surveys");
+  redirect(`/admin/surveys/${inserted.id}/edit`);
 }
