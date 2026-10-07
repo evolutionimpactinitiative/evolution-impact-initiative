@@ -369,7 +369,7 @@ function SupportNudgeCard() {
             Help us shape what we offer
           </h3>
           <p className="text-sm text-brand-dark/70 mt-1">
-            Tell us what support would be useful for your family — parenting, speech,
+            Tell us what support would be useful for your family. Parenting, speech,
             school readiness, cultural activities. It takes a minute and helps us plan
             what to run next.
           </p>

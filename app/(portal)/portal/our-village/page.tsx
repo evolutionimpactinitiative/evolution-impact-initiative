@@ -111,7 +111,7 @@ export default async function OurVillagePage({
           </h1>
         </div>
         <p className="text-brand-dark/70 mt-2">
-          A gentle stream of activities, announcements and useful local services —
+          A gentle stream of activities, announcements and useful local services,
           curated by the Growing Together team.
         </p>
       </div>
@@ -137,7 +137,7 @@ export default async function OurVillagePage({
       {rows.length === 0 && (
         <div className="bg-white rounded-2xl border border-brand-dark/10 p-8 text-center">
           <p className="text-brand-dark/70">
-            Nothing here yet — check back soon.
+            Nothing here yet. Check back soon.
           </p>
         </div>
       )}
@@ -283,7 +283,7 @@ function PostCard({ post }: { post: VillagePost }) {
         {/* Author attribution */}
         {post.author_name && (
           <p className="text-xs text-brand-dark/50 mt-4 pt-3 border-t border-brand-dark/5">
-            — {post.author_name}
+            by {post.author_name}
           </p>
         )}
       </div>

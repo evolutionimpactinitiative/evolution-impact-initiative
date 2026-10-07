@@ -96,7 +96,7 @@ export default async function FamilyPage() {
           My Family
         </h1>
         <p className="text-brand-dark/70 mt-2">
-          Add your child (or children) once — then register for any session with a couple of taps.
+          Add your child (or children) once, then register for any session with a couple of taps.
         </p>
       </div>
 

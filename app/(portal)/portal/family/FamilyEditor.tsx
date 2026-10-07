@@ -345,7 +345,7 @@ export function FamilyEditor({ family, carer, children }: Props) {
           )}
         </div>
         <p className="text-sm text-brand-dark/60 mb-5">
-          The more we know, the better we can support each child from the moment they arrive. Only the basics are required — share the rest at your own pace.
+          The more we know, the better we can support each child from the moment they arrive. Only the basics are required. Share the rest at your own pace.
         </p>
 
         {children.length === 0 && !addingChild && (
@@ -518,7 +518,7 @@ function ChildForm({ mode, child, onCancel, onSaved, onDelete, deleting }: Child
       <div>
         <h3 className="font-heading font-black text-lg text-brand-dark">{heading}</h3>
         <p className="text-sm text-brand-dark/60 mt-1">
-          Only the first section is required. Fill the rest at your own pace — you can always come back and add more.
+          Only the first section is required. Fill the rest at your own pace. You can always come back and add more.
         </p>
       </div>
 
@@ -591,7 +591,7 @@ function ChildForm({ mode, child, onCancel, onSaved, onDelete, deleting }: Child
       {/* ── Section 2: What they love ───────────────────── */}
       <Section
         title="What they love"
-        why="So we can plan activities they'll light up for — and greet them with something familiar on day one."
+        why="So we can plan activities they'll light up for, and greet them with something familiar on day one."
       >
         <ChipPicker
           label="Interests"
@@ -637,7 +637,7 @@ function ChildForm({ mode, child, onCancel, onSaved, onDelete, deleting }: Child
       {/* ── Section 4: Communication ────────────────────── */}
       <Section
         title="Communication"
-        why="So every child feels understood — especially before they have the words."
+        why="So every child feels understood, especially before they have the words."
       >
         <ChipMultiWithCustom
           label="Languages spoken at home"
@@ -696,7 +696,7 @@ function ChildForm({ mode, child, onCancel, onSaved, onDelete, deleting }: Child
           label="Accessibility requirements"
           name="accessibility_requirements"
           defaultValue={child?.accessibility_requirements ?? ""}
-          placeholder="Mobility, sight, hearing, neurodivergence, EHCP — anything the space needs to accommodate."
+          placeholder="Mobility, sight, hearing, neurodivergence, EHCP. Anything the space needs to accommodate."
         />
       </Section>
 
@@ -858,7 +858,7 @@ function ChipPicker({
   return (
     <div>
       <label className="block text-sm font-medium text-brand-dark mb-2">
-        {label} <span className="text-brand-dark/50 font-normal">— tap to add</span>
+        {label} <span className="text-brand-dark/50 font-normal">(tap to add)</span>
       </label>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => {
