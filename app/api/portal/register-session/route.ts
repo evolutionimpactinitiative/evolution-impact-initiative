@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { slotsForRegistration } from "@/lib/events";
+import { canUseEarlyAccess } from "@/lib/portal/gt-early-access";
 
 interface Body {
   eventId: string;
@@ -84,10 +85,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Registration is closed for this session." }, { status: 400 });
   }
   if (event.publish_at && new Date(event.publish_at) > new Date()) {
-    return NextResponse.json(
-      { error: "Registration for this session hasn't opened yet." },
-      { status: 400 },
-    );
+    // Early-access door: a family that has attended ≥1 GT session can
+    // register in the last hour before publish_at. Everyone else is
+    // held back until the public open time.
+    const eligibleEarly = await canUseEarlyAccess({
+      event,
+      familyId: carer.family_id,
+    });
+    if (!eligibleEarly) {
+      return NextResponse.json(
+        { error: "Registration for this session hasn't opened yet." },
+        { status: 400 },
+      );
+    }
   }
 
   // Duplicate guard — one active registration per family per event.

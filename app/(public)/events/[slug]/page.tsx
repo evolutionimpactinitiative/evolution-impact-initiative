@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
-import { AlertTriangle, ArrowLeft, Calendar, Clock, MapPin, Users, Tag, Info, Bell } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Calendar, Clock, MapPin, Users, Tag, Info, Bell, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -12,6 +12,10 @@ import { B2S_SLUG } from "@/lib/back-to-school";
 import { COLLECTION_SLUG } from "@/lib/back-to-school/collection";
 import { NotifyMeForm } from "@/components/shared/NotifyMeForm";
 import { CountdownTimer } from "@/components/shared/CountdownTimer";
+import {
+  hasFamilyAttendedGt,
+  isInEarlyAccessWindow,
+} from "@/lib/portal/gt-early-access";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -250,21 +254,37 @@ export default async function EventPage({ params }: Props) {
   }
 
   // Logged-in parent? Prefill the Notify Me form so they can one-click.
+  // Also resolve family_id so we can check GT early-access eligibility
+  // for scheduled Growing Together events.
   const supabaseAuth = await createClient();
   const {
     data: { user: viewerUser },
   } = await supabaseAuth.auth.getUser();
   let viewerCarer: { name: string; email: string } | null = null;
+  let viewerFamilyId: string | null = null;
   if (viewerUser) {
     const admin = createAdminClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: carer } = await (admin as any)
       .from("parent_carers")
-      .select("name, email")
+      .select("name, email, family_id")
       .eq("user_id", viewerUser.id)
       .maybeSingle();
-    if (carer) viewerCarer = carer;
+    if (carer) {
+      viewerCarer = { name: carer.name, email: carer.email };
+      viewerFamilyId = carer.family_id;
+    }
   }
+
+  const isGrowingTogether = event.programme === "growing_together";
+  const inEarlyAccessWindow =
+    isGrowingTogether && isInEarlyAccessWindow(event.publish_at);
+  const viewerHasAttendedGt =
+    isGrowingTogether && viewerFamilyId
+      ? await hasFamilyAttendedGt(viewerFamilyId)
+      : false;
+  const viewerCanEarlyRegister =
+    isGrowingTogether && inEarlyAccessWindow && viewerHasAttendedGt;
 
   const today = new Date().toISOString().split("T")[0];
   const isUpcoming = event.date >= today;
@@ -453,21 +473,77 @@ export default async function EventPage({ params }: Props) {
                   <CountdownTimer targetDate={event.publishAtISO} />
                 </div>
 
-                {/* Notify Me Form */}
-                <div className="bg-white rounded-xl p-6 border-2 border-brand-blue/30 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Bell className="w-5 h-5 text-brand-blue" />
-                    <h3 className="font-heading font-bold text-lg text-brand-dark">Get Notified</h3>
+                {viewerCanEarlyRegister ? (
+                  /* Early-access unlocked card — attended GT families inside the 1h window */
+                  <div className="bg-brand-green/10 border-2 border-brand-green rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-5 h-5 text-brand-green" />
+                      <h3 className="font-heading font-black text-lg text-brand-dark">
+                        Early access unlocked
+                      </h3>
+                    </div>
+                    <p className="text-sm text-brand-dark/80 mb-4">
+                      You&apos;re a returning Growing Together family — you can register for this session
+                      before public registration opens.
+                    </p>
+                    <Button asChild className="w-full">
+                      <Link href={`/events/${event.slug}/register-portal`}>Register now</Link>
+                    </Button>
                   </div>
-                  <p className="text-sm text-brand-dark/70 mb-4">
-                    Enter your email and we&apos;ll notify you as soon as registration opens.
-                  </p>
-                  <NotifyMeForm
-                    eventId={event.id}
-                    eventTitle={event.title}
-                    viewer={viewerCarer}
-                  />
-                </div>
+                ) : (
+                  /* Notify Me Form */
+                  <div className="bg-white rounded-xl p-6 border-2 border-brand-blue/30 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Bell className="w-5 h-5 text-brand-blue" />
+                      <h3 className="font-heading font-bold text-lg text-brand-dark">Get Notified</h3>
+                    </div>
+                    <p className="text-sm text-brand-dark/70 mb-4">
+                      Enter your email and we&apos;ll notify you as soon as registration opens.
+                    </p>
+                    <NotifyMeForm
+                      eventId={event.id}
+                      eventTitle={event.title}
+                      viewer={viewerCarer}
+                    />
+                  </div>
+                )}
+
+                {/* Early-access explainer for GT events — always shown when the viewer
+                    can't use early access right now, so first-timers + non-GT visitors
+                    understand what the perk is. */}
+                {isGrowingTogether && !viewerCanEarlyRegister && (
+                  <div className="bg-brand-pale/60 border border-brand-blue/20 rounded-xl p-4">
+                    <p className="text-xs uppercase tracking-wider font-bold text-brand-blue mb-1">
+                      Returning Growing Together families
+                    </p>
+                    <p className="text-sm text-brand-dark/80">
+                      Families who have attended at least one Growing Together session can
+                      register 1 hour before this opens to the public.{" "}
+                      {!viewerUser && (
+                        <>
+                          <Link
+                            href={`/portal/login?next=/events/${event.slug}`}
+                            className="text-brand-blue underline"
+                          >
+                            Log in
+                          </Link>{" "}
+                          to use your early access.
+                        </>
+                      )}
+                      {viewerUser && !viewerHasAttendedGt && (
+                        <>
+                          Once you&apos;ve attended your first session, you&apos;ll get early
+                          access to future ones.
+                        </>
+                      )}
+                      {viewerUser &&
+                        viewerHasAttendedGt &&
+                        !inEarlyAccessWindow && (
+                          <>Your early-access window opens 1 hour before registration opens.</>
+                        )}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

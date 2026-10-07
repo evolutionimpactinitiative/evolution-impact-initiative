@@ -265,6 +265,23 @@ export default async function GrowingTogetherPage() {
             </p>
           </div>
 
+          {/* Early-access perk for returning families */}
+          <div className="max-w-2xl mx-auto mb-12 bg-brand-green/10 border-2 border-brand-green/40 rounded-2xl p-5 md:p-6 flex items-start gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-green/20 flex items-center justify-center">
+              <span aria-hidden className="text-xl">✨</span>
+            </div>
+            <div>
+              <p className="font-heading font-black text-brand-dark mb-1">
+                Returning families register 1 hour early
+              </p>
+              <p className="text-sm text-brand-dark/70">
+                Once your family has attended a Growing Together session, you&apos;ll get access
+                to register for every future session a full hour before it opens to the
+                public. Our way of saying thank you for coming back.
+              </p>
+            </div>
+          </div>
+
           {upcoming.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {upcoming.map((session) => (
