@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Users, Bell, Shield } from "lucide-react";
 import { TreasurerToggle } from "@/components/admin/settings/TreasurerToggle";
@@ -94,8 +95,16 @@ export default async function SettingsPage() {
             approvers on a single expense.
           </p>
           <p className="text-sm text-gray-500">
-            To add or remove team members, or to change roles between chair /
-            editor, update the database directly in Supabase for now.
+            To add or remove team members, update the database directly in
+            Supabase for now.
+          </p>
+          <p className="text-sm pt-2">
+            <Link
+              href="/admin/settings/team"
+              className="text-brand-blue hover:text-brand-dark font-medium inline-flex items-center gap-1"
+            >
+              Edit team roles &amp; permissions →
+            </Link>
           </p>
         </div>
       </div>
