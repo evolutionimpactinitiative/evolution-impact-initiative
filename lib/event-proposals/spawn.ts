@@ -136,6 +136,16 @@ export async function spawnEventFromProposal(
     status: "draft" as const,
     registration_status: "auto" as const,
     created_by: proposal.created_by,
+    // Carry the programme choice from the proposal through to the
+    // spawned draft event so the admin can push it live without
+    // re-picking. 'general' on the proposal maps to NULL on the event
+    // (events.programme uses NULL to mean "no programme tag").
+    programme:
+      proposal.programme === "growing_together" ||
+      proposal.programme === "creative_connections"
+        ? proposal.programme
+        : null,
+    strand: proposal.strand,
   };
 
   // Try to insert with the base slug; on unique-violation, retry with a

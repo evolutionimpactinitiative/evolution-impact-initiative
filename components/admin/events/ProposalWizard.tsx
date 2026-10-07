@@ -6,10 +6,13 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
+  Calendar,
   Check,
   ChevronLeft,
   Loader2,
+  Palette,
   Send,
+  Sprout,
   Trash2,
 } from "lucide-react";
 import {
@@ -77,6 +80,43 @@ export function ProposalWizard({ initial, team, funds, initialStep }: Props) {
 
   function update<K extends keyof EventProposal>(k: K, v: EventProposal[K]) {
     setProposal((p) => ({ ...p, [k]: v }));
+  }
+
+  // One-off PATCH used by the programme picker (not tied to a step).
+  async function savePatch(patch: Partial<EventProposal>): Promise<boolean> {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch(`/api/event-proposals/${proposal.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Save failed");
+      setProposal((p) => ({ ...p, ...patch }));
+      setSavedAt(new Date());
+      return true;
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Save failed");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function pickProgramme(
+    kind: "growing_together" | "creative_connections" | "general",
+  ) {
+    await savePatch({
+      programme: kind,
+      // Reset strand if moving away from CC.
+      strand: kind === "creative_connections" ? proposal.strand : null,
+    });
+  }
+
+  async function clearProgramme() {
+    await savePatch({ programme: null, strand: null });
   }
 
   async function save(): Promise<boolean> {
@@ -147,8 +187,147 @@ export function ProposalWizard({ initial, team, funds, initialStep }: Props) {
   const progressPct = Math.round((step / TOTAL_STEPS) * 100);
   const isLast = step === TOTAL_STEPS;
 
+  // Programme gate — before the wizard renders, the admin picks which
+  // programme this proposal is for. The pick is persisted immediately
+  // so a refresh keeps them past this screen.
+  if (!proposal.programme) {
+    return (
+      <div className="space-y-6 max-w-3xl mx-auto">
+        <div>
+          <Link
+            href="/admin/events/proposals"
+            className="text-sm text-gray-600 hover:text-brand-dark inline-flex items-center gap-1 mb-3"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Proposals
+          </Link>
+          <h1 className="text-xl md:text-2xl font-heading font-black text-brand-dark">
+            {proposal.title || "Untitled proposal"}
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Which programme is this proposal for?
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {(
+            [
+              {
+                kind: "growing_together" as const,
+                label: "Growing Together",
+                blurb: "Early Years (0–5)",
+                funder: "BBC Children in Need",
+                Icon: Sprout,
+                accent: "hover:border-brand-green",
+                iconBg: "bg-brand-green/10",
+                iconColor: "text-brand-green",
+              },
+              {
+                kind: "creative_connections" as const,
+                label: "Creative Connections",
+                blurb: "Youth / Men's / Women's strands",
+                funder: "National Lottery Awards for All",
+                Icon: Palette,
+                accent: "hover:border-purple-500",
+                iconBg: "bg-purple-100",
+                iconColor: "text-purple-600",
+              },
+              {
+                kind: "general" as const,
+                label: "General event",
+                blurb: "Festival, Back to School, one-offs",
+                funder: "No grant tag",
+                Icon: Calendar,
+                accent: "hover:border-brand-blue",
+                iconBg: "bg-brand-blue/10",
+                iconColor: "text-brand-blue",
+              },
+            ]
+          ).map(({ kind, label, blurb, funder, Icon, accent, iconBg, iconColor }) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => pickProgramme(kind)}
+              disabled={saving}
+              className={`text-left bg-white border-2 border-gray-200 rounded-xl p-5 ${accent} hover:shadow-md transition disabled:opacity-60`}
+            >
+              <span
+                className={`inline-flex items-center justify-center w-10 h-10 rounded-lg mb-3 ${iconBg} ${iconColor}`}
+              >
+                <Icon className="w-5 h-5" />
+              </span>
+              <h3 className="font-heading font-black text-gray-900 mb-1">
+                {label}
+              </h3>
+              <p className="text-sm text-gray-600 mb-1">{blurb}</p>
+              <p className="text-xs text-gray-400">{funder}</p>
+            </button>
+          ))}
+        </div>
+
+        {saveError && (
+          <p className="text-sm text-red-600">{saveError}</p>
+        )}
+      </div>
+    );
+  }
+
+  const programmeMeta = {
+    growing_together: {
+      label: "Growing Together",
+      funder: "BBC Children in Need",
+      Icon: Sprout,
+      iconBg: "bg-brand-green/10",
+      iconColor: "text-brand-green",
+    },
+    creative_connections: {
+      label: "Creative Connections",
+      funder: "National Lottery Awards for All",
+      Icon: Palette,
+      iconBg: "bg-purple-100",
+      iconColor: "text-purple-600",
+    },
+    general: {
+      label: "General event",
+      funder: "No grant tag",
+      Icon: Calendar,
+      iconBg: "bg-brand-blue/10",
+      iconColor: "text-brand-blue",
+    },
+  }[proposal.programme];
+  const ProgrammeIcon = programmeMeta.Icon;
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
+      {/* Programme strip */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <span
+            className={`inline-flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 ${programmeMeta.iconBg} ${programmeMeta.iconColor}`}
+          >
+            <ProgrammeIcon className="w-4 h-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 leading-tight">
+              <Check className="inline w-3 h-3 text-emerald-600 mr-1" />
+              Programme
+            </p>
+            <p className="font-semibold text-gray-900 leading-tight truncate">
+              {programmeMeta.label}{" "}
+              <span className="text-gray-400 font-normal">· {programmeMeta.funder}</span>
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={clearProgramme}
+          disabled={saving}
+          className="text-sm text-brand-blue hover:text-brand-dark flex-shrink-0 disabled:opacity-50"
+        >
+          Change programme
+        </button>
+      </div>
+
       {/* HEADER + progress */}
       <div>
         <Link

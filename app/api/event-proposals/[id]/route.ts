@@ -77,6 +77,8 @@ const ALLOWED_FIELDS = new Set([
   "registration_notes",
   "success_measures",
   "photo_video_consent_default",
+  "programme",
+  "strand",
 ]);
 
 // PATCH /api/event-proposals/[id] — partial update. Whitelist enforced.

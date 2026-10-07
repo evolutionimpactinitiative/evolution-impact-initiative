@@ -159,6 +159,8 @@ export interface EventProposal {
   rejection_reason: string | null;
   spawned_event_id: string | null;
   created_by: string | null;
+  programme: "growing_together" | "creative_connections" | "general" | null;
+  strand: "youth" | "mens" | "womens" | null;
   created_at: string;
   updated_at: string;
 }
