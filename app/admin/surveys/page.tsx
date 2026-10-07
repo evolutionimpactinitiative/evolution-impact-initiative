@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
-import { Plus, ClipboardList, BarChart2 } from "lucide-react";
+import { Plus, ClipboardList, BarChart2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlanceCard } from "@/components/admin/GlanceCard";
 
@@ -185,12 +185,28 @@ export default async function SurveysPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/admin/surveys/${survey.id}`}>View Responses</Link>
+                      <Link href={`/admin/surveys/${survey.id}`}>View responses</Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/admin/surveys/${survey.id}/edit`}>Edit</Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      title="Open the public survey link in a new tab"
+                    >
+                      <a
+                        href={`/feedback/${survey.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1"
+                      >
+                        Public link
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
                     </Button>
                   </div>
                 </div>
