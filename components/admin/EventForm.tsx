@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import type { Event, EventInsert, CustomField } from "@/lib/supabase/types";
-import { Loader2, Upload, X, Clock, Calendar } from "lucide-react";
+import { Loader2, Upload, X, Clock, Calendar, Sprout, Palette, Check } from "lucide-react";
 import { RichTextEditor } from "./RichTextEditor";
 import { CustomFieldsBuilder } from "./CustomFieldsBuilder";
 
@@ -27,6 +27,50 @@ const categories = [
 type CategoryType = "creative" | "sport" | "support" | "community" | "workshop" | "social" | "training" | "family";
 type EventType = "children" | "adults" | "mixed";
 type RegistrationStatusType = "open" | "closed" | "auto";
+type ProgrammeKind = "growing_together" | "creative_connections" | "general";
+
+const PROGRAMME_META: Record<
+  ProgrammeKind,
+  { label: string; funder: string; blurb: string; accent: string; iconBg: string; iconColor: string; icon: typeof Sprout }
+> = {
+  growing_together: {
+    label: "Growing Together",
+    funder: "BBC Children in Need",
+    blurb: "Early Years (0–5)",
+    accent: "border-brand-green",
+    iconBg: "bg-brand-green/10",
+    iconColor: "text-brand-green",
+    icon: Sprout,
+  },
+  creative_connections: {
+    label: "Creative Connections",
+    funder: "National Lottery Awards for All",
+    blurb: "Youth / Men's / Women's strands",
+    accent: "border-purple-500",
+    iconBg: "bg-purple-100",
+    iconColor: "text-purple-600",
+    icon: Palette,
+  },
+  general: {
+    label: "General event",
+    funder: "No grant tag",
+    blurb: "Festival, Back to School, workshops, one-offs",
+    accent: "border-brand-blue",
+    iconBg: "bg-brand-blue/10",
+    iconColor: "text-brand-blue",
+    icon: Calendar,
+  },
+};
+
+// Translate DB programme value ↔ picker kind. The DB stores:
+//   'growing_together' | 'creative_connections' | null
+// The picker also distinguishes an explicit "general" choice (which
+// maps back to NULL on save) so the admin has to pick deliberately.
+function dbProgrammeToKind(p: string | null | undefined): ProgrammeKind | "" {
+  if (p === "growing_together") return "growing_together";
+  if (p === "creative_connections") return "creative_connections";
+  return ""; // null + unknown = no choice yet (new event waiting for a pick)
+}
 
 export function EventForm({ event }: EventFormProps) {
   const router = useRouter();
@@ -70,7 +114,55 @@ export function EventForm({ event }: EventFormProps) {
     primary_difference: event?.primary_difference || "",
     cycle_number: event?.cycle_number ?? "",
     what_to_expect: event?.what_to_expect || "",
+    strand:
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ((event as any)?.strand as "youth" | "mens" | "womens" | null) || "",
   });
+
+  // Programme-picker state. On an existing event we infer the kind from
+  // the row; on new events the picker starts unresolved and the rest of
+  // the form is hidden until the admin picks.
+  const initialKind: ProgrammeKind | "" = event
+    ? dbProgrammeToKind(event.programme) || "general"
+    : "";
+  const [programmeKind, setProgrammeKind] = useState<ProgrammeKind | "">(initialKind);
+
+  function chooseProgramme(kind: ProgrammeKind) {
+    setProgrammeKind(kind);
+    // Reset programme-specific fields when switching so stale values
+    // don't leak into another programme shape.
+    setFormData((prev) => ({
+      ...prev,
+      programme: kind === "general" ? "" : kind,
+      primary_difference: kind === "growing_together" ? prev.primary_difference : "",
+      cycle_number: kind === "growing_together" ? prev.cycle_number : "",
+      what_to_expect:
+        kind === "growing_together" || kind === "creative_connections"
+          ? prev.what_to_expect
+          : "",
+      what_to_bring:
+        kind === "growing_together" || kind === "creative_connections"
+          ? prev.what_to_bring
+          : "",
+      strand: kind === "creative_connections" ? prev.strand : "",
+      // Prefill some sensible defaults when switching into a programme.
+      age_group:
+        prev.age_group ||
+        (kind === "growing_together" ? "0–5 years" : prev.age_group),
+    }));
+  }
+
+  function resetProgramme() {
+    setProgrammeKind("");
+    setFormData((prev) => ({
+      ...prev,
+      programme: "",
+      primary_difference: "",
+      cycle_number: "",
+      what_to_expect: "",
+      strand: "",
+    }));
+  }
 
   const [customFields, setCustomFields] = useState<CustomField[]>(event?.custom_fields || []);
 
@@ -90,7 +182,7 @@ export function EventForm({ event }: EventFormProps) {
     try {
       const slug = isEditing ? event.slug : generateSlug(formData.title);
 
-      const eventData: EventInsert = {
+      const eventData = {
         ...formData,
         slug,
         status: saveAs,
@@ -101,14 +193,21 @@ export function EventForm({ event }: EventFormProps) {
         custom_fields: customFields.length > 0 ? customFields : null,
         publish_at: formData.publish_at ? new Date(formData.publish_at).toISOString() : null,
         programme: formData.programme || null,
-        primary_difference: formData.programme
-          ? ((formData.primary_difference || null) as "confidence" | "connection" | "belonging" | null)
-          : null,
-        cycle_number: formData.programme && formData.cycle_number !== ""
-          ? Number(formData.cycle_number)
-          : null,
+        primary_difference:
+          formData.programme === "growing_together"
+            ? ((formData.primary_difference || null) as "confidence" | "connection" | "belonging" | null)
+            : null,
+        cycle_number:
+          formData.programme === "growing_together" && formData.cycle_number !== ""
+            ? Number(formData.cycle_number)
+            : null,
         what_to_expect: formData.programme ? (formData.what_to_expect || null) : null,
-      };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        strand:
+          formData.programme === "creative_connections"
+            ? (formData.strand || null)
+            : null,
+      } as EventInsert;
 
       let savedEventId = isEditing ? event.id : null;
 
@@ -199,6 +298,87 @@ export function EventForm({ event }: EventFormProps) {
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">{error}</div>
       )}
 
+      {/* Programme picker — the first choice. Collapses into a strip
+          once chosen; in edit mode starts collapsed. */}
+      {!programmeKind ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="font-heading font-bold text-lg text-gray-900 mb-1">
+            {isEditing ? "Programme" : "Create a new event"}
+          </h2>
+          <p className="text-sm text-gray-500 mb-5">
+            First, which programme is this for?
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(["growing_together", "creative_connections", "general"] as const).map((kind) => {
+              const meta = PROGRAMME_META[kind];
+              const Icon = meta.icon;
+              return (
+                <button
+                  key={kind}
+                  type="button"
+                  onClick={() => chooseProgramme(kind)}
+                  className={`text-left bg-white border-2 border-gray-200 rounded-xl p-5 hover:${meta.accent} hover:shadow-md transition group`}
+                >
+                  <span
+                    className={`inline-flex items-center justify-center w-10 h-10 rounded-lg mb-3 ${meta.iconBg} ${meta.iconColor}`}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </span>
+                  <h3 className="font-heading font-black text-gray-900 mb-1">
+                    {meta.label}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-1">{meta.blurb}</p>
+                  <p className="text-xs text-gray-400">{meta.funder}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {(() => {
+              const meta = PROGRAMME_META[programmeKind];
+              const Icon = meta.icon;
+              return (
+                <>
+                  <span
+                    className={`inline-flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 ${meta.iconBg} ${meta.iconColor}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm text-gray-500 leading-tight">
+                      <Check className="inline w-3 h-3 text-emerald-600 mr-1" />
+                      Programme
+                    </p>
+                    <p className="font-semibold text-gray-900 leading-tight truncate">
+                      {meta.label}{" "}
+                      <span className="text-gray-400 font-normal">· {meta.funder}</span>
+                    </p>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+          {!isEditing && (
+            <button
+              type="button"
+              onClick={resetProgramme}
+              className="text-sm text-brand-blue hover:text-brand-dark flex-shrink-0"
+            >
+              Change programme
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* The rest of the form only appears once a programme is chosen,
+          so first-time admins can't skip the picker. In edit mode the
+          programme is already set so this always renders. */}
+      {programmeKind && (
+        <>
+
       {/* Basic Details */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="font-heading font-bold text-lg text-gray-900 mb-4">Basic Details</h2>
@@ -263,28 +443,21 @@ export function EventForm({ event }: EventFormProps) {
         </div>
       </div>
 
-      {/* Programme */}
+      {/* Programme-specific extras — only rendered for programmes that
+          have programme-specific fields (GT, CC). General events skip
+          this section entirely. */}
+      {formData.programme === "growing_together" && (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="font-heading font-bold text-lg text-gray-900 mb-4">Programme</h2>
+        <h2 className="font-heading font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
+          <Sprout className="w-4 h-4 text-brand-green" />
+          Growing Together
+        </h2>
         <p className="text-sm text-gray-500 mb-4">
-          Optional. Tag this event as part of a named programme (e.g. Growing Together) so it
-          appears on that programme&apos;s public page and admin dashboard.
+          Fields that appear on the Growing Together programme page and in CiN
+          outcomes reporting.
         </p>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Programme</label>
-          <select
-            value={formData.programme}
-            onChange={(e) => setFormData({ ...formData, programme: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-          >
-            <option value="">None (standalone event)</option>
-            <option value="growing_together">Growing Together (Early Years, 0–5)</option>
-          </select>
-        </div>
-
-        {formData.programme === "growing_together" && (
-          <div className="mt-4 space-y-4 pl-4 border-l-4 border-brand-green">
+        <div className="space-y-4 pl-4 border-l-4 border-brand-green">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Primary difference <span className="text-red-500">*</span>
@@ -358,8 +531,86 @@ export function EventForm({ event }: EventFormProps) {
               />
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Programme-specific extras — Creative Connections */}
+      {formData.programme === "creative_connections" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="font-heading font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
+            <Palette className="w-4 h-4 text-purple-600" />
+            Creative Connections
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Fields that appear on the Creative Connections programme page and in
+            National Lottery Awards for All reporting.
+          </p>
+
+          <div className="space-y-4 pl-4 border-l-4 border-purple-500">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Strand <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Which cohort is this session for?
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {(
+                  [
+                    { value: "youth", label: "Youth", hint: "Ages 13–18" },
+                    { value: "mens", label: "Men's", hint: "Adults 18+" },
+                    { value: "womens", label: "Women's", hint: "Adults 18+" },
+                  ] as const
+                ).map((s) => (
+                  <label
+                    key={s.value}
+                    className="flex items-start gap-2 p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-purple-500"
+                  >
+                    <input
+                      type="radio"
+                      name="strand"
+                      value={s.value}
+                      checked={formData.strand === s.value}
+                      onChange={(e) => {
+                        const next = e.target.value as "youth" | "mens" | "womens";
+                        setFormData({
+                          ...formData,
+                          strand: next,
+                          // Only prefill age_group if the admin hasn't set one yet.
+                          age_group:
+                            formData.age_group ||
+                            (next === "youth" ? "13–18" : "18+"),
+                        });
+                      }}
+                      className="mt-1"
+                    />
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">{s.label}</div>
+                      <div className="text-xs text-gray-500">{s.hint}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                What to expect
+              </label>
+              <p className="text-xs text-gray-500 mb-1">
+                Short summary of the session shape — shown on the public session page.
+              </p>
+              <textarea
+                value={formData.what_to_expect}
+                onChange={(e) => setFormData({ ...formData, what_to_expect: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="A relaxed creative session with time to make, chat, and share."
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Date & Location */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -889,6 +1140,8 @@ export function EventForm({ event }: EventFormProps) {
           {isEditing ? "Update & Publish" : "Create & Publish"}
         </Button>
       </div>
+        </>
+      )}
     </form>
   );
 }
