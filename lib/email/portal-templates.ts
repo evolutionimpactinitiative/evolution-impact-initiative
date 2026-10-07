@@ -293,6 +293,90 @@ export function villagePostEmail(params: {
   return { subject, html };
 }
 
+// ============================================
+// Chat — team reply + new family message
+// ============================================
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function quoteBlock(body: string): string {
+  // Preserve newlines in the message body while escaping HTML.
+  return escapeHtml(body).replace(/\n/g, "<br/>");
+}
+
+export function chatTeamReplyEmail(params: {
+  senderName: string;
+  body: string;
+  viewUrl: string;
+}): { subject: string; html: string } {
+  const { senderName, body, viewUrl } = params;
+  const subject = `${senderName} replied — Growing Together`;
+  const html = shell(`
+    <p style="margin:0 0 8px;font-size:11px;color:${BRAND.blue};font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+      New message
+    </p>
+    <h1 style="margin:0 0 16px;font-family:'Montserrat',sans-serif;font-size:20px;color:${BRAND.dark};font-weight:800;">
+      ${escapeHtml(senderName)} replied
+    </h1>
+    <div style="padding:16px;background-color:#f6f9fd;border-left:3px solid ${BRAND.blue};border-radius:6px;margin:0 0 20px;font-size:15px;line-height:22px;color:#333;">
+      ${quoteBlock(body)}
+    </div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 8px;">
+      <tr>
+        <td style="background-color:${BRAND.blue};border-radius:8px;">
+          <a href="${viewUrl}" style="display:inline-block;padding:14px 28px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">
+            Open the conversation
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:16px 0 0;font-size:12px;color:#888;text-align:center;">
+      Reply from your Growing Together portal — this email is not monitored.
+    </p>
+  `);
+  return { subject, html };
+}
+
+export function chatNewFamilyMessageEmail(params: {
+  familyName: string;
+  body: string;
+  adminUrl: string;
+}): { subject: string; html: string } {
+  const { familyName, body, adminUrl } = params;
+  const subject = `New message from ${familyName}`;
+  const html = shell(`
+    <p style="margin:0 0 8px;font-size:11px;color:${BRAND.green};font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+      Family message
+    </p>
+    <h1 style="margin:0 0 16px;font-family:'Montserrat',sans-serif;font-size:20px;color:${BRAND.dark};font-weight:800;">
+      ${escapeHtml(familyName)} just messaged the team
+    </h1>
+    <div style="padding:16px;background-color:#f6fcf7;border-left:3px solid ${BRAND.green};border-radius:6px;margin:0 0 20px;font-size:15px;line-height:22px;color:#333;">
+      ${quoteBlock(body)}
+    </div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 8px;">
+      <tr>
+        <td style="background-color:${BRAND.blue};border-radius:8px;">
+          <a href="${adminUrl}" style="display:inline-block;padding:14px 28px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">
+            Open in admin
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:16px 0 0;font-size:12px;color:#888;text-align:center;">
+      Any team member can reply. First to reply gets assigned automatically.
+    </p>
+  `);
+  return { subject, html };
+}
+
 export function villageDigestEmail(params: {
   parentName: string;
   posts: Array<{
