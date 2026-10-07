@@ -8,13 +8,11 @@ import {
   Users,
   Mail,
   Send,
-  MessageCircle,
-  UserCheck,
   ClipboardList,
-  Sparkles,
+  Heart,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StatCard } from "@/components/admin/StatCard";
 import {
   DataCard,
   DataCardHeader,
@@ -115,37 +113,6 @@ export default async function AdminDashboard() {
 
   const upcomingEvents = upcomingEventsData as Event[] | null;
 
-  // ---- Attention queries (Option C "needs attention" feed) ----
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const fourteenDaysFrom = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-
-  // 1. Chat threads awaiting a team reply.
-  const { count: chatNeedsReply } = await supabase
-    .from("chat_threads" as "profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "open")
-    .eq("last_message_by", "family");
-
-  // 2. Families who joined in the last 7 days.
-  const { count: newFamiliesCount } = await supabase
-    .from("families" as "profiles")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", sevenDaysAgo.toISOString());
-
-  // 3. Growing Together sessions in the next 14 days.
-  const { count: upcomingGtCount } = await supabase
-    .from("events")
-    .select("*", { count: "exact", head: true })
-    .eq("programme", "growing_together")
-    .eq("status", "published")
-    .gte("date", new Date().toISOString().split("T")[0])
-    .lte("date", fourteenDaysFrom.toISOString().split("T")[0]);
-
-  // 4. Village posts sitting in draft.
-  const { count: draftVillageCount } = await supabase
-    .from("village_posts" as "profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "draft");
 
   return (
     <div className="space-y-6">
@@ -159,93 +126,53 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      {/* Needs attention — things only a human can resolve, right now */}
-      <AttentionList
-        items={[
-          chatNeedsReply && chatNeedsReply > 0
-            ? {
-                key: "chat",
-                icon: "MessageCircle" as const,
-                label: `${chatNeedsReply} family message${chatNeedsReply === 1 ? "" : "s"} waiting for a reply`,
-                tone: "urgent" as const,
-                href: "/admin/messages?filter=needs_reply",
-              }
-            : null,
-          upcomingGtCount && upcomingGtCount > 0
-            ? {
-                key: "gt",
-                icon: "Calendar" as const,
-                label: `${upcomingGtCount} Growing Together session${upcomingGtCount === 1 ? "" : "s"} in the next 14 days`,
-                tone: "info" as const,
-                href: "/admin/growing-together",
-              }
-            : null,
-          newFamiliesCount && newFamiliesCount > 0
-            ? {
-                key: "families",
-                icon: "UserCheck" as const,
-                label: `${newFamiliesCount} new famil${newFamiliesCount === 1 ? "y" : "ies"} joined this week`,
-                tone: "info" as const,
-                href: "/admin/growing-together/families",
-              }
-            : null,
-          draftVillageCount && draftVillageCount > 0
-            ? {
-                key: "village",
-                icon: "ClipboardList" as const,
-                label: `${draftVillageCount} Our Village post${draftVillageCount === 1 ? "" : "s"} in draft`,
-                tone: "info" as const,
-                href: "/admin/growing-together/village",
-              }
-            : null,
-        ].filter((x): x is NonNullable<typeof x> => x !== null)}
-      />
-
-      {/* At a glance — compact scan-line of all the vanity metrics */}
-      <section>
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500 mb-3">
-          At a glance
-        </h2>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 lg:p-5">
-          <div className="flex flex-wrap gap-x-8 gap-y-4 items-baseline">
-            <GlanceStat
-              label="Upcoming events"
-              value={String(upcomingEventsCount || 0)}
-              href="/admin/events"
-            />
-            <GlanceDivider />
-            <GlanceStat
-              label="Registrations this month"
-              value={String(registrationsThisMonth || 0)}
-              href="/admin/registrations"
-            />
-            <GlanceDivider />
-            <GlanceStat
-              label="Subscribers"
-              value={String(activeSubscribersCount || 0)}
-              href="/admin/subscribers"
-            />
-            <GlanceDivider />
-            <GlanceStat
-              label="Survey responses"
-              value={String(surveyResponsesThisMonth || 0)}
-              href="/admin/surveys"
-            />
-            {canSeeMoney && (
-              <>
-                <GlanceDivider />
-                <GlanceStat
-                  label="Donations this month"
-                  value={`£${(totalDonationsThisMonth / 100).toFixed(0)}`}
-                  href="/admin/donations"
-                />
-                <GlanceDivider />
-                <GlanceStat label="Recurring" value="£0" />
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
+        <GlanceCard
+          label="Upcoming events"
+          value={String(upcomingEventsCount || 0)}
+          icon={<Calendar className="w-4 h-4" />}
+          iconTint="bg-brand-blue/10 text-brand-blue"
+          href="/admin/events"
+        />
+        <GlanceCard
+          label="Registrations this month"
+          value={String(registrationsThisMonth || 0)}
+          icon={<Users className="w-4 h-4" />}
+          iconTint="bg-brand-green/10 text-brand-green"
+          href="/admin/registrations"
+        />
+        <GlanceCard
+          label="Subscribers"
+          value={String(activeSubscribersCount || 0)}
+          icon={<Mail className="w-4 h-4" />}
+          iconTint="bg-indigo-100 text-indigo-500"
+          href="/admin/subscribers"
+        />
+        <GlanceCard
+          label="Survey responses"
+          value={String(surveyResponsesThisMonth || 0)}
+          icon={<ClipboardList className="w-4 h-4" />}
+          iconTint="bg-orange-100 text-orange-500"
+          href="/admin/surveys"
+        />
+        {canSeeMoney && (
+          <GlanceCard
+            label="Donations this month"
+            value={`£${(totalDonationsThisMonth / 100).toFixed(0)}`}
+            icon={<Heart className="w-4 h-4" />}
+            iconTint="bg-red-100 text-red-500"
+            href="/admin/donations"
+          />
+        )}
+        {canSeeMoney && (
+          <GlanceCard
+            label="Recurring"
+            value="£0"
+            icon={<TrendingUp className="w-4 h-4" />}
+            iconTint="bg-purple-100 text-purple-500"
+          />
+        )}
+      </div>
 
       {/* Quick actions - Full width buttons on mobile */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-3">
@@ -386,106 +313,50 @@ export default async function AdminDashboard() {
   );
 }
 
-// ---- Dashboard-local components for Option C ----
-
-type AttentionIconName = "MessageCircle" | "Calendar" | "UserCheck" | "ClipboardList";
-
-type AttentionItem = {
-  key: string;
-  icon: AttentionIconName;
-  label: string;
-  tone: "urgent" | "info";
-  href: string;
-};
-
-function AttentionList({ items }: { items: AttentionItem[] }) {
-  return (
-    <section>
-      <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500 mb-3">
-        Needs attention
-      </h2>
-      {items.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 mb-3">
-            <Sparkles className="w-5 h-5 text-emerald-600" />
-          </div>
-          <p className="font-heading font-black text-gray-900">
-            You&apos;re all caught up.
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Nothing waiting on you right now.
-          </p>
-        </div>
-      ) : (
-        <ul className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
-          {items.map((item) => (
-            <li key={item.key}>
-              <Link
-                href={item.href}
-                className="flex items-center justify-between gap-4 px-4 py-4 hover:bg-gray-50 transition-colors group"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span
-                    className={
-                      "flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0 " +
-                      (item.tone === "urgent"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-brand-blue/10 text-brand-blue")
-                    }
-                  >
-                    <AttentionIcon name={item.icon} />
-                  </span>
-                  <p className="font-medium text-gray-900 truncate">{item.label}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-brand-blue flex-shrink-0" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function AttentionIcon({ name }: { name: AttentionIconName }) {
-  if (name === "MessageCircle") return <MessageCircle className="w-4 h-4" />;
-  if (name === "Calendar") return <Calendar className="w-4 h-4" />;
-  if (name === "UserCheck") return <UserCheck className="w-4 h-4" />;
-  return <ClipboardList className="w-4 h-4" />;
-}
-
-function GlanceStat({
+// Dashboard glance card — slim card with an uppercase caption, a big
+// bold number, and a colored icon chip in the top-right corner. The
+// whole card is clickable when href is set.
+function GlanceCard({
   label,
   value,
+  icon,
+  iconTint,
   href,
 }: {
   label: string;
   value: string;
+  icon: React.ReactNode;
+  iconTint: string; // tailwind classes for bg + text colour of the icon chip
   href?: string;
 }) {
-  const content = (
-    <div className="min-w-0">
-      <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">
-        {label}
+  const base =
+    "block bg-white rounded-xl border border-gray-100 shadow-sm p-4 transition hover:border-brand-blue/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/60";
+  const body = (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[10px] uppercase tracking-wider font-bold text-gray-500 leading-snug">
+          {label}
+        </p>
+        <span
+          className={
+            "flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 " +
+            iconTint
+          }
+        >
+          {icon}
+        </span>
+      </div>
+      <p className="text-2xl lg:text-3xl font-black text-brand-dark mt-3">
+        {value}
       </p>
-      <p className="text-xl font-black text-brand-dark mt-0.5">{value}</p>
-    </div>
+    </>
   );
   if (href) {
     return (
-      <Link href={href} className="hover:text-brand-blue transition-colors">
-        {content}
+      <Link href={href} className={base}>
+        {body}
       </Link>
     );
   }
-  return content;
-}
-
-function GlanceDivider() {
-  return (
-    <span
-      aria-hidden
-      className="hidden sm:block w-px h-10 bg-gray-200 self-center"
-    />
-  );
+  return <div className={base + " cursor-default"}>{body}</div>;
 }
