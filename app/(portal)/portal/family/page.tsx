@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Child, Family, ParentCarer } from "@/lib/supabase/types";
 import { resolvePortalIdentity } from "@/lib/portal/current-carer";
 import { FamilyEditor } from "./FamilyEditor";
+import { NotificationPreferences } from "./NotificationPreferences";
 
 export default async function FamilyPage() {
   const supabase = await createClient();
@@ -104,6 +105,13 @@ export default async function FamilyPage() {
         family={family as Family}
         carer={carer as ParentCarer}
         children={(children as Child[] | null) ?? []}
+      />
+
+      <NotificationPreferences
+        initial={
+          ((carer as unknown as { village_email_pref?: string }).village_email_pref ??
+            "daily_digest") as "per_post" | "daily_digest" | "never"
+        }
       />
     </div>
   );

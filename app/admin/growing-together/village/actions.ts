@@ -4,6 +4,36 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyParentsOfVillagePost } from "@/lib/notifications/fanout";
+
+type NotifiablePost = {
+  id: string;
+  title: string;
+  body: string | null;
+  category: string;
+  author_name: string | null;
+  cover_image_url: string | null;
+};
+
+// Fan a published post out to parents. Fetches a fresh row to avoid
+// trusting mid-flight form data. Logs + swallows errors so a notify
+// failure never breaks the admin save.
+async function fanoutIfPublished(postId: string) {
+  const admin = createAdminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: post } = await (admin as any)
+    .from("village_posts")
+    .select("id, title, body, category, author_name, cover_image_url, status")
+    .eq("id", postId)
+    .maybeSingle();
+  if (!post || post.status !== "published") return;
+  try {
+    const result = await notifyParentsOfVillagePost(post as NotifiablePost);
+    console.log("village notify fan-out:", { postId, ...result });
+  } catch (err) {
+    console.error("village notify fan-out failed:", { postId, err });
+  }
+}
 
 type Category =
   | "activity"
@@ -77,10 +107,15 @@ export async function createVillagePost(fd: FormData) {
     .single();
   if (error) throw error;
 
+  const newId = (data as { id: string }).id;
+  if (payload.status === "published") {
+    await fanoutIfPublished(newId);
+  }
+
   revalidatePath("/admin/growing-together/village");
   revalidatePath("/portal/our-village");
   revalidatePath("/portal");
-  redirect(`/admin/growing-together/village/${(data as { id: string }).id}`);
+  redirect(`/admin/growing-together/village/${newId}`);
 }
 
 export async function updateVillagePost(id: string, fd: FormData) {
@@ -112,6 +147,13 @@ export async function updateVillagePost(id: string, fd: FormData) {
     .update({ ...payload, published_at })
     .eq("id", id);
   if (error) throw error;
+
+  // Notify on first-time publish only; the fan-out helper itself also
+  // de-dups via existing notifications, but this avoids an unnecessary
+  // round-trip for every save of an already-published post.
+  if (nowPublished && !wasPublished) {
+    await fanoutIfPublished(id);
+  }
 
   revalidatePath("/admin/growing-together/village");
   revalidatePath(`/admin/growing-together/village/${id}`);
@@ -170,6 +212,10 @@ export async function setVillageStatus(id: string, status: Status) {
     .update({ status, published_at })
     .eq("id", id);
   if (error) throw error;
+
+  if (status === "published" && !wasPublished) {
+    await fanoutIfPublished(id);
+  }
 
   revalidatePath("/admin/growing-together/village");
   revalidatePath(`/admin/growing-together/village/${id}`);

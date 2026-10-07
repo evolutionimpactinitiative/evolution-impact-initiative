@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Bell } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { FundedByCiN } from "@/components/shared/FundedByCiN";
 import { PortalSignOutButton } from "./PortalSignOutButton";
 
@@ -9,6 +11,21 @@ export default async function PortalLayout({ children }: { children: React.React
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Unread notification count. Uses the admin client so RLS doesn't need
+  // the carer session (layout runs for admins/stale sessions too — they
+  // just see 0).
+  let unreadCount = 0;
+  if (user) {
+    const admin = createAdminClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count } = await (admin as any)
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .is("read_at", null);
+    unreadCount = count ?? 0;
+  }
 
   return (
     <div className="min-h-screen bg-brand-pale/40 flex flex-col">
@@ -55,6 +72,22 @@ export default async function PortalLayout({ children }: { children: React.React
                 className="hidden sm:inline-block font-heading text-sm font-semibold text-brand-dark hover:text-brand-blue transition-colors"
               >
                 Our Village
+              </Link>
+              <Link
+                href="/portal/notifications"
+                aria-label={
+                  unreadCount > 0
+                    ? `Notifications (${unreadCount} unread)`
+                    : "Notifications"
+                }
+                className="relative text-brand-dark hover:text-brand-blue transition-colors"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-green text-white text-[10px] font-bold leading-[18px] text-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
               <PortalSignOutButton />
             </div>

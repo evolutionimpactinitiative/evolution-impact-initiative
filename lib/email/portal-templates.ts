@@ -214,3 +214,147 @@ export function portalPasswordResetEmail(params: {
   `);
   return { subject, html };
 }
+
+// ============================================
+// Our Village — per-post + daily digest emails
+// ============================================
+
+const CATEGORY_LABEL: Record<string, string> = {
+  activity: "Activity",
+  announcement: "Announcement",
+  local_service: "Local service",
+  programme_update: "Programme update",
+  resource: "Resource",
+};
+
+// Strip HTML tags for an excerpt. Village post body comes from Tiptap
+// so safe to naively strip for a text preview.
+function excerpt(html: string | null | undefined, max = 220): string {
+  if (!html) return "";
+  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return text.length > max ? text.slice(0, max - 1).trimEnd() + "…" : text;
+}
+
+function villagePreferencesLine(prefsUrl: string): string {
+  return `
+    <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#999;text-align:center;">
+      You&rsquo;re receiving this because you&rsquo;re part of the Growing Together village.
+      <a href="${prefsUrl}" style="color:${BRAND.blue};text-decoration:underline;">Change how often we email you</a>.
+    </p>
+  `;
+}
+
+export function villagePostEmail(params: {
+  parentName: string;
+  post: {
+    title: string;
+    body: string | null;
+    category: string;
+    author_name: string | null;
+    cover_image_url: string | null;
+  };
+  viewUrl: string;
+  prefsUrl: string;
+}): { subject: string; html: string } {
+  const { parentName, post, viewUrl, prefsUrl } = params;
+  const subject = `Our Village: ${post.title}`;
+  const label = CATEGORY_LABEL[post.category] || "Village";
+  const preview = excerpt(post.body);
+  const cover = post.cover_image_url
+    ? `<img src="${post.cover_image_url}" alt="" width="536" style="display:block;width:100%;max-width:536px;height:auto;border-radius:8px;margin:0 0 20px;" />`
+    : "";
+  const byline = post.author_name
+    ? `<p style="margin:0 0 20px;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Posted by ${post.author_name}</p>`
+    : "";
+
+  const html = shell(`
+    <p style="margin:0 0 8px;font-size:11px;color:${BRAND.green};font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+      ${label} · Our Village
+    </p>
+    <h1 style="margin:0 0 16px;font-family:'Montserrat',sans-serif;font-size:22px;color:${BRAND.dark};font-weight:800;line-height:1.3;">
+      ${post.title}
+    </h1>
+    ${byline}
+    ${cover}
+    <p style="margin:0 0 24px;font-size:15px;line-height:24px;color:#444;">
+      ${preview || `Hi ${parentName}, there&rsquo;s a new post for you in Our Village.`}
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 8px;">
+      <tr>
+        <td style="background-color:${BRAND.blue};border-radius:8px;">
+          <a href="${viewUrl}" style="display:inline-block;padding:14px 28px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">
+            Read the full post
+          </a>
+        </td>
+      </tr>
+    </table>
+    ${villagePreferencesLine(prefsUrl)}
+  `);
+  return { subject, html };
+}
+
+export function villageDigestEmail(params: {
+  parentName: string;
+  posts: Array<{
+    id: string;
+    title: string;
+    body: string | null;
+    category: string;
+  }>;
+  viewUrl: string;
+  prefsUrl: string;
+}): { subject: string; html: string } {
+  const { parentName, posts, viewUrl, prefsUrl } = params;
+  const count = posts.length;
+  const subject =
+    count === 1
+      ? `Our Village: 1 new post today`
+      : `Our Village: ${count} new posts today`;
+
+  const items = posts
+    .map((p) => {
+      const label = CATEGORY_LABEL[p.category] || "Village";
+      const preview = excerpt(p.body, 160);
+      return `
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:0 0 16px;">
+          <tr>
+            <td style="padding:16px;background-color:#fafbfc;border:1px solid #eef0f3;border-radius:10px;">
+              <p style="margin:0 0 6px;font-size:10px;color:${BRAND.green};font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">
+                ${label}
+              </p>
+              <h3 style="margin:0 0 8px;font-family:'Montserrat',sans-serif;font-size:16px;color:${BRAND.dark};font-weight:800;line-height:1.3;">
+                ${p.title}
+              </h3>
+              ${
+                preview
+                  ? `<p style="margin:0;font-size:13px;line-height:20px;color:#555;">${preview}</p>`
+                  : ""
+              }
+            </td>
+          </tr>
+        </table>
+      `;
+    })
+    .join("");
+
+  const html = shell(`
+    <h1 style="margin:0 0 8px;font-family:'Montserrat',sans-serif;font-size:22px;color:${BRAND.dark};font-weight:800;">
+      Hi ${parentName}
+    </h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:24px;color:#444;">
+      Here&rsquo;s what&rsquo;s new in Our Village today.
+    </p>
+    ${items}
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:16px auto 8px;">
+      <tr>
+        <td style="background-color:${BRAND.blue};border-radius:8px;">
+          <a href="${viewUrl}" style="display:inline-block;padding:14px 28px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">
+            Open Our Village
+          </a>
+        </td>
+      </tr>
+    </table>
+    ${villagePreferencesLine(prefsUrl)}
+  `);
+  return { subject, html };
+}
