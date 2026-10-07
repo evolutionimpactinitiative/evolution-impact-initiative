@@ -282,7 +282,7 @@ function PostCard({ post }: { post: VillagePost }) {
 
         {/* Author attribution */}
         {post.author_name && (
-          <p className="text-xs text-brand-dark/50 mt-4 pt-3 border-t border-brand-dark/5">
+          <p className="text-xs uppercase tracking-wider text-brand-dark/50 mt-4 pt-3 border-t border-brand-dark/5">
             Posted by {post.author_name}
           </p>
         )}
