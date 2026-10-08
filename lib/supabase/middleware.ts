@@ -65,6 +65,7 @@ export async function updateSession(request: NextRequest) {
       "/portal/verify-email",
       "/portal/forgot-password",
       "/portal/reset-password",
+      "/portal/claim",
     ];
     const isPublic = publicPortalPaths.some((p) => request.nextUrl.pathname.startsWith(p));
 
