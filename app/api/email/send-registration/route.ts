@@ -59,11 +59,37 @@ export async function POST(request: NextRequest) {
 
     const event = eventData as Event;
 
+    // Only surface the "create your account" CTA for parents who don't
+    // yet have one (i.e. the registering carer has no auth user). We
+    // read the token straight off the parent_carers row — the public
+    // register endpoint stamps a fresh one on each anonymous attempt.
+    let claimToken: string | null = null;
+    const registeredBy = (registration as { registered_by_parent_carer_id?: string | null })
+      .registered_by_parent_carer_id;
+    if (registeredBy) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: carer } = await (supabase as any)
+        .from("parent_carers")
+        .select("user_id, claim_token, claim_token_expires_at")
+        .eq("id", registeredBy)
+        .maybeSingle();
+
+      if (
+        carer &&
+        !carer.user_id &&
+        carer.claim_token &&
+        (!carer.claim_token_expires_at ||
+          new Date(carer.claim_token_expires_at) > new Date())
+      ) {
+        claimToken = carer.claim_token;
+      }
+    }
+
     // Generate email based on registration status
     const isWaitlisted = registration.status === "waitlisted";
     const emailData = isWaitlisted
-      ? waitlistConfirmationEmail(registration, event)
-      : registrationConfirmationEmail(registration, event);
+      ? waitlistConfirmationEmail(registration, event, undefined, { claimToken })
+      : registrationConfirmationEmail(registration, event, { claimToken });
 
     // Send email
     const resend = getResendClient();

@@ -166,8 +166,11 @@ const emailWrapper = (content: string, heroImage?: string, accentColor: string =
 
 export function registrationConfirmationEmail(
   registration: RegistrationWithChildren,
-  event: Event
+  event: Event,
+  options?: { claimToken?: string | null }
 ): { subject: string; html: string } {
+  const claimToken = options?.claimToken || null;
+  const claimUrl = claimToken ? `${BASE_URL}/portal/claim?token=${claimToken}` : null;
   const eventDate = new Date(event.date).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -298,6 +301,36 @@ export function registrationConfirmationEmail(
       </tr>
     </table>
 
+    ${claimUrl ? `
+    <!-- Create your account prompt -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border: 1px solid ${BRAND.blue}20; border-radius: 12px; margin-top: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.dark}; font-weight: 800;">
+            ✨ Make the next one one tap
+          </h3>
+          <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 22px; color: ${BRAND.dark};">
+            Create a free Growing Together account to see upcoming sessions, book in two taps,
+            cancel easily, and track your child&rsquo;s journey. Your details are already saved —
+            you just need a password.
+          </p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+            <tr>
+              <td style="border-radius: 4px; background: ${BRAND.blue}; text-align: center;">
+                <a href="${claimUrl}" target="_blank" style="background: ${BRAND.blue}; font-family: 'Montserrat', sans-serif; font-size: 13px; text-decoration: none; padding: 12px 24px; color: #ffffff; display: inline-block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                  Create my account
+                </a>
+              </td>
+            </tr>
+          </table>
+          <p style="margin: 14px 0 0; font-family: 'Inter', sans-serif; font-size: 12px; color: ${BRAND.dark}80;">
+            Link expires in 90 days.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ` : ""}
+
     <p style="margin: 30px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6; text-align: left;">
       See you soon!<br>
       <strong>The Evolution Impact Initiative Team</strong>
@@ -313,8 +346,11 @@ export function registrationConfirmationEmail(
 export function waitlistConfirmationEmail(
   registration: RegistrationWithChildren,
   event: Event,
-  position?: number
+  position?: number,
+  options?: { claimToken?: string | null }
 ): { subject: string; html: string } {
+  const claimToken = options?.claimToken || null;
+  const claimUrl = claimToken ? `${BASE_URL}/portal/claim?token=${claimToken}` : null;
   const eventDate = new Date(event.date).toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -431,6 +467,36 @@ export function waitlistConfirmationEmail(
         </td>
       </tr>
     </table>
+
+    ${claimUrl ? `
+    <!-- Create your account prompt -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${BRAND.pale}; border: 1px solid ${BRAND.blue}20; border-radius: 12px; margin-top: 25px;">
+      <tr>
+        <td style="padding: 25px; text-align: left;">
+          <h3 style="margin: 0 0 10px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: ${BRAND.dark}; font-weight: 800;">
+            ✨ Get moved up faster
+          </h3>
+          <p style="margin: 0 0 18px; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 22px; color: ${BRAND.dark};">
+            Create a free Growing Together account to see upcoming sessions, book future
+            ones in two taps, and track your spot. Your details are already saved — you
+            just need a password.
+          </p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+            <tr>
+              <td style="border-radius: 4px; background: ${BRAND.blue}; text-align: center;">
+                <a href="${claimUrl}" target="_blank" style="background: ${BRAND.blue}; font-family: 'Montserrat', sans-serif; font-size: 13px; text-decoration: none; padding: 12px 24px; color: #ffffff; display: inline-block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                  Create my account
+                </a>
+              </td>
+            </tr>
+          </table>
+          <p style="margin: 14px 0 0; font-family: 'Inter', sans-serif; font-size: 12px; color: ${BRAND.dark}80;">
+            Link expires in 90 days.
+          </p>
+        </td>
+      </tr>
+    </table>
+    ` : ""}
 
     <p style="margin: 30px 0 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${BRAND.dark}; line-height: 1.6; text-align: left;">
       Best wishes,<br>
